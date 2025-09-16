@@ -11,10 +11,10 @@
   --ring: #6366f1;             /* 포커스 링 */
   
   /* 버튼 색상 */
-  --primary: #6b7280;          /* 뉴트럴 그레이 */
+  --primary: #3b82f6;          /* 파란색 - 눈에 잘 띄는 색상 */
   --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #4b5563;    /* 조금 더 어두운 그레이 */
-  --primary-active: #374151;   /* 더 어두운 그레이 */
+  --primary-hover: #2563eb;    /* 조금 더 어두운 파란색 */
+  --primary-active: #1d4ed8;   /* 더 어두운 파란색 */
   --secondary: #ffffff;        /* 보조 버튼 배경 */
   --secondary-foreground: #171717; /* 보조 버튼 텍스트 */
   --secondary-hover: #f5f5f5;  /* 보조 버튼 호버 */
@@ -102,10 +102,10 @@
   --ring: #6366f1;             /* 포커스 링 (동일) */
   
   /* 버튼 색상 - 다크모드 */
-  --primary: #6b7280;          /* 뉴트럴 그레이 */
+  --primary: #3b82f6;          /* 파란색 - 눈에 잘 띄는 색상 */
   --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #4b5563;    /* 조금 더 어두운 그레이 */
-  --primary-active: #374151;   /* 더 어두운 그레이 */
+  --primary-hover: #2563eb;    /* 조금 더 어두운 파란색 */
+  --primary-active: #1d4ed8;   /* 더 어두운 파란색 */
   --secondary: #262626;        /* 보조 버튼 배경 */
   --secondary-foreground: #ededed; /* 보조 버튼 텍스트 */
   --secondary-hover: #404040;  /* 보조 버튼 호버 */

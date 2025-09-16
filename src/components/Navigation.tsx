@@ -15,7 +15,7 @@ export default function Navigation() {
   // 서버사이드 렌더링 시 hydration mismatch 방지
   if (!mounted) {
     return (
-      <nav className="bg-muted shadow-sm">
+      <nav className="bg-muted shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
@@ -45,10 +45,10 @@ export default function Navigation() {
               <Link
                 href={getLocalizedPath('/')}
                 className={cn(
-                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 border border-transparent',
                   isActive('/') 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                    ? 'bg-primary text-primary-foreground shadow-md border-primary/20' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background hover:border-border'
                 )}
               >
                 {t('navigation.home')}
@@ -62,10 +62,10 @@ export default function Navigation() {
                 <Link
                   href={getLocalizedPath('/profile')}
                   className={cn(
-                    'px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
+                    'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer border border-transparent',
                     isActive('/profile') 
-                      ? 'bg-primary text-primary-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                      ? 'bg-primary text-primary-foreground shadow-md border-primary/20' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background hover:border-border'
                   )}
                   >
                     {profile.display_name || profile.username}
@@ -76,10 +76,10 @@ export default function Navigation() {
               <Link
                 href={getLocalizedPath('/login')}
                 className={cn(
-                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  'px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 border border-transparent',
                   isActive('/login') 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background'
+                    ? 'bg-primary text-primary-foreground shadow-md border-primary/20' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background hover:border-border'
                 )}
                 >
                   {t('navigation.login')}

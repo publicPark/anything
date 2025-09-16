@@ -1,0 +1,27 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="frontGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b9dc3;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6b7280;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4b5563;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="topGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9ca3af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6b7280;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="rightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4b5563;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#374151;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 3D 정육면체 -->
+  <!-- 앞면 (메인 면) -->
+  <rect x="6" y="14" width="20" height="20" fill="url(#frontGradient)" stroke="#374151" stroke-width="0.5"/>
+  
+  <!-- 윗면 (상단 면) -->
+  <polygon points="6,14 10,10 30,10 26,14" fill="url(#topGradient)" stroke="#374151" stroke-width="0.5"/>
+  
+  <!-- 옆면 (우측 면) -->
+  <polygon points="26,14 30,10 30,30 26,34" fill="url(#rightGradient)" stroke="#374151" stroke-width="0.5"/>
+</svg>

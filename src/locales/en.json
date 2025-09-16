@@ -11,8 +11,8 @@
   "home": {
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome!",
-    "title": "NextJS + Supabase Authentication System",
-    "description": "A website with magic link/Google login and profile management capabilities.",
+    "title": "Anything Website",
+    "description": "Anything Website",
     "loading": "Loading..."
   },
   "login": {

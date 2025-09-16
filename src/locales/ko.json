@@ -11,8 +11,8 @@
   "home": {
     "welcome": "안녕하세요, {name}님!",
     "welcomeMessage": "환영합니다!",
-    "title": "NextJS + Supabase 인증 시스템",
-    "description": "매직링크/구글 로그인과 프로필 관리가 가능한 웹사이트입니다.",
+    "title": "아무거나 웹사이트",
+    "description": "아무거나 웹사이트",
     "loading": "로딩 중..."
   },
   "login": {

@@ -94,14 +94,14 @@ export default function ProfilePage() {
 
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-muted rounded-lg shadow-md p-6">
+      <div className="max-w-md mx-auto bg-muted rounded-lg shadow-lg border border-border p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
         </div>
 
         {message && (
-          <div className={`mb-4 p-3 rounded-md text-sm ${
-            message.includes('업데이트') || message.includes('updated') ? 'bg-success-100 text-success-800' : 'bg-destructive/10 text-destructive'
+          <div className={`mb-4 p-3 rounded-md text-sm border ${
+            message.includes('업데이트') || message.includes('updated') ? 'bg-success-100 text-success-800 border-success-600' : 'bg-destructive/10 text-destructive border-destructive/20'
           }`}>
             {message}
           </div>

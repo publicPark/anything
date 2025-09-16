@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NextJS + Supabase Auth",
-  description: "매직링크/구글 로그인과 프로필 관리가 가능한 웹사이트",
+  title: "아무거나",
+  description: "아무거나 웹사이트",
 };
 
 export default function RootLayout({

@@ -25,12 +25,14 @@ export default function SettingsButton() {
           : 'text-muted-foreground hover:text-foreground hover:bg-background'
       }`}
       title={locale === 'en' ? 'Settings' : '설정'}
+      aria-label={locale === 'en' ? 'Settings' : '설정'}
     >
       <svg 
         className="w-5 h-5" 
         fill="none" 
         stroke="currentColor" 
         viewBox="0 0 24 24"
+        aria-hidden="true"
       >
         <path 
           strokeLinecap="round" 

@@ -2,39 +2,15 @@
 
 import { useProfile } from '@/hooks/useProfile'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useI18n } from '@/hooks/useI18n'
-import SettingsButton from '@/components/LanguageSwitcher'
-import { useState, useEffect } from 'react'
+import { useNavigation } from '@/hooks/useNavigation'
+import SettingsButton from '@/components/SettingsButton'
+import { cn } from '@/lib/utils'
 
 export default function Navigation() {
   const { profile, loading } = useProfile()
-  const pathname = usePathname()
-  const { t, locale } = useI18n()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const isActive = (path: string) => {
-    const localizedPath = getLocalizedPath(path)
-    
-    // 홈 경로의 경우 특별 처리: /ko/와 /ko 모두 매칭
-    if (path === '/') {
-      return pathname === localizedPath || pathname === localizedPath.replace(/\/$/, '')
-    }
-    
-    return pathname === localizedPath
-  }
-  
-  const getLocalizedPath = (path: string) => {
-    // During SSR or before mounting, use default locale
-    if (!mounted) {
-      return `/ko${path}`
-    }
-    return `/${locale}${path}`
-  }
+  const { t } = useI18n()
+  const { mounted, getLocalizedPath, isActive } = useNavigation()
 
   // 서버사이드 렌더링 시 hydration mismatch 방지
   if (!mounted) {
@@ -68,11 +44,12 @@ export default function Navigation() {
             <div className="hidden md:flex items-center space-x-4">
               <Link
                 href={getLocalizedPath('/')}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={cn(
+                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                   isActive('/') 
                     ? 'bg-primary text-primary-foreground shadow-sm' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-background'
-                }`}
+                )}
               >
                 {t('navigation.home')}
               </Link>
@@ -86,21 +63,23 @@ export default function Navigation() {
               <>
                 <Link
                   href={getLocalizedPath('/profile')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={cn(
+                    'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                     isActive('/profile') 
                       ? 'bg-primary text-primary-foreground shadow-sm' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-background'
-                  }`}
+                  )}
                   >
                     {t('navigation.profile')}
                   </Link>
                 <Link
                   href={getLocalizedPath('/settings')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={cn(
+                    'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                     isActive('/settings') 
                       ? 'bg-primary text-primary-foreground shadow-sm' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-background'
-                  }`}
+                  )}
                   >
                     {t('navigation.settings')}
                   </Link>
@@ -109,11 +88,12 @@ export default function Navigation() {
             {!loading && !profile && (
               <Link
                 href={getLocalizedPath('/login')}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={cn(
+                  'px-3 py-2 rounded-md text-sm font-medium transition-colors',
                   isActive('/login') 
                     ? 'bg-primary text-primary-foreground shadow-sm' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-background'
-                }`}
+                )}
                 >
                   {t('navigation.login')}
                 </Link>

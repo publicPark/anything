@@ -49,6 +49,17 @@
       "admin": "Administrator"
     }
   },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Choose your preferred language",
+    "appearance": "Appearance",
+    "appearanceDescription": "Choose your preferred theme",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "systemMode": "System",
+    "goBack": "Go Back"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

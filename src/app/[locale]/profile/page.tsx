@@ -5,6 +5,8 @@ import { useProfile } from '@/hooks/useProfile'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useI18n } from '@/hooks/useI18n'
+import { Button } from '@/components/ui/Button'
+import { formatDate } from '@/lib/utils'
 
 export default function ProfilePage() {
   const { profile, loading, error, updateProfile } = useProfile()
@@ -38,12 +40,9 @@ export default function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-lg mb-4 text-muted-foreground">{t('profile.notFound')}</div>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover active:bg-primary-active"
-          >
+          <Button onClick={() => window.location.reload()}>
             {t('profile.refresh')}
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -150,11 +149,7 @@ export default function ProfilePage() {
               {t('profile.joinDate')}
             </label>
             <div className="text-muted-foreground text-sm">
-              {new Date(profile.created_at).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {formatDate(profile.created_at)}
             </div>
           </div>
         </div>
@@ -162,36 +157,24 @@ export default function ProfilePage() {
         <div className="mt-6 flex space-x-3">
           {isEditing ? (
             <>
-              <button
-                onClick={handleSave}
-                className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary-hover active:bg-primary-active focus:outline-none focus:ring-2 focus:ring-ring"
-              >
+              <Button onClick={handleSave} className="flex-1">
                 {t('profile.save')}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex-1 bg-secondary text-secondary-foreground py-2 px-4 rounded-md hover:bg-secondary-hover active:bg-secondary-active focus:outline-none focus:ring-2 focus:ring-ring"
-              >
+              </Button>
+              <Button variant="secondary" onClick={handleCancel} className="flex-1">
                 {t('profile.cancel')}
-              </button>
+              </Button>
             </>
           ) : (
-            <button
-              onClick={handleEdit}
-              className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary-hover active:bg-primary-active focus:outline-none focus:ring-2 focus:ring-ring"
-            >
+            <Button onClick={handleEdit} className="flex-1">
               {t('profile.edit')}
-            </button>
+            </Button>
           )}
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">
-          <button
-            onClick={handleLogout}
-            className="w-full bg-destructive text-destructive-foreground py-2 px-4 rounded-md hover:bg-destructive-hover active:bg-destructive-active focus:outline-none focus:ring-2 focus:ring-ring"
-          >
+          <Button variant="destructive" onClick={handleLogout} className="w-full">
             {t('profile.logout')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

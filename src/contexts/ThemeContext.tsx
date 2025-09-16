@@ -2,18 +2,29 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
-type Theme = 'light' | 'dark'
+type Theme = 'light' | 'dark' | 'system'
 
 interface ThemeContextType {
   theme: Theme
+  resolvedTheme: 'light' | 'dark'
+  setTheme: (theme: Theme) => void
   toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
+  const [theme, setTheme] = useState<Theme>('system')
   const [mounted, setMounted] = useState(false)
+
+  // 시스템 테마 감지
+  const getSystemTheme = (): 'light' | 'dark' => {
+    if (typeof window === 'undefined') return 'light'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  // 실제 적용될 테마 계산
+  const resolvedTheme = theme === 'system' ? getSystemTheme() : theme
 
   useEffect(() => {
     // 클라이언트에서만 실행
@@ -21,12 +32,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // localStorage에서 테마 설정 불러오기
     const savedTheme = localStorage.getItem('theme') as Theme
-    if (savedTheme) {
+    if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setTheme(savedTheme)
     } else {
-      // 시스템 설정 확인
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setTheme(prefersDark ? 'dark' : 'light')
+      setTheme('system')
     }
   }, [])
 
@@ -35,18 +44,39 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // HTML 요소에 테마 클래스 적용
     document.documentElement.classList.remove('light', 'dark')
-    document.documentElement.classList.add(theme)
+    document.documentElement.classList.add(resolvedTheme)
     
     // localStorage에 저장
     localStorage.setItem('theme', theme)
-  }, [theme, mounted])
+  }, [theme, resolvedTheme, mounted])
+
+  // 시스템 테마 변화 감지
+  useEffect(() => {
+    if (!mounted || theme !== 'system') return
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      document.documentElement.classList.remove('light', 'dark')
+      document.documentElement.classList.add(getSystemTheme())
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [mounted, theme])
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    setTheme(prev => {
+      switch (prev) {
+        case 'light': return 'dark'
+        case 'dark': return 'system'
+        case 'system': return 'light'
+        default: return 'light'
+      }
+    })
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   )

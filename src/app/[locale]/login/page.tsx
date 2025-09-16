@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-// import { useRouter } from 'next/navigation' // Not used
 import { useI18n } from '@/hooks/useI18n'
+import { Button } from '@/components/ui/Button'
+import { isValidEmail } from '@/lib/utils'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,6 +16,12 @@ export default function LoginPage() {
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!isValidEmail(email)) {
+      setMessage(locale === 'en' ? 'Please enter a valid email address' : '올바른 이메일 주소를 입력해주세요')
+      return
+    }
+    
     setLoading(true)
     setMessage('')
 
@@ -85,13 +92,14 @@ export default function LoginPage() {
           )}
 
           <div>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary-hover active:bg-primary-active focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              isLoading={loading}
+              className="w-full"
             >
-              {loading ? '...' : t('login.continue')}
-            </button>
+              {t('login.continue')}
+            </Button>
           </div>
 
           <div className="mt-6">
@@ -105,13 +113,14 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-input text-sm font-medium text-foreground hover:bg-muted hover:text-foreground hover:border-border disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                className="w-full"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -129,8 +138,8 @@ export default function LoginPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="ml-2">{t('login.googleLogin')}</span>
-              </button>
+                {t('login.googleLogin')}
+              </Button>
             </div>
           </div>
         </form>

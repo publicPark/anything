@@ -62,9 +62,9 @@ export default function SettingsPage() {
                 <button
                   key={lang}
                   onClick={() => switchLanguage(lang)}
-                  className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
                     locale === lang
-                      ? 'bg-primary/10 border-primary/20 text-primary'
+                      ? 'bg-primary/20 border-primary/40 text-foreground shadow-sm'
                       : 'bg-input border-border text-foreground hover:bg-muted'
                   }`}
                 >
@@ -73,7 +73,7 @@ export default function SettingsPage() {
                     <span className="font-medium">{getLanguageDisplay(lang)}</span>
                   </div>
                   {locale === lang && (
-                    <span className="text-primary">
+                    <span className="text-primary font-bold">
                       ✓
                     </span>
                   )}
@@ -94,9 +94,9 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <button
                 onClick={() => setTheme('light')}
-                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
                   theme === 'light'
-                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    ? 'bg-primary/20 border-primary/40 text-foreground shadow-sm'
                     : 'bg-input border-border text-foreground hover:bg-muted'
                 }`}
               >
@@ -105,7 +105,7 @@ export default function SettingsPage() {
                   <span className="font-medium">{t('settings.lightMode')}</span>
                 </div>
                 {theme === 'light' && (
-                  <span className="text-primary">
+                  <span className="text-primary font-bold">
                     ✓
                   </span>
                 )}
@@ -113,9 +113,9 @@ export default function SettingsPage() {
 
               <button
                 onClick={() => setTheme('dark')}
-                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
                   theme === 'dark'
-                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    ? 'bg-primary/20 border-primary/40 text-foreground shadow-sm'
                     : 'bg-input border-border text-foreground hover:bg-muted'
                 }`}
               >
@@ -124,7 +124,7 @@ export default function SettingsPage() {
                   <span className="font-medium">{t('settings.darkMode')}</span>
                 </div>
                 {theme === 'dark' && (
-                  <span className="text-primary">
+                  <span className="text-primary font-bold">
                     ✓
                   </span>
                 )}
@@ -132,9 +132,9 @@ export default function SettingsPage() {
 
               <button
                 onClick={() => setTheme('system')}
-                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                className={`w-full flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
                   theme === 'system'
-                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    ? 'bg-primary/20 border-primary/40 text-foreground shadow-sm'
                     : 'bg-input border-border text-foreground hover:bg-muted'
                 }`}
               >
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   <span className="font-medium">{t('settings.systemMode')}</span>
                 </div>
                 {theme === 'system' && (
-                  <span className="text-primary">
+                  <span className="text-primary font-bold">
                     ✓
                   </span>
                 )}

@@ -19,7 +19,7 @@ export default function SettingsButton() {
   return (
     <button
       onClick={goToSettings}
-      className={`p-2 rounded-md transition-colors ${
+      className={`p-2 rounded-md transition-colors cursor-pointer ${
         isActive()
           ? 'bg-primary text-primary-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground hover:bg-background'

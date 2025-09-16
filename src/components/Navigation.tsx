@@ -56,32 +56,19 @@ export default function Navigation() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {/* 설정 버튼 */}
-            <SettingsButton />
 
             {profile && (
               <>
                 <Link
                   href={getLocalizedPath('/profile')}
                   className={cn(
-                    'px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    'px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
                     isActive('/profile') 
                       ? 'bg-primary text-primary-foreground shadow-sm' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-background'
                   )}
                   >
-                    {t('navigation.profile')}
-                  </Link>
-                <Link
-                  href={getLocalizedPath('/settings')}
-                  className={cn(
-                    'px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive('/settings') 
-                      ? 'bg-primary text-primary-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background'
-                  )}
-                  >
-                    {t('navigation.settings')}
+                    {profile.display_name || profile.username}
                   </Link>
               </>
             )}
@@ -98,6 +85,8 @@ export default function Navigation() {
                   {t('navigation.login')}
                 </Link>
             )}
+            {/* 설정 버튼 */}
+            <SettingsButton />
           </div>
         </div>
       </div>

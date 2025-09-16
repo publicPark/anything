@@ -85,7 +85,7 @@ export default function ProfilePage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'basic': return 'bg-muted text-foreground'
+      case 'basic': return 'bg-background text-foreground'
       case 'premium': return 'bg-info-100 text-info-800'
       case 'admin': return 'bg-destructive/10 text-destructive'
       default: return 'bg-muted text-foreground'

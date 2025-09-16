@@ -96,11 +96,55 @@
   --color-neutral-950: var(--neutral-950);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* 다크모드 CSS 변수 */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  
+  /* Primary Colors - 다크모드용 navy */
+  --primary-50: #1e1b4b;
+  --primary-100: #312e81;
+  --primary-200: #3730a3;
+  --primary-300: #4338ca;
+  --primary-400: #4f46e5;
+  --primary-500: #6366f1;
+  --primary-600: #818cf8;
+  --primary-700: #a5b4fc;
+  --primary-800: #c7d2fe;
+  --primary-900: #e0e7ff;
+  
+  /* Neutral Colors - 다크모드용 */
+  --neutral-50: #171717;
+  --neutral-100: #262626;
+  --neutral-200: #404040;
+  --neutral-300: #525252;
+  --neutral-400: #737373;
+  --neutral-500: #a3a3a3;
+  --neutral-600: #d4d4d4;
+  --neutral-700: #e5e5e5;
+  --neutral-800: #f5f5f5;
+  --neutral-900: #fafafa;
+  --neutral-950: #ffffff;
+  
+  /* Success Colors - 다크모드용 */
+  --success-100: #064e3b;
+  --success-600: #10b981;
+  --success-800: #6ee7b7;
+  
+  /* Error Colors - 다크모드용 */
+  --error-100: #7f1d1d;
+  --error-600: #ef4444;
+  --error-800: #fca5a5;
+  
+  /* Warning Colors - 다크모드용 */
+  --warning-100: #78350f;
+  --warning-600: #f59e0b;
+  --warning-800: #fcd34d;
+  
+  /* Info Colors - 다크모드용 */
+  --info-100: #1e3a8a;
+  --info-600: #3b82f6;
+  --info-800: #93c5fd;
 }
 
 body {

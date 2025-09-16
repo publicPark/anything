@@ -18,7 +18,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
+        <div className="text-lg text-neutral-600 dark:text-neutral-400">로딩 중...</div>
       </div>
     )
   }
@@ -35,7 +35,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg mb-4">프로필을 찾을 수 없습니다.</div>
+          <div className="text-lg mb-4 text-neutral-600 dark:text-neutral-400">프로필을 찾을 수 없습니다.</div>
           <button
             onClick={() => window.location.reload()}
             className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
@@ -90,18 +90,18 @@ export default function ProfilePage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'basic': return 'bg-gray-100 text-gray-800'
+      case 'basic': return 'bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200'
       case 'premium': return 'bg-info-100 text-info-800'
       case 'admin': return 'bg-error-100 text-error-800'
-      default: return 'bg-gray-100 text-gray-800'
+      default: return 'bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200'
     }
   }
 
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+      <div className="max-w-md mx-auto bg-white dark:bg-neutral-800 rounded-lg shadow-md p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">프로필</h1>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">프로필</h1>
         </div>
 
         {message && (
@@ -189,7 +189,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
           <button
             onClick={handleLogout}
             className="w-full bg-error-600 text-white py-2 px-4 rounded-md hover:bg-error-700 focus:outline-none focus:ring-2 focus:ring-error-500"

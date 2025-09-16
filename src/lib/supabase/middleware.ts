@@ -35,24 +35,30 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 공개적으로 접근 가능한 경로들
-  const publicPaths = ['/login', '/auth', '/']
+  // 공개적으로 접근 가능한 경로들 (로케일 프리픽스 포함)
+  const publicPaths = ['/login', '/auth', '/', '/settings']
+  const pathname = request.nextUrl.pathname
+  
+  // 로케일 프리픽스 제거하여 경로 확인
+  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '') || '/'
   
   if (
     !user &&
-    !publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+    !publicPaths.some(path => pathWithoutLocale.startsWith(path))
   ) {
     // 로그인이 필요한 페이지에 접근 시 로그인 페이지로 리다이렉트
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    // 현재 로케일 유지
+    const locale = pathname.split('/')[1] || 'ko'
+    url.pathname = `/${locale}/login`
     return NextResponse.redirect(url)
   }
 
   // 사용자가 로그인되어 있고 프로필이 필요한 페이지에 접근하는 경우 프로필 확인
   if (
     user &&
-    !publicPaths.some(path => request.nextUrl.pathname.startsWith(path)) &&
-    !request.nextUrl.pathname.startsWith('/profile')
+    !publicPaths.some(path => pathWithoutLocale.startsWith(path)) &&
+    !pathWithoutLocale.startsWith('/profile')
   ) {
     // 프로필 존재 여부 확인
     const { data: profile } = await supabase
@@ -64,7 +70,9 @@ export async function updateSession(request: NextRequest) {
     // 프로필이 없으면 프로필 페이지로 리다이렉트
     if (!profile) {
       const url = request.nextUrl.clone()
-      url.pathname = '/profile'
+      // 현재 로케일 유지
+      const locale = pathname.split('/')[1] || 'ko'
+      url.pathname = `/${locale}/profile`
       return NextResponse.redirect(url)
     }
   }

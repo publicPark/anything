@@ -1,0 +1,57 @@
+{
+  "navigation": {
+    "home": "Home",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "darkMode": "Switch to dark mode",
+    "lightMode": "Switch to light mode"
+  },
+  "home": {
+    "welcome": "Hello, {name}!",
+    "welcomeMessage": "Welcome!",
+    "title": "NextJS + Supabase Authentication System",
+    "description": "A website with magic link/Google login and profile management capabilities.",
+    "loading": "Loading..."
+  },
+  "login": {
+    "title": "Login",
+    "email": "Email address",
+    "emailPlaceholder": "Email address",
+    "continue": "Continue",
+    "or": "or",
+    "googleLogin": "Login with Google",
+    "magicLinkSent": "Login link sent to your email. Please check your email.",
+    "loading": "..."
+  },
+  "profile": {
+    "title": "Profile",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Enter display name",
+    "userCode": "User Code",
+    "role": "Role",
+    "joinDate": "Join Date",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "logout": "Logout",
+    "notSet": "Not set",
+    "notFound": "Profile not found.",
+    "refresh": "Refresh",
+    "updateSuccess": "Profile updated successfully.",
+    "updateError": "An error occurred while updating.",
+    "loading": "Loading...",
+    "error": "Error",
+    "roles": {
+      "basic": "Basic User",
+      "premium": "Premium User",
+      "admin": "Administrator"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}

@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 기본 색상 - 의미론적 시스템 */
+  --background: #ffffff;        /* 기본 배경 */
+  --foreground: #171717;        /* 기본 텍스트 */
+  --muted: #f5f5f5;            /* 연한 배경 (카드, 섹션 등) */
+  --muted-foreground: #737373;  /* 연한 텍스트 */
+  --border: #e5e5e5;           /* 테두리 */
+  --input: #ffffff;            /* 입력 필드 배경 */
+  --ring: #6366f1;             /* 포커스 링 */
+  
+  /* 버튼 색상 */
+  --primary: #6366f1;          /* 기본 버튼 배경 */
+  --primary-foreground: #ffffff; /* 기본 버튼 텍스트 */
+  --primary-hover: #4f46e5;    /* 기본 버튼 호버 */
+  --primary-active: #4338ca;   /* 기본 버튼 활성 */
+  --secondary: #f5f5f5;        /* 보조 버튼 배경 */
+  --secondary-foreground: #171717; /* 보조 버튼 텍스트 */
+  --secondary-hover: #e5e5e5;  /* 보조 버튼 호버 */
+  --secondary-active: #d4d4d4; /* 보조 버튼 활성 */
+  --destructive: #dc2626;      /* 위험 버튼 배경 */
+  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 */
+  --destructive-hover: #b91c1c; /* 위험 버튼 호버 */
+  --destructive-active: #991b1b; /* 위험 버튼 활성 */
   
   /* Primary Color - Navy 색상 팔레트 */
   --primary-50: #f0f4ff;  /* 매우 연한 navy */
@@ -32,24 +52,33 @@
   --info-100: #dbeafe;
   --info-600: #2563eb;
   --info-800: #1e40af;
-  
-  /* Neutral Colors - 일반적인 흑백 컬러 */
-  --neutral-50: #fafafa;
-  --neutral-100: #f5f5f5;
-  --neutral-200: #e5e5e5;
-  --neutral-300: #d4d4d4;
-  --neutral-400: #a3a3a3;
-  --neutral-500: #737373;
-  --neutral-600: #525252;
-  --neutral-700: #404040;
-  --neutral-800: #262626;
-  --neutral-900: #171717;
-  --neutral-950: #0a0a0a;
 }
 
 @theme inline {
+  /* 기본 색상 - 의미론적 시스템 */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* 버튼 색상 */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-active: var(--destructive-active);
+  
+  /* 폰트 */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   
@@ -81,25 +110,32 @@
   --color-info-100: var(--info-100);
   --color-info-600: var(--info-600);
   --color-info-800: var(--info-800);
-  
-  /* Neutral Color Variables */
-  --color-neutral-50: var(--neutral-50);
-  --color-neutral-100: var(--neutral-100);
-  --color-neutral-200: var(--neutral-200);
-  --color-neutral-300: var(--neutral-300);
-  --color-neutral-400: var(--neutral-400);
-  --color-neutral-500: var(--neutral-500);
-  --color-neutral-600: var(--neutral-600);
-  --color-neutral-700: var(--neutral-700);
-  --color-neutral-800: var(--neutral-800);
-  --color-neutral-900: var(--neutral-900);
-  --color-neutral-950: var(--neutral-950);
 }
 
 /* 다크모드 CSS 변수 */
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  /* 기본 색상 - 의미론적 시스템 */
+  --background: #0a0a0a;        /* 어두운 배경 */
+  --foreground: #ededed;        /* 밝은 텍스트 */
+  --muted: #262626;            /* 어두운 연한 배경 */
+  --muted-foreground: #a3a3a3;  /* 연한 텍스트 */
+  --border: #404040;           /* 어두운 테두리 */
+  --input: #171717;            /* 어두운 입력 필드 배경 */
+  --ring: #6366f1;             /* 포커스 링 (동일) */
+  
+  /* 버튼 색상 - 다크모드 */
+  --primary: #6366f1;          /* 기본 버튼 배경 (동일) */
+  --primary-foreground: #ffffff; /* 기본 버튼 텍스트 (동일) */
+  --primary-hover: #4f46e5;    /* 기본 버튼 호버 (동일) */
+  --primary-active: #4338ca;   /* 기본 버튼 활성 (동일) */
+  --secondary: #262626;        /* 보조 버튼 배경 */
+  --secondary-foreground: #ededed; /* 보조 버튼 텍스트 */
+  --secondary-hover: #404040;  /* 보조 버튼 호버 */
+  --secondary-active: #525252; /* 보조 버튼 활성 */
+  --destructive: #dc2626;      /* 위험 버튼 배경 (동일) */
+  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 (동일) */
+  --destructive-hover: #b91c1c; /* 위험 버튼 호버 (동일) */
+  --destructive-active: #991b1b; /* 위험 버튼 활성 (동일) */
   
   /* Primary Colors - 다크모드용 navy */
   --primary-50: #1e1b4b;
@@ -112,19 +148,6 @@
   --primary-700: #a5b4fc;
   --primary-800: #c7d2fe;
   --primary-900: #e0e7ff;
-  
-  /* Neutral Colors - 다크모드용 */
-  --neutral-50: #171717;
-  --neutral-100: #262626;
-  --neutral-200: #404040;
-  --neutral-300: #525252;
-  --neutral-400: #737373;
-  --neutral-500: #a3a3a3;
-  --neutral-600: #d4d4d4;
-  --neutral-700: #e5e5e5;
-  --neutral-800: #f5f5f5;
-  --neutral-900: #fafafa;
-  --neutral-950: #ffffff;
   
   /* Success Colors - 다크모드용 */
   --success-100: #064e3b;

@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <Navigation />
-          <main className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+          <main className="min-h-screen bg-background">
             {children}
           </main>
         </ThemeProvider>

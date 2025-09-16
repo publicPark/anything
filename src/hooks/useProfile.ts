@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types/database'
 
@@ -9,6 +9,28 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
+
+  const createProfile = useCallback(async (userId: string, email: string): Promise<Profile> => {
+    const username = `user_${userId.substring(0, 8)}`
+    const displayName = email.split('@')[0]
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        username,
+        display_name: displayName,
+        role: 'basic'
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return data
+  }, [supabase])
 
   useEffect(() => {
     async function getProfile() {
@@ -57,29 +79,7 @@ export function useProfile() {
     )
 
     return () => subscription.unsubscribe()
-  }, [supabase])
-
-  const createProfile = async (userId: string, email: string): Promise<Profile> => {
-    const username = `user_${userId.substring(0, 8)}`
-    const displayName = email.split('@')[0]
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        username,
-        display_name: displayName,
-        role: 'basic'
-      })
-      .select()
-      .single()
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
-    return data
-  }
+  }, [supabase, createProfile])
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!profile) return

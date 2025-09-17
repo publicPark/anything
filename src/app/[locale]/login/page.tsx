@@ -1,75 +1,77 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useI18n } from '@/hooks/useI18n'
-import { Button } from '@/components/ui/Button'
-import { isValidEmail } from '@/lib/utils'
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useI18n } from "@/hooks/useI18n";
+import { Button } from "@/components/ui/Button";
+import { isValidEmail } from "@/lib/utils";
+import { buildAuthCallbackUrl, buildOAuthRedirectUrl } from "@/lib/url-helpers";
+import { LOCALIZED_MESSAGES } from "@/lib/locale-helpers";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   // const router = useRouter() // Not used in this component
-  const supabase = createClient()
-  const { t, locale } = useI18n()
+  const supabase = createClient();
+  const { t, locale } = useI18n();
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!isValidEmail(email)) {
-      setMessage(locale === 'en' ? 'Please enter a valid email address' : '올바른 이메일 주소를 입력해주세요')
-      return
+      setMessage(LOCALIZED_MESSAGES.validation.validEmail(locale));
+      return;
     }
-    
-    setLoading(true)
-    setMessage('')
+
+    setLoading(true);
+    setMessage("");
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/${locale}/`)}`,
+        emailRedirectTo: buildAuthCallbackUrl(locale),
       },
-    })
+    });
 
     if (error) {
-      setMessage(error.message)
+      setMessage(error.message);
     } else {
-      setMessage(t('login.magicLinkSent'))
+      setMessage(t("login.magicLinkSent"));
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleGoogleLogin = async () => {
-    setLoading(true)
-    setMessage('')
+    setLoading(true);
+    setMessage("");
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/${locale}/`)}`,
+        redirectTo: buildOAuthRedirectUrl(locale),
       },
-    })
+    });
 
     if (error) {
-      setMessage(error.message)
-      setLoading(false)
+      setMessage(error.message);
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            {t('login.title')}
+            {t("login.title")}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleMagicLinkLogin}>
           <div className="rounded-md shadow-sm">
             <div>
               <label htmlFor="email" className="sr-only">
-                {t('login.email')}
+                {t("login.email")}
               </label>
               <input
                 id="email"
@@ -78,7 +80,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground bg-input rounded-md focus:outline-none focus:ring-ring focus:border-ring focus:z-10 sm:text-sm"
-                placeholder={t('login.emailPlaceholder')}
+                placeholder={t("login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -86,7 +88,15 @@ export default function LoginPage() {
           </div>
 
           {message && (
-            <div className={`text-sm ${message.includes('링크') || message.includes('완료') || message.includes('sent') ? 'text-success-600' : 'text-destructive'}`}>
+            <div
+              className={`text-sm ${
+                message.includes("링크") ||
+                message.includes("완료") ||
+                message.includes("sent")
+                  ? "text-success-600"
+                  : "text-destructive"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -98,7 +108,7 @@ export default function LoginPage() {
               isLoading={loading}
               className="w-full"
             >
-              {t('login.continue')}
+              {t("login.continue")}
             </Button>
           </div>
 
@@ -108,7 +118,9 @@ export default function LoginPage() {
                 <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-muted-foreground">{t('login.or')}</span>
+                <span className="px-2 bg-background text-muted-foreground">
+                  {t("login.or")}
+                </span>
               </div>
             </div>
 
@@ -138,12 +150,12 @@ export default function LoginPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                {t('login.googleLogin')}
+                {t("login.googleLogin")}
               </Button>
             </div>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

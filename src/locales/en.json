@@ -1,22 +1,35 @@
 {
+  "metadata": {
+    "title": "Anything",
+    "description": "Modern Next.js website with magic link/Google login and profile management",
+    "keywords": "Next.js, Supabase, authentication, login, profile, internationalization",
+    "author": "Anything Team",
+    "ogTitle": "Anything - Modern Web Application",
+    "ogDescription": "Modern Next.js website with magic link/Google login and profile management",
+    "ogImage": "/og-image-en.png",
+    "twitterCard": "summary_large_image",
+    "twitterTitle": "Anything - Modern Web Application",
+    "twitterDescription": "Modern Next.js website with magic link/Google login and profile management"
+  },
   "navigation": {
     "home": "Home",
-    "profile": "Profile",
     "login": "Login",
     "logout": "Logout",
     "loading": "Loading...",
-    "darkMode": "Switch to dark mode",
-    "lightMode": "Switch to light mode"
+    "profile": "Profile"
   },
   "home": {
+    "title": "Home",
+    "description": "Main page of the Anything website",
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome!",
-    "title": "Anything Website",
-    "description": "Anything Website",
+    "subtitle": "Anything Website",
+    "subdescription": "Anything Website",
     "loading": "Loading..."
   },
   "login": {
     "title": "Login",
+    "description": "Sign in with magic link or Google account",
     "email": "Email address",
     "emailPlaceholder": "Email address",
     "continue": "Continue",
@@ -27,6 +40,7 @@
   },
   "profile": {
     "title": "Profile",
+    "description": "View and edit your user profile information",
     "displayName": "Display Name",
     "displayNamePlaceholder": "Enter display name",
     "userCode": "User Code",
@@ -36,6 +50,7 @@
     "save": "Save",
     "cancel": "Cancel",
     "logout": "Logout",
+    "deleteAccount": "Delete Account",
     "notSet": "Not set",
     "notFound": "Profile not found.",
     "refresh": "Refresh",
@@ -51,6 +66,7 @@
   },
   "settings": {
     "title": "Settings",
+    "description": "Manage app settings including language and theme",
     "language": "Language",
     "languageDescription": "Choose your preferred language",
     "appearance": "Appearance",

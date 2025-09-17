@@ -99,11 +99,11 @@ export default function ProfilePage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "basic":
+      case "titan":
         return "bg-background text-foreground";
-      case "premium":
+      case "gaia":
         return "bg-info-100 text-info-800";
-      case "admin":
+      case "chaos":
         return "bg-destructive/10 text-destructive";
       default:
         return "bg-muted text-foreground";
@@ -156,28 +156,6 @@ export default function ProfilePage() {
           </div>
           {/* <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              {t("profile.userCode")}
-            </label>
-            <div className="text-muted-foreground font-mono text-sm bg-input px-2 py-1 rounded border-l-4 border-border">
-              {profile.username}
-            </div>
-          </div> */}
-
-          <div>
-            {/* <label className="block text-sm font-medium text-foreground mb-1">
-              {t("profile.role")}
-            </label> */}
-            <span
-              className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getRoleColor(
-                profile.role
-              )}`}
-            >
-              {getRoleDisplayName(profile.role)}
-            </span>
-          </div>
-
-          {/* <div>
-            <label className="block text-sm font-medium text-foreground mb-1">
               {t("profile.joinDate")}
             </label>
             <div className="text-muted-foreground text-sm">
@@ -207,6 +185,29 @@ export default function ProfilePage() {
           )}
         </div>
 
+        <div className="mt-6 space-y-4 pt-4 border-t border-border">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              {t("profile.userCode")}
+            </label>
+            <div className="text-muted-foreground font-mono text-sm bg-input px-2 py-1 rounded border-l-4 border-border">
+              {profile.username}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              {t("profile.role")}
+            </label>
+            <span
+              className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getRoleColor(
+                profile.role
+              )}`}
+            >
+              {getRoleDisplayName(profile.role)}
+            </span>
+          </div>
+        </div>
+
         <div className="mt-4 pt-4 border-t border-border">
           <Button
             variant="destructive"
@@ -218,7 +219,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto mt-4 bg-muted rounded-lg shadow-lg border border-border p-6">
+      <div className="max-w-md mx-auto mt-4 rounded-lg p-6">
         <Button
           variant="ghost"
           onClick={() => setIsDeleteModalOpen(true)}

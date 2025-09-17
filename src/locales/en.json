@@ -25,7 +25,10 @@
     "welcomeMessage": "Welcome!",
     "subtitle": "Anything Website",
     "subdescription": "Anything Website",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "errorTitle": "An Error Occurred",
+    "retry": "Try Again",
+    "goToLogin": "Go to Login"
   },
   "login": {
     "title": "Login",
@@ -59,9 +62,9 @@
     "loading": "Loading...",
     "error": "Error",
     "roles": {
-      "basic": "Basic User",
-      "premium": "Premium User",
-      "admin": "Administrator"
+      "titan": "Titan",
+      "gaia": "Gaia",
+      "chaos": "Chaos"
     }
   },
   "settings": {

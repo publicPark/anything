@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Profile } from "@/types/database";
-import { PROFILE_CONSTANTS, ERROR_CODES } from "@/lib/constants";
+import { ERROR_CODES } from "@/lib/constants";
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -13,57 +13,20 @@ export function useProfile() {
 
   const createProfile = useCallback(
     async (userId: string, email: string): Promise<Profile> => {
-      const baseUsername = `${
-        PROFILE_CONSTANTS.USERNAME_PREFIX
-      }${userId.substring(0, PROFILE_CONSTANTS.USERNAME_LENGTH)}`;
-      const displayName = email.split("@")[0];
+      try {
+        const { data, error } = await supabase.rpc("create_user_profile", {
+          user_id: userId,
+          user_email: email,
+        });
 
-      // Generate unique username with retry logic
-      let username = baseUsername;
-      let counter = 0;
-      const maxRetries = PROFILE_CONSTANTS.MAX_RETRIES;
-
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .insert({
-              id: userId,
-              username,
-              display_name: displayName,
-              role: PROFILE_CONSTANTS.DEFAULT_ROLE,
-            })
-            .select()
-            .single();
-
-          if (error) {
-            if (
-              error.code === ERROR_CODES.USERNAME_CONFLICT &&
-              error.message.includes("username")
-            ) {
-              // Username conflict - try next variation
-              counter++;
-              username = `${baseUsername}_${counter}`;
-              continue;
-            }
-            throw new Error(`Profile creation failed: ${error.message}`);
-          }
-
-          return data;
-        } catch (err) {
-          if (
-            err instanceof Error &&
-            err.message.includes("Username already exists")
-          ) {
-            counter++;
-            username = `${baseUsername}_${counter}`;
-            continue;
-          }
-          throw err;
+        if (error) {
+          throw new Error(`Profile creation failed: ${error.message}`);
         }
-      }
 
-      throw new Error("Failed to create profile after multiple attempts");
+        return data;
+      } catch (err) {
+        throw err;
+      }
     },
     [supabase]
   );

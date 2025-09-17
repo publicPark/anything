@@ -2,14 +2,6 @@
  * Application constants
  */
 
-// Profile creation constants
-export const PROFILE_CONSTANTS = {
-  MAX_RETRIES: 10,
-  USERNAME_PREFIX: "user_",
-  USERNAME_LENGTH: 8,
-  DEFAULT_ROLE: "basic" as const,
-} as const;
-
 // URL patterns
 export const URL_PATTERNS = {
   AUTH_CALLBACK: "/auth/callback",

@@ -25,7 +25,10 @@
     "welcomeMessage": "환영합니다!",
     "subtitle": "아무거나 웹사이트",
     "subdescription": "아무거나 웹사이트",
-    "loading": "로딩 중..."
+    "loading": "로딩 중...",
+    "errorTitle": "오류가 발생했습니다",
+    "retry": "다시 시도",
+    "goToLogin": "로그인 페이지로 이동"
   },
   "login": {
     "title": "로그인",
@@ -44,7 +47,7 @@
     "displayName": "표시 이름",
     "displayNamePlaceholder": "표시할 이름을 입력하세요",
     "userCode": "유저 코드",
-    "role": "권한",
+    "role": "역할",
     "joinDate": "가입일",
     "edit": "수정",
     "save": "저장",
@@ -59,9 +62,9 @@
     "loading": "로딩 중...",
     "error": "오류",
     "roles": {
-      "basic": "기본 사용자",
-      "premium": "프리미엄 사용자",
-      "admin": "관리자"
+      "titan": "타이탄",
+      "gaia": "가이아",
+      "chaos": "혼돈"
     }
   },
   "settings": {

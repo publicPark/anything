@@ -1,10 +1,14 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Supabase 인증 미들웨어
+ * - 인증 상태 확인
+ * - 공개 경로 접근 제어
+ * - 로그인 필요 시 리다이렉트
+ */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,78 +16,55 @@ export async function updateSession(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
-          )
+          );
         },
       },
     }
-  )
+  );
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
+  // 현재 사용자 인증 상태 확인
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
-  // 공개적으로 접근 가능한 경로들 (로케일 프리픽스 포함)
-  const publicPaths = ['/login', '/auth', '/', '/settings']
-  const pathname = request.nextUrl.pathname
-  
-  // 로케일 프리픽스 제거하여 경로 확인
-  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '') || '/'
-  
+  // 공개적으로 접근 가능한 경로들
+  const publicPaths = ["/login", "/auth", "/", "/settings", "/ship"];
+  const pathname = request.nextUrl.pathname;
+  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
+
+  // 로그인이 필요한 페이지에 비인증 사용자가 접근하는 경우
   if (
     !user &&
-    !publicPaths.some(path => pathWithoutLocale.startsWith(path))
+    !publicPaths.some((path) => pathWithoutLocale.startsWith(path))
   ) {
-    // 로그인이 필요한 페이지에 접근 시 로그인 페이지로 리다이렉트
-    const url = request.nextUrl.clone()
-    // 현재 로케일 유지
-    const locale = pathname.split('/')[1] || 'ko'
-    url.pathname = `/${locale}/login`
-    return NextResponse.redirect(url)
+    const url = request.nextUrl.clone();
+    const locale = pathname.split("/")[1] || "ko";
+    url.pathname = `/${locale}/login`;
+
+    // 원래 페이지를 next 파라미터로 추가
+    url.searchParams.set("next", pathname);
+
+    const response = NextResponse.redirect(url);
+
+    // returnTo 쿠키도 설정 (추가 보안)
+    response.cookies.set("returnTo", pathname, {
+      maxAge: 60 * 10, // 10분
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    return response;
   }
 
-  // 사용자가 로그인되어 있고 프로필이 필요한 페이지에 접근하는 경우 프로필 확인
-  if (
-    user &&
-    !publicPaths.some(path => pathWithoutLocale.startsWith(path)) &&
-    !pathWithoutLocale.startsWith('/profile')
-  ) {
-    // 프로필 존재 여부 확인
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single()
-
-    // 프로필이 없으면 프로필 페이지로 리다이렉트
-    if (!profile) {
-      const url = request.nextUrl.clone()
-      // 현재 로케일 유지
-      const locale = pathname.split('/')[1] || 'ko'
-      url.pathname = `/${locale}/profile`
-      return NextResponse.redirect(url)
-    }
-  }
-
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-  // creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object instead of the supabaseResponse object
-
-  return supabaseResponse
+  return supabaseResponse;
 }

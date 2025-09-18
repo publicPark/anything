@@ -2,6 +2,22 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 /**
+ * Get returnTo value from cookie
+ */
+async function getReturnToFromCookie(request: Request): Promise<string | null> {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
+
+  const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
+    const [key, value] = cookie.trim().split("=");
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  return cookies.returnTo || null;
+}
+
+/**
  * Authentication callback handler
  * Handles OAuth callbacks and magic link authentication
  */
@@ -11,7 +27,11 @@ export async function GET(request: Request) {
   const error = searchParams.get("error");
   const errorCode = searchParams.get("error_code");
   const errorDescription = searchParams.get("error_description");
-  const next = searchParams.get("next") ?? "/ko/";
+  // next 파라미터 우선, 없으면 쿠키에서 가져오기, 둘 다 없으면 홈으로
+  const next =
+    searchParams.get("next") ??
+    (await getReturnToFromCookie(request)) ??
+    "/ko/";
 
   // Handle authentication errors
   if (error) {
@@ -58,13 +78,20 @@ function redirectToSuccess(origin: string, next: string, request: Request) {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const isLocalEnv = process.env.NODE_ENV === "development";
 
+  let response: NextResponse;
+
   if (isLocalEnv) {
-    return NextResponse.redirect(`${origin}${next}`);
+    response = NextResponse.redirect(`${origin}${next}`);
   } else if (forwardedHost) {
-    return NextResponse.redirect(`https://${forwardedHost}${next}`);
+    response = NextResponse.redirect(`https://${forwardedHost}${next}`);
   } else {
-    return NextResponse.redirect(`${origin}${next}`);
+    response = NextResponse.redirect(`${origin}${next}`);
   }
+
+  // returnTo 쿠키 삭제
+  response.cookies.delete("returnTo");
+
+  return response;
 }
 
 /**

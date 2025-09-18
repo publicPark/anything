@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
@@ -12,9 +13,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  // const router = useRouter() // Not used in this component
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { t, locale } = useI18n();
+
+  // 원래 페이지 URL 가져오기
+  const next = searchParams.get("next") || `/${locale}/`;
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +34,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: buildAuthCallbackUrl(locale),
+        emailRedirectTo: buildAuthCallbackUrl(locale, next),
       },
     });
 
@@ -49,7 +53,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: buildOAuthRedirectUrl(locale),
+        redirectTo: buildOAuthRedirectUrl(locale, next),
       },
     });
 

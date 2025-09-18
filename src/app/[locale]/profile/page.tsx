@@ -70,10 +70,8 @@ export default function ProfilePage() {
       await updateProfile(formData);
       setIsEditing(false);
       setMessage(t("profile.updateSuccess"));
-      setTimeout(() => setMessage(""), UI_CONSTANTS.MESSAGE_TIMEOUT);
     } catch {
       setMessage(t("profile.updateError"));
-      setTimeout(() => setMessage(""), UI_CONSTANTS.MESSAGE_TIMEOUT);
     }
   };
 
@@ -128,6 +126,7 @@ export default function ProfilePage() {
                 : "destructive"
             }
             className="mb-4"
+            onClose={() => setMessage("")}
           />
         )}
 

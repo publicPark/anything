@@ -9,7 +9,8 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
-import { Ship, ShipMember, Profile } from "@/types/database";
+import { MemberRequestList } from "@/components/MemberRequestList";
+import { Ship, ShipMember, Profile, ShipMemberRequest } from "@/types/database";
 
 type ShipMemberRole = "captain" | "navigator" | "crew";
 
@@ -17,6 +18,7 @@ interface ShipWithDetails extends Ship {
   members: (ShipMember & { profile: Profile })[];
   userRole?: ShipMemberRole;
   isMember: boolean;
+  hasPendingRequest?: boolean;
 }
 
 export default function ShipDetailPage() {
@@ -27,6 +29,9 @@ export default function ShipDetailPage() {
   const { profile, loading: profileLoading } = useProfile();
 
   const [ship, setShip] = useState<ShipWithDetails | null>(null);
+  const [memberRequests, setMemberRequests] = useState<
+    (ShipMemberRequest & { profiles: Profile | undefined })[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -39,6 +44,7 @@ export default function ShipDetailPage() {
     member_only: false,
     member_approval_required: false,
   });
+  const [isProcessingRequest, setIsProcessingRequest] = useState(false);
 
   const shipPublicId = params.public_id as string;
 
@@ -119,12 +125,35 @@ export default function ShipDetailPage() {
         })
       );
 
+      // 사용자의 승인 요청 상태 확인
+      let hasPendingRequest = false;
+      if (profile && !userMembership) {
+        const { data: userRequest } = await supabase
+          .from("ship_member_requests")
+          .select("id")
+          .eq("ship_id", shipData.id)
+          .eq("user_id", profile.id)
+          .eq("status", "pending")
+          .single();
+
+        hasPendingRequest = !!userRequest;
+      }
+
       setShip({
         ...shipData,
         members: membersWithProfiles,
         userRole: userMembership?.role,
         isMember: !!userMembership, // 실제 멤버십 상태로 설정
+        hasPendingRequest,
       });
+
+      // 승인 요청 가져오기 (선장 또는 항해사만)
+      if (
+        userMembership?.role === "captain" ||
+        userMembership?.role === "navigator"
+      ) {
+        await fetchMemberRequests(shipData.id);
+      }
     } catch (err: any) {
       console.error("Error fetching ship details:", err);
       setError(err.message || t("ships.errorLoadingShip"));
@@ -133,19 +162,80 @@ export default function ShipDetailPage() {
     }
   };
 
-  const handleJoinShip = async () => {
+  const fetchMemberRequests = async (shipId: string) => {
+    try {
+      // 1. 승인 요청 가져오기
+      const { data: requests, error: requestsError } = await supabase
+        .from("ship_member_requests")
+        .select("*")
+        .eq("ship_id", shipId)
+        .eq("status", "pending")
+        .order("requested_at", { ascending: false });
+
+      if (requestsError) {
+        console.error("Error fetching member requests:", requestsError);
+        return;
+      }
+
+      if (!requests || requests.length === 0) {
+        setMemberRequests([]);
+        return;
+      }
+
+      // 2. 각 요청의 사용자 프로필 가져오기
+      const userIds = requests.map((req) => req.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        return;
+      }
+
+      // 3. 요청과 프로필을 결합
+      const requestsWithProfiles = requests.map((request) => {
+        const userProfile = profiles?.find(
+          (profile) => profile.id === request.user_id
+        );
+        return {
+          ...request,
+          profiles: userProfile,
+        };
+      });
+
+      setMemberRequests(requestsWithProfiles);
+    } catch (err) {
+      console.error("Error fetching member requests:", err);
+    }
+  };
+
+  const handleJoinShip = async (requestMessage?: string) => {
     if (!profile || !ship) return;
 
     setIsJoining(true);
     setError(null);
 
     try {
-      const { error } = await supabase.rpc("join_ship", {
+      const { data, error } = await supabase.rpc("join_ship", {
         ship_uuid: ship.id,
+        request_message: requestMessage || null,
       });
 
       if (error) {
         throw error;
+      }
+
+      // 결과에 따라 다른 메시지 표시
+      if (data.type === "request") {
+        // 승인 요청이 생성됨
+        alert(t("ships.requestSent"));
+        // 승인 요청 상태 업데이트
+        setShip((prev) => (prev ? { ...prev, hasPendingRequest: true } : null));
+      } else if (data.type === "member") {
+        // 즉시 가입됨
+        alert(t("ships.shipJoined"));
       }
 
       // 성공 시 페이지 새로고침
@@ -155,6 +245,69 @@ export default function ShipDetailPage() {
       setError(err.message || t("ships.errorJoiningShip"));
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleApproveRequest = async (
+    requestId: string,
+    reviewMessage?: string
+  ) => {
+    if (!ship) return;
+
+    setIsProcessingRequest(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.rpc("approve_member_request", {
+        request_uuid: requestId,
+        review_message: reviewMessage || null,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      alert(t("ships.requestApproved"));
+
+      // 승인 요청 목록과 배 정보 새로고침
+      await fetchMemberRequests(ship.id);
+      await fetchShipDetails();
+    } catch (err: any) {
+      console.error("Error approving request:", err);
+      setError(err.message || "Failed to approve request");
+    } finally {
+      setIsProcessingRequest(false);
+    }
+  };
+
+  const handleRejectRequest = async (
+    requestId: string,
+    reviewMessage?: string
+  ) => {
+    if (!ship) return;
+
+    setIsProcessingRequest(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.rpc("reject_member_request", {
+        request_uuid: requestId,
+        review_message: reviewMessage || null,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      alert(t("ships.requestRejected"));
+
+      // 승인 요청 목록 새로고침
+      await fetchMemberRequests(ship.id);
+    } catch (err: any) {
+      console.error("Error rejecting request:", err);
+      setError(err.message || "Failed to reject request");
+    } finally {
+      setIsProcessingRequest(false);
     }
   };
 
@@ -381,6 +534,16 @@ export default function ShipDetailPage() {
         onTransferCaptaincy={handleTransferCaptaincy}
         onRemoveMember={handleRemoveMember}
       />
+
+      {/* 승인 요청 목록 (선장/항해사만 볼 수 있음) */}
+      {(ship.userRole === "captain" || ship.userRole === "navigator") && (
+        <MemberRequestList
+          requests={memberRequests}
+          onApproveRequest={handleApproveRequest}
+          onRejectRequest={handleRejectRequest}
+          isProcessing={isProcessingRequest}
+        />
+      )}
     </div>
   );
 }

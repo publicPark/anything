@@ -11,6 +11,7 @@ interface MemberItemProps {
   currentUserId: string | undefined;
   showManagement: boolean;
   canManage: boolean;
+  canTransferCaptaincy: boolean;
   onPromoteToNavigator: (memberId: string) => void;
   onDemoteToCrew: (memberId: string) => void;
   onTransferCaptaincy: (memberId: string, memberName: string) => void;
@@ -22,6 +23,7 @@ export function MemberItem({
   currentUserId,
   showManagement,
   canManage,
+  canTransferCaptaincy,
   onPromoteToNavigator,
   onDemoteToCrew,
   onTransferCaptaincy,
@@ -44,24 +46,33 @@ export function MemberItem({
         <div>
           <div className="flex items-center space-x-2">
             <p className="font-medium text-foreground">{memberName}</p>
+
             {isCurrentUser && (
               <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary border border-primary/30">
                 {t("ships.me")}
               </span>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <p className="text-sm text-muted-foreground">
+
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                member.role === "captain"
+                  ? "bg-error-100 text-error-800"
+                  : member.role === "navigator"
+                  ? "bg-info-100 text-info-800"
+                  : "bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
+              }`}
+            >
               {t(`ships.roles.${member.role}`)}
-            </p>
+            </span>
           </div>
         </div>
       </div>
 
       {/* 관리 기능은 관리 모드에서만 표시 */}
-      {showManagement && canManage && member.role !== "captain" && (
+      {showManagement && canManage && (
         <div className="flex flex-col sm:flex-row gap-2">
-          {member.role === "crew" && (
+          {/* 승격 버튼: 선원을 항해사로 승격 (선장만 가능) */}
+          {member.role === "crew" && canTransferCaptaincy && (
             <Button
               onClick={() => onPromoteToNavigator(member.id)}
               size="sm"
@@ -71,26 +82,32 @@ export function MemberItem({
               {t("ships.promoteToNavigator")}
             </Button>
           )}
-          {member.role === "navigator" && (
-            <>
-              <Button
-                onClick={() => onTransferCaptaincy(member.id, memberName)}
-                size="sm"
-                variant="secondary"
-                className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-primary-foreground whitespace-nowrap"
-              >
-                {t("ships.transferCaptaincy")}
-              </Button>
-              <Button
-                onClick={() => onDemoteToCrew(member.id)}
-                size="sm"
-                variant="secondary"
-                className="w-full sm:w-auto whitespace-nowrap"
-              >
-                {t("ships.demoteToCrew")}
-              </Button>
-            </>
+
+          {/* 선장 양도 버튼: 항해사를 선장으로 승격 (선장만 가능) */}
+          {member.role === "navigator" && canTransferCaptaincy && (
+            <Button
+              onClick={() => onTransferCaptaincy(member.id, memberName)}
+              size="sm"
+              variant="secondary"
+              className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-primary-foreground whitespace-nowrap"
+            >
+              {t("ships.transferCaptaincy")}
+            </Button>
           )}
+
+          {/* 강등 버튼: 항해사를 선원으로 강등 (선장만 가능) */}
+          {member.role === "navigator" && canTransferCaptaincy && (
+            <Button
+              onClick={() => onDemoteToCrew(member.id)}
+              size="sm"
+              variant="secondary"
+              className="w-full sm:w-auto whitespace-nowrap"
+            >
+              {t("ships.demoteToCrew")}
+            </Button>
+          )}
+
+          {/* 제거 버튼: 멤버 제거 */}
           <Button
             onClick={() => onRemoveMember(member.id)}
             size="sm"

@@ -17,6 +17,9 @@ CREATE TYPE user_role AS ENUM ('titan', 'gaia', 'chaos');
 -- 배 멤버 역할 열거형
 CREATE TYPE ship_member_role AS ENUM ('captain', 'navigator', 'crew');
 
+-- 멤버 승인 요청 상태 열거형
+CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected');
+
 -- ==============================================
 -- 2. TABLES
 -- ==============================================
@@ -54,6 +57,20 @@ CREATE TABLE ship_members (
   UNIQUE(ship_id, user_id)
 );
 
+-- 배 멤버 승인 요청 테이블
+CREATE TABLE ship_member_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  status approval_status DEFAULT 'pending' NOT NULL,
+  message TEXT, -- 가입 신청 메시지
+  requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  review_message TEXT, -- 승인/거부 메시지
+  UNIQUE(ship_id, user_id)
+);
+
 -- ==============================================
 -- 3. ROW LEVEL SECURITY (RLS)
 -- ==============================================
@@ -62,6 +79,7 @@ CREATE TABLE ship_members (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ship_member_requests ENABLE ROW LEVEL SECURITY;
 
 -- 프로필 조회 정책
 -- 1. 자신의 프로필 조회 가능
@@ -136,6 +154,45 @@ CREATE POLICY "Captains can remove members" ON ship_members
       WHERE sm.ship_id = ship_members.ship_id
       AND sm.user_id = auth.uid()
       AND sm.role = 'captain'
+    )
+  );
+
+-- 배 멤버 승인 요청 관련 정책들
+-- 1. 모든 사용자는 승인 요청을 조회할 수 있음 (자신의 요청 또는 배 관리자)
+CREATE POLICY "Users can view member requests" ON ship_member_requests
+  FOR SELECT USING (
+    user_id = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_member_requests.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'navigator')
+    )
+  );
+
+-- 2. 모든 사용자는 승인 요청을 생성할 수 있음
+CREATE POLICY "Users can create member requests" ON ship_member_requests
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- 3. 선장과 항해사는 승인 요청을 수정할 수 있음 (승인/거부)
+CREATE POLICY "Captains and navigators can update member requests" ON ship_member_requests
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_member_requests.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'navigator')
+    )
+  );
+
+-- 4. 선장과 항해사는 승인 요청을 삭제할 수 있음
+CREATE POLICY "Captains and navigators can delete member requests" ON ship_member_requests
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_member_requests.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'navigator')
     )
   );
 
@@ -255,7 +312,7 @@ BEGIN
   user_id := auth.uid();
   
   -- 사용자가 로그인되어 있는지 확인
-  IF user_id IS NULL THEN
+  IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
@@ -278,22 +335,24 @@ BEGIN
 END;
 $$;
 
--- 배 가입 함수
-CREATE OR REPLACE FUNCTION join_ship(ship_uuid UUID)
-RETURNS ship_members
+-- 배 가입 함수 (승인 필요 여부에 따라 다르게 처리)
+CREATE OR REPLACE FUNCTION join_ship(ship_uuid UUID, request_message TEXT DEFAULT NULL)
+RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  user_id UUID;
+  current_user_id UUID;
   ship_record ships;
   new_member ship_members;
+  new_request ship_member_requests;
+  result JSON;
 BEGIN
   -- 현재 사용자 ID 가져오기
-  user_id := auth.uid();
+  current_user_id := auth.uid();
   
   -- 사용자가 로그인되어 있는지 확인
-  IF user_id IS NULL THEN
+  IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
@@ -304,16 +363,39 @@ BEGIN
   END IF;
   
   -- 이미 가입되어 있는지 확인
-  IF EXISTS (SELECT 1 FROM ship_members WHERE ship_id = ship_uuid AND user_id = user_id) THEN
+  IF EXISTS (SELECT 1 FROM ship_members sm WHERE sm.ship_id = ship_uuid AND sm.user_id = current_user_id) THEN
     RAISE EXCEPTION 'Already a member of this ship';
   END IF;
   
-  -- 배 가입
-  INSERT INTO ship_members (ship_id, user_id, role)
-  VALUES (ship_uuid, user_id, 'crew')
-  RETURNING * INTO new_member;
+  -- 이미 승인 요청이 있는지 확인
+  IF EXISTS (SELECT 1 FROM ship_member_requests smr WHERE smr.ship_id = ship_uuid AND smr.user_id = current_user_id AND smr.status = 'pending') THEN
+    RAISE EXCEPTION 'Already requested to join this ship';
+  END IF;
   
-  RETURN new_member;
+  -- 승인이 필요한 경우
+  IF ship_record.member_approval_required THEN
+    -- 승인 요청 생성
+    INSERT INTO ship_member_requests (ship_id, user_id, message)
+    VALUES (ship_uuid, current_user_id, request_message)
+    RETURNING * INTO new_request;
+    
+    result := json_build_object(
+      'type', 'request',
+      'request', row_to_json(new_request)
+    );
+  ELSE
+    -- 즉시 가입
+    INSERT INTO ship_members (ship_id, user_id, role)
+    VALUES (ship_uuid, current_user_id, 'crew')
+    RETURNING * INTO new_member;
+    
+    result := json_build_object(
+      'type', 'member',
+      'member', row_to_json(new_member)
+    );
+  END IF;
+  
+  RETURN result;
 END;
 $$;
 
@@ -335,7 +417,7 @@ BEGIN
   user_id := auth.uid();
   
   -- 사용자가 로그인되어 있는지 확인
-  IF user_id IS NULL THEN
+  IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
@@ -362,6 +444,128 @@ BEGIN
   RETURNING * INTO updated_member;
   
   RETURN updated_member;
+END;
+$$;
+
+-- 승인 요청 승인 함수
+CREATE OR REPLACE FUNCTION approve_member_request(
+  request_uuid UUID,
+  review_msg TEXT DEFAULT NULL
+)
+RETURNS ship_members
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  request_record ship_member_requests;
+  new_member ship_members;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 승인 요청 정보 조회
+  SELECT * INTO request_record FROM ship_member_requests WHERE id = request_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Request not found';
+  END IF;
+  
+  -- 승인 요청이 대기 중인지 확인
+  IF request_record.status != 'pending' THEN
+    RAISE EXCEPTION 'Request is not pending';
+  END IF;
+  
+  -- 권한 확인 (선장 또는 항해사)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = request_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'navigator')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 트랜잭션으로 승인 처리
+  BEGIN
+    -- 승인 요청 상태 업데이트
+    UPDATE ship_member_requests 
+    SET status = 'approved', 
+        reviewed_at = NOW(), 
+        reviewed_by = current_user_id,
+        review_message = review_msg
+    WHERE id = request_uuid;
+    
+    -- 멤버로 추가
+    INSERT INTO ship_members (ship_id, user_id, role)
+    VALUES (request_record.ship_id, request_record.user_id, 'crew')
+    RETURNING * INTO new_member;
+    
+    RETURN new_member;
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE EXCEPTION 'Failed to approve request: %', SQLERRM;
+  END;
+END;
+$$;
+
+-- 승인 요청 거부 함수
+CREATE OR REPLACE FUNCTION reject_member_request(
+  request_uuid UUID,
+  review_msg TEXT DEFAULT NULL
+)
+RETURNS ship_member_requests
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  request_record ship_member_requests;
+  updated_request ship_member_requests;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 승인 요청 정보 조회
+  SELECT * INTO request_record FROM ship_member_requests WHERE id = request_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Request not found';
+  END IF;
+  
+  -- 승인 요청이 대기 중인지 확인
+  IF request_record.status != 'pending' THEN
+    RAISE EXCEPTION 'Request is not pending';
+  END IF;
+  
+  -- 권한 확인 (선장 또는 항해사)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = request_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'navigator')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 승인 요청 상태 업데이트
+  UPDATE ship_member_requests 
+  SET status = 'rejected', 
+      reviewed_at = NOW(), 
+      reviewed_by = current_user_id,
+      review_message = review_msg
+  WHERE id = request_uuid
+  RETURNING * INTO updated_request;
+  
+  RETURN updated_request;
 END;
 $$;
 
@@ -465,6 +669,8 @@ CREATE TRIGGER on_auth_user_created
 -- 함수 실행 권한 설정
 GRANT EXECUTE ON FUNCTION create_user_profile(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION create_ship(TEXT, TEXT, BOOLEAN, BOOLEAN) TO authenticated;
-GRANT EXECUTE ON FUNCTION join_ship(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION join_ship(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION change_member_role(UUID, ship_member_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION transfer_captaincy(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION approve_member_request(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION reject_member_request(UUID, TEXT) TO authenticated;

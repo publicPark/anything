@@ -20,7 +20,7 @@ export default function SettingsButton() {
   return (
     <button
       onClick={goToSettings}
-      className={`p-2 rounded-md transition-all duration-200 cursor-pointer border border-transparent ${
+      className={`p-2 md:p-2 rounded-md transition-all duration-200 cursor-pointer border border-transparent min-h-[44px] min-w-[44px] flex items-center justify-center ${
         isActive()
           ? "bg-primary text-primary-foreground shadow-md border-primary/20"
           : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-border"

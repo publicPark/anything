@@ -12,6 +12,7 @@
     "twitterDescription": "Modern Next.js website with magic link/Google login and profile management"
   },
   "navigation": {
+    "brand": "Anything",
     "home": "Home",
     "login": "Login",
     "logout": "Logout",
@@ -146,7 +147,24 @@
     "errorTransferringCaptaincy": "An error occurred while transferring captaincy.",
     "me": "Me",
     "shipNameRequired": "Please enter a ship name.",
-    "errorCreatingShip": "An error occurred while creating the ship."
+    "errorCreatingShip": "An error occurred while creating the ship.",
+    "requestToJoin": "Request to Join",
+    "requestSent": "Join request sent",
+    "requestMessage": "Request Message",
+    "requestMessagePlaceholder": "Please briefly explain why you want to join (optional)",
+    "pendingApproval": "Pending Approval",
+    "approvalRequired": "This ship requires approval for membership",
+    "memberRequests": "Member Requests",
+    "approveRequest": "Approve",
+    "rejectRequest": "Reject",
+    "approveRequestConfirm": "Are you sure you want to approve this join request?",
+    "rejectRequestConfirm": "Are you sure you want to reject this join request?",
+    "requestApproved": "Join request approved",
+    "requestRejected": "Join request rejected",
+    "noPendingRequests": "No pending requests",
+    "review": "Review",
+    "reviewMessage": "Review Message",
+    "reviewMessagePlaceholder": "Please provide a reason for approval/rejection (optional)"
   },
   "common": {
     "loading": "Loading...",

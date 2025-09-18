@@ -1,5 +1,6 @@
 export type UserRole = "titan" | "gaia" | "chaos";
 export type ShipMemberRole = "captain" | "navigator" | "crew";
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface Profile {
   id: string;
@@ -30,6 +31,18 @@ export interface ShipMember {
   joined_at: string;
 }
 
+export interface ShipMemberRequest {
+  id: string;
+  ship_id: string;
+  user_id: string;
+  status: ApprovalStatus;
+  message: string | null;
+  requested_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  review_message: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -50,6 +63,19 @@ export interface Database {
         Insert: Omit<ShipMember, "id" | "joined_at">;
         Update: Partial<Omit<ShipMember, "id" | "joined_at">>;
       };
+      ship_member_requests: {
+        Row: ShipMemberRequest;
+        Insert: Omit<
+          ShipMemberRequest,
+          "id" | "requested_at" | "reviewed_at" | "reviewed_by"
+        >;
+        Update: Partial<
+          Omit<
+            ShipMemberRequest,
+            "id" | "requested_at" | "reviewed_at" | "reviewed_by"
+          >
+        >;
+      };
     };
     Functions: {
       create_ship: {
@@ -64,8 +90,23 @@ export interface Database {
       join_ship: {
         Args: {
           ship_uuid: string;
+          request_message?: string;
+        };
+        Returns: any; // JSON response with type and data
+      };
+      approve_member_request: {
+        Args: {
+          request_uuid: string;
+          review_message?: string;
         };
         Returns: ShipMember;
+      };
+      reject_member_request: {
+        Args: {
+          request_uuid: string;
+          review_message?: string;
+        };
+        Returns: ShipMemberRequest;
       };
       change_member_role: {
         Args: {

@@ -31,7 +31,9 @@ export function MemberList({
 }: MemberListProps) {
   const { t } = useI18n();
 
+  // 권한별 관리 가능 여부 결정
   const canManageMembers = userRole === "captain" || userRole === "navigator";
+  const canTransferCaptaincy = userRole === "captain";
 
   if (!showMemberManagement && !showMemberView) {
     return null;
@@ -47,20 +49,35 @@ export function MemberList({
         {showMemberManagement ? t("ships.manageMembers") : t("ships.members")}
       </h2>
 
-      <div className="space-y-3">
-        {sortedMembers.map((member) => (
-          <MemberItem
-            key={member.id}
-            member={member}
-            currentUserId={currentUserId}
-            showManagement={showMemberManagement}
-            canManage={userRole === "captain"}
-            onPromoteToNavigator={onPromoteToNavigator}
-            onDemoteToCrew={onDemoteToCrew}
-            onTransferCaptaincy={onTransferCaptaincy}
-            onRemoveMember={onRemoveMember}
-          />
-        ))}
+      <div className="space-y-4">
+        {sortedMembers.map((member) => {
+          // 각 멤버별로 관리 권한 결정
+          let canManageThisMember = false;
+
+          if (userRole === "captain") {
+            // 선장은 모든 멤버 관리 가능 (자신 제외)
+            canManageThisMember = member.user_id !== currentUserId;
+          } else if (userRole === "navigator") {
+            // 항해사는 선원만 관리 가능 (자신, 다른 항해사, 선장 제외)
+            canManageThisMember =
+              member.role === "crew" && member.user_id !== currentUserId;
+          }
+
+          return (
+            <MemberItem
+              key={member.id}
+              member={member}
+              currentUserId={currentUserId}
+              showManagement={showMemberManagement}
+              canManage={canManageThisMember}
+              canTransferCaptaincy={canTransferCaptaincy}
+              onPromoteToNavigator={onPromoteToNavigator}
+              onDemoteToCrew={onDemoteToCrew}
+              onTransferCaptaincy={onTransferCaptaincy}
+              onRemoveMember={onRemoveMember}
+            />
+          );
+        })}
       </div>
     </div>
   );

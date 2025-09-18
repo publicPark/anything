@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { JoinRequestModal } from "@/components/JoinRequestModal";
 import { Ship, ShipMember, Profile } from "@/types/database";
 
 type ShipMemberRole = "captain" | "navigator" | "crew";
@@ -11,13 +13,14 @@ interface ShipWithDetails extends Ship {
   members: (ShipMember & { profile: Profile })[];
   userRole?: ShipMemberRole;
   isMember: boolean;
+  hasPendingRequest?: boolean;
 }
 
 interface ShipHeaderProps {
   ship: ShipWithDetails;
   profile: Profile | null;
   locale: string;
-  onJoinShip: () => void;
+  onJoinShip: (message?: string) => void;
   onLeaveShip: () => void;
   onDeleteShip: () => void;
   onEditStart: () => void;
@@ -79,6 +82,7 @@ export function ShipHeader({
   setEditFormData,
 }: ShipHeaderProps) {
   const { t } = useI18n();
+  const [showJoinRequestModal, setShowJoinRequestModal] = useState(false);
 
   const canManageMembers =
     ship?.userRole === "captain" || ship?.userRole === "navigator";
@@ -92,6 +96,19 @@ export function ShipHeader({
 
   const handleEditSave = () => {
     onEditSave(editFormData);
+  };
+
+  const handleJoinClick = () => {
+    if (ship.member_approval_required) {
+      setShowJoinRequestModal(true);
+    } else {
+      onJoinShip();
+    }
+  };
+
+  const handleJoinRequestSubmit = (message: string) => {
+    onJoinShip(message);
+    setShowJoinRequestModal(false);
   };
 
   return (
@@ -297,8 +314,8 @@ export function ShipHeader({
                 ) : (
                   <Button
                     onClick={
-                      profile
-                        ? onJoinShip
+                      profile && !ship.hasPendingRequest
+                        ? handleJoinClick
                         : () => {
                             const currentPath = window.location.pathname;
                             window.location.href = `/${locale}/login?next=${encodeURIComponent(
@@ -306,13 +323,23 @@ export function ShipHeader({
                             )}`;
                           }
                     }
-                    disabled={isJoining}
-                    className="bg-primary hover:bg-primary-hover text-primary-foreground"
+                    disabled={isJoining || ship.hasPendingRequest}
+                    className={
+                      ship.hasPendingRequest
+                        ? "bg-muted text-muted-foreground cursor-not-allowed"
+                        : "bg-primary hover:bg-primary-hover text-primary-foreground"
+                    }
                   >
                     {isJoining ? (
                       <LoadingSpinner size="sm" />
+                    ) : ship.hasPendingRequest ? (
+                      t("ships.pendingApproval")
                     ) : profile ? (
-                      t("ships.join")
+                      ship.member_approval_required ? (
+                        t("ships.requestToJoin")
+                      ) : (
+                        t("ships.join")
+                      )
                     ) : (
                       t("ships.loginToJoin")
                     )}
@@ -370,6 +397,14 @@ export function ShipHeader({
           </div>
         </div>
       </div>
+
+      {/* 가입 신청 모달 */}
+      <JoinRequestModal
+        isOpen={showJoinRequestModal}
+        onClose={() => setShowJoinRequestModal(false)}
+        onSubmit={handleJoinRequestSubmit}
+        isSubmitting={isJoining}
+      />
     </div>
   );
 }

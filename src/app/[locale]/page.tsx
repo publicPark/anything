@@ -64,7 +64,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="text-left">
+        <div className="text-center">
           <h1 className="sr-only">홈</h1>
           <h3 className="text-xl font-medium mb-8">
             {profile
@@ -85,9 +85,20 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-foreground mb-4">
                 {t("home.subtitle")}
               </h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4 whitespace-pre-line">
                 {t("home.subdescription")}
               </p>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const currentPath = window.location.pathname;
+                  window.location.href = `/${locale}/login?next=${encodeURIComponent(
+                    currentPath
+                  )}`;
+                }}
+              >
+                {t("home.goToLogin")}
+              </Button>
             </div>
           )}
         </div>

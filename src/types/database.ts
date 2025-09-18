@@ -108,6 +108,25 @@ export interface Database {
         };
         Returns: ShipMemberRequest;
       };
+      reset_rejected_request_to_pending: {
+        Args: {
+          request_uuid: string;
+          review_msg?: string;
+        };
+        Returns: ShipMemberRequest;
+      };
+      delete_rejected_request: {
+        Args: {
+          request_uuid: string;
+        };
+        Returns: boolean;
+      };
+      get_rejected_requests: {
+        Args: {
+          ship_uuid: string;
+        };
+        Returns: ShipMemberRequest[];
+      };
       change_member_role: {
         Args: {
           member_uuid: string;

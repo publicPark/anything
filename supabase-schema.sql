@@ -569,6 +569,168 @@ BEGIN
 END;
 $$;
 
+-- 거부된 요청을 대기 상태로 되돌리는 함수 (재검토용)
+CREATE OR REPLACE FUNCTION reset_rejected_request_to_pending(
+  request_uuid UUID,
+  review_msg TEXT DEFAULT NULL
+)
+RETURNS ship_member_requests
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  request_record ship_member_requests;
+  updated_request ship_member_requests;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 승인 요청 정보 조회
+  SELECT * INTO request_record FROM ship_member_requests WHERE id = request_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Request not found';
+  END IF;
+  
+  -- 승인 요청이 거부된 상태인지 확인
+  IF request_record.status != 'rejected' THEN
+    RAISE EXCEPTION 'Request is not rejected';
+  END IF;
+  
+  -- 권한 확인 (선장 또는 항해사)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = request_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'navigator')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 거부된 요청을 대기 상태로 되돌리기
+  UPDATE ship_member_requests 
+  SET status = 'pending', 
+      reviewed_at = NULL,
+      reviewed_by = NULL,
+      review_message = review_msg
+  WHERE id = request_uuid
+  RETURNING * INTO updated_request;
+  
+  RETURN updated_request;
+END;
+$$;
+
+-- 거부된 요청 삭제 함수
+CREATE OR REPLACE FUNCTION delete_rejected_request(
+  request_uuid UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  request_record ship_member_requests;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 승인 요청 정보 조회
+  SELECT * INTO request_record FROM ship_member_requests WHERE id = request_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Request not found';
+  END IF;
+  
+  -- 승인 요청이 거부된 상태인지 확인
+  IF request_record.status != 'rejected' THEN
+    RAISE EXCEPTION 'Request is not rejected';
+  END IF;
+  
+  -- 권한 확인 (선장 또는 항해사)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = request_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'navigator')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 거부된 요청 삭제
+  DELETE FROM ship_member_requests WHERE id = request_uuid;
+  
+  RETURN TRUE;
+END;
+$$;
+
+-- 거부된 요청 조회 함수
+CREATE OR REPLACE FUNCTION get_rejected_requests(
+  ship_uuid UUID
+)
+RETURNS TABLE (
+  id UUID,
+  ship_id UUID,
+  user_id UUID,
+  status approval_status,
+  message TEXT,
+  requested_at TIMESTAMP WITH TIME ZONE,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  reviewed_by UUID,
+  review_message TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 권한 확인 (선장 또는 항해사)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = ship_uuid 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'navigator')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 거부된 요청들 반환
+  RETURN QUERY
+  SELECT 
+    smr.id,
+    smr.ship_id,
+    smr.user_id,
+    smr.status,
+    smr.message,
+    smr.requested_at,
+    smr.reviewed_at,
+    smr.reviewed_by,
+    smr.review_message
+  FROM ship_member_requests smr
+  WHERE smr.ship_id = ship_uuid 
+  AND smr.status = 'rejected'
+  ORDER BY smr.reviewed_at DESC;
+END;
+$$;
+
 -- 선장 양도 함수
 CREATE OR REPLACE FUNCTION transfer_captaincy(
   new_captain_member_uuid UUID

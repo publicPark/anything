@@ -5,17 +5,13 @@ import { Ship, ShipMember, Profile } from "@/types/database";
 
 type ShipMemberRole = "captain" | "navigator" | "crew";
 
-// 스타일 상수 - 글로벌 컬러 시스템 사용
+// 스타일 상수 - 기존 글로벌 컬러 시스템 사용
 const ROLE_STYLES = {
   captain: "bg-error-100 text-error-800",
   navigator: "bg-info-100 text-info-800",
-  crew: "bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
+  crew: "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
 } as const;
 
-const SHIP_STATUS_STYLES = {
-  memberOnly: "px-2 py-1 text-xs bg-warning-100 text-warning-800 rounded",
-  approvalRequired: "px-2 py-1 text-xs bg-warning-100 text-warning-800 rounded",
-} as const;
 
 interface ShipWithDetails extends Ship {
   members?: (ShipMember & { profile: Profile })[];
@@ -26,7 +22,6 @@ interface ShipCardProps {
   ship: ShipWithDetails;
   onClick: (ship: ShipWithDetails) => void;
   showUserRole?: boolean;
-  showStatus?: boolean;
   showMemberCount?: boolean;
   showCreatedAt?: boolean;
 }
@@ -35,7 +30,6 @@ export function ShipCard({
   ship,
   onClick,
   showUserRole = false,
-  showStatus = true,
   showMemberCount = true,
   showCreatedAt = true,
 }: ShipCardProps) {
@@ -53,32 +47,15 @@ export function ShipCard({
           {ship.name}
         </h3>
 
-        <div className="flex items-center space-x-1">
-          {showUserRole && ship.userRole && (
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full ${
-                ROLE_STYLES[ship.userRole]
-              }`}
-            >
-              {t(`ships.roles.${ship.userRole}`)}
-            </span>
-          )}
-
-          {showStatus && (
-            <>
-              {ship.member_only && (
-                <span className={SHIP_STATUS_STYLES.memberOnly}>
-                  {t("ships.memberOnly")}
-                </span>
-              )}
-              {ship.member_approval_required && (
-                <span className={SHIP_STATUS_STYLES.approvalRequired}>
-                  {t("ships.memberApprovalRequired")}
-                </span>
-              )}
-            </>
-          )}
-        </div>
+        {showUserRole && ship.userRole && (
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full ${
+              ROLE_STYLES[ship.userRole]
+            }`}
+          >
+            {t(`ships.roles.${ship.userRole}`)}
+          </span>
+        )}
       </div>
 
       {ship.description && (

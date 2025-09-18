@@ -119,7 +119,7 @@ export function MyShips() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center">
         <h2 className="text-2xl font-bold text-foreground">
           {t("ships.myShips")}
         </h2>
@@ -171,7 +171,6 @@ export function MyShips() {
               ship={ship}
               onClick={() => handleShipClick(ship)}
               showUserRole={true}
-              showStatus={true}
               showMemberCount={true}
               showCreatedAt={true}
             />

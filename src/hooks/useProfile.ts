@@ -172,7 +172,7 @@ export function useProfile() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, createProfile]);
+  }, [supabase]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!profile) return;

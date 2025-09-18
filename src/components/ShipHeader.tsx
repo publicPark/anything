@@ -14,6 +14,7 @@ interface ShipWithDetails extends Ship {
   userRole?: ShipMemberRole;
   isMember: boolean;
   hasPendingRequest?: boolean;
+  hasRejectedRequest?: boolean;
 }
 
 interface ShipHeaderProps {
@@ -61,7 +62,7 @@ const ROLE_STYLES = {
     "px-3 py-1 text-sm font-medium rounded-full bg-error-100 text-error-800",
   navigator:
     "px-3 py-1 text-sm font-medium rounded-full bg-info-100 text-info-800",
-  crew: "px-3 py-1 text-sm font-medium rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
+  crew: "px-3 py-1 text-sm font-medium rounded-full bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
 } as const;
 
 export function ShipHeader({
@@ -134,7 +135,7 @@ export function ShipHeader({
               <h3 className="text-sm font-medium text-warning-800">
                 {t("ships.memberOnlyTitle")}
               </h3>
-              <div className="mt-2 text-sm text-warning-700">
+              <div className="mt-2 text-sm text-warning-800">
                 <p>{t("ships.memberOnlyMessageNotLoggedIn")}</p>
               </div>
             </div>
@@ -162,7 +163,7 @@ export function ShipHeader({
               <h3 className="text-sm font-medium text-info-800">
                 {t("ships.memberOnlyTitle")}
               </h3>
-              <div className="mt-2 text-sm text-info-700">
+              <div className="mt-2 text-sm text-info-800">
                 <p>{t("ships.memberOnlyMessageLoggedIn")}</p>
               </div>
             </div>
@@ -249,12 +250,12 @@ export function ShipHeader({
                 {ship.description && (
                   <p className="text-muted-foreground">{ship.description}</p>
                 )}
-                <div className="text-sm text-muted-foreground mt-2">
+                {/* <div className="text-sm text-muted-foreground mt-2">
                   <span>
                     {t("ships.createdAt")}:{" "}
                     {new Date(ship.created_at).toLocaleDateString()}
                   </span>
-                </div>
+                </div> */}
               </>
             )}
           </div>
@@ -314,7 +315,7 @@ export function ShipHeader({
                 ) : (
                   <Button
                     onClick={
-                      profile && !ship.hasPendingRequest
+                      profile && !ship.hasPendingRequest && !ship.hasRejectedRequest
                         ? handleJoinClick
                         : () => {
                             const currentPath = window.location.pathname;
@@ -323,9 +324,9 @@ export function ShipHeader({
                             )}`;
                           }
                     }
-                    disabled={isJoining || ship.hasPendingRequest}
+                    disabled={isJoining || ship.hasPendingRequest || ship.hasRejectedRequest}
                     className={
-                      ship.hasPendingRequest
+                      ship.hasPendingRequest || ship.hasRejectedRequest
                         ? "bg-muted text-muted-foreground cursor-not-allowed"
                         : "bg-primary hover:bg-primary-hover text-primary-foreground"
                     }
@@ -334,6 +335,8 @@ export function ShipHeader({
                       <LoadingSpinner size="sm" />
                     ) : ship.hasPendingRequest ? (
                       t("ships.pendingApproval")
+                    ) : ship.hasRejectedRequest ? (
+                      t("ships.cannotReapplyAfterRejection")
                     ) : profile ? (
                       ship.member_approval_required ? (
                         t("ships.requestToJoin")
@@ -357,9 +360,9 @@ export function ShipHeader({
                       {t(`ships.roles.${ship.userRole}`)}
                     </span>
                   )}
-                  <span>
+                  {/* <span>
                     {t("ships.memberCount", { count: ship.members.length })}
-                  </span>
+                  </span> */}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {canManageMembers && (

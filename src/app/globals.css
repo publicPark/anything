@@ -40,6 +40,13 @@
   --info-100: #dbeafe;
   --info-600: #2563eb;
   --info-800: #1e40af;
+  
+  /* 중성 색상 - 라이트모드 */
+  --neutral-200: #e5e5e5;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  
+  
 }
 
 @theme inline {
@@ -136,6 +143,13 @@
   --info-100: #1e3a8a;
   --info-600: #3b82f6;
   --info-800: #93c5fd;
+  
+  /* 중성 색상 - 다크모드 */
+  --neutral-200: #262626;
+  --neutral-700: #d4d4d4;
+  --neutral-800: #e5e5e5;
+  
+  
 }
 
 body {

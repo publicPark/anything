@@ -36,7 +36,7 @@ export function MemberItem({
     member.profile?.display_name || member.profile?.username || "Unknown User";
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-y-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-y-3 bg-muted rounded-lg">
       <div className="flex items-center space-x-3">
         <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
           {(member.profile?.display_name ||
@@ -59,7 +59,7 @@ export function MemberItem({
                   ? "bg-error-100 text-error-800"
                   : member.role === "navigator"
                   ? "bg-info-100 text-info-800"
-                  : "bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
+                  : "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
               }`}
             >
               {t(`ships.roles.${member.role}`)}

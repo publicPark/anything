@@ -152,7 +152,6 @@ export default function ShipsPage() {
               ship={ship}
               onClick={() => handleShipClick(ship)}
               showUserRole={false}
-              showStatus={true}
               showMemberCount={false}
               showCreatedAt={true}
             />

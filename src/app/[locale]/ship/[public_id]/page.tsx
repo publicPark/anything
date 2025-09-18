@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
@@ -32,6 +32,9 @@ export default function ShipDetailPage() {
   const [memberRequests, setMemberRequests] = useState<
     (ShipMemberRequest & { profiles: Profile | undefined })[]
   >([]);
+  const [rejectedRequests, setRejectedRequests] = useState<
+    (ShipMemberRequest & { profiles: Profile | undefined })[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -45,6 +48,9 @@ export default function ShipDetailPage() {
     member_approval_required: false,
   });
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
+  const [hasRejectedRequest, setHasRejectedRequest] = useState(false);
+  const lastRejectedRequestId = useRef<string | null>(null);
+  const lastApprovedRequestId = useRef<string | null>(null);
 
   const shipPublicId = params.public_id as string;
 
@@ -139,12 +145,27 @@ export default function ShipDetailPage() {
         hasPendingRequest = !!userRequest;
       }
 
+      // 현재 사용자가 거부된 요청이 있는지 확인
+      let hasRejectedRequest = false;
+      if (profile && !userMembership) {
+        const { data: userRejectedRequest } = await supabase
+          .from("ship_member_requests")
+          .select("id")
+          .eq("ship_id", shipData.id)
+          .eq("user_id", profile.id)
+          .eq("status", "rejected")
+          .maybeSingle();
+        
+        hasRejectedRequest = !!userRejectedRequest;
+      }
+
       setShip({
         ...shipData,
         members: membersWithProfiles,
         userRole: userMembership?.role,
         isMember: !!userMembership, // 실제 멤버십 상태로 설정
         hasPendingRequest,
+        hasRejectedRequest,
       });
 
       // 승인 요청 가져오기 (선장 또는 항해사만)
@@ -153,6 +174,7 @@ export default function ShipDetailPage() {
         userMembership?.role === "navigator"
       ) {
         await fetchMemberRequests(shipData.id);
+        await fetchRejectedRequests(shipData.id);
       }
     } catch (err: any) {
       console.error("Error fetching ship details:", err);
@@ -191,6 +213,7 @@ export default function ShipDetailPage() {
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
+        setMemberRequests([]);
         return;
       }
 
@@ -208,6 +231,52 @@ export default function ShipDetailPage() {
       setMemberRequests(requestsWithProfiles);
     } catch (err) {
       console.error("Error fetching member requests:", err);
+    }
+  };
+
+  const fetchRejectedRequests = async (shipId: string) => {
+    try {
+      // 거부된 요청 가져오기
+      const { data: requests, error: requestsError } = await supabase.rpc(
+        "get_rejected_requests",
+        { ship_uuid: shipId }
+      );
+
+      if (requestsError) {
+        console.error("Error fetching rejected requests:", requestsError);
+        return;
+      }
+
+      if (!requests || requests.length === 0) {
+        setRejectedRequests([]);
+        return;
+      }
+
+      // 각 요청의 사용자 프로필 가져오기
+      const userIds = requests.map((req: ShipMemberRequest) => req.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        setRejectedRequests([]);
+        return;
+      }
+
+      // 요청과 프로필 매칭
+      const requestsWithProfiles = requests.map((req: ShipMemberRequest) => {
+        const userProfile = profiles?.find((p) => p.id === req.user_id);
+        return {
+          ...req,
+          profiles: userProfile,
+        };
+      });
+
+      setRejectedRequests(requestsWithProfiles);
+    } catch (err) {
+      console.error("Error fetching rejected requests:", err);
     }
   };
 
@@ -267,15 +336,21 @@ export default function ShipDetailPage() {
         throw error;
       }
 
-      alert(t("ships.requestApproved"));
+      // 중복 알림 방지
+      if (lastApprovedRequestId.current !== requestId) {
+        alert(t("ships.requestApproved"));
+        lastApprovedRequestId.current = requestId;
+      }
 
       // 승인 요청 목록과 배 정보 새로고침
       await fetchMemberRequests(ship.id);
       await fetchShipDetails();
+      
+      // 데이터 새로고침 완료 후 로딩 상태 해제
+      setIsProcessingRequest(false);
     } catch (err: any) {
       console.error("Error approving request:", err);
       setError(err.message || "Failed to approve request");
-    } finally {
       setIsProcessingRequest(false);
     }
   };
@@ -299,13 +374,82 @@ export default function ShipDetailPage() {
         throw error;
       }
 
-      alert(t("ships.requestRejected"));
+      // 중복 알림 방지
+      if (lastRejectedRequestId.current !== requestId) {
+        alert(t("ships.requestRejected"));
+        lastRejectedRequestId.current = requestId;
+      }
 
       // 승인 요청 목록 새로고침
       await fetchMemberRequests(ship.id);
+      await fetchRejectedRequests(ship.id);
+      
+      // 데이터 새로고침 완료 후 로딩 상태 해제
+      setIsProcessingRequest(false);
     } catch (err: any) {
       console.error("Error rejecting request:", err);
       setError(err.message || "Failed to reject request");
+      setIsProcessingRequest(false);
+    }
+  };
+
+  const handleResetRejectedRequest = async (requestId: string) => {
+    if (!ship) return;
+
+    setIsProcessingRequest(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.rpc("reset_rejected_request_to_pending", {
+        request_uuid: requestId,
+        review_msg: null,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // 중복 알림 방지
+      if (lastApprovedRequestId.current !== requestId) {
+        alert(t("ships.requestResetToPending"));
+        lastApprovedRequestId.current = requestId;
+      }
+
+      // 요청 목록 새로고침
+      await fetchMemberRequests(ship.id);
+      await fetchRejectedRequests(ship.id);
+      
+      // 데이터 새로고침 완료 후 로딩 상태 해제
+      setIsProcessingRequest(false);
+    } catch (err: any) {
+      console.error("Error resetting rejected request:", err);
+      setError(err.message || "Failed to reset rejected request");
+      setIsProcessingRequest(false);
+    }
+  };
+
+  const handleDeleteRejectedRequest = async (requestId: string) => {
+    if (!ship) return;
+
+    setIsProcessingRequest(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.rpc("delete_rejected_request", {
+        request_uuid: requestId,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      alert(t("ships.requestDeleted"));
+
+      // 거부된 요청 목록 새로고침
+      await fetchRejectedRequests(ship.id);
+    } catch (err: any) {
+      console.error("Error deleting rejected request:", err);
+      setError(err.message || "Failed to delete rejected request");
     } finally {
       setIsProcessingRequest(false);
     }
@@ -537,12 +681,21 @@ export default function ShipDetailPage() {
 
       {/* 승인 요청 목록 (선장/항해사만 볼 수 있음) */}
       {(ship.userRole === "captain" || ship.userRole === "navigator") && (
-        <MemberRequestList
-          requests={memberRequests}
-          onApproveRequest={handleApproveRequest}
-          onRejectRequest={handleRejectRequest}
-          isProcessing={isProcessingRequest}
-        />
+        <>
+          {/* 대기 중인 요청이 있으면 항상 보이고, 없으면 멤버 관리 버튼을 눌렀을 때만 보임 */}
+          {(memberRequests.length > 0 || showMemberManagement) && (
+            <MemberRequestList
+              requests={memberRequests}
+              rejectedRequests={rejectedRequests}
+              onApproveRequest={handleApproveRequest}
+              onRejectRequest={handleRejectRequest}
+              onResetRejectedRequest={handleResetRejectedRequest}
+              onDeleteRejectedRequest={handleDeleteRejectedRequest}
+              isProcessing={isProcessingRequest}
+              showRejectedRequests={showMemberManagement}
+            />
+          )}
+        </>
       )}
     </div>
   );

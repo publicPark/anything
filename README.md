@@ -7,12 +7,14 @@
 - ✅ 매직링크 로그인 (이메일 기반)
 - ✅ Google OAuth 로그인
 - ✅ 자동 프로필 생성
-- ✅ 3단계 사용자 권한 (basic, premium, admin)
+- ✅ 3단계 사용자 권한 (titan, gaia, chaos)
 - ✅ 프로필 수정 기능
-- ✅ 프로필 자동 생성 미들웨어
+- ✅ 배(Ship) 관리 시스템
+- ✅ 멤버 관리 및 승인 시스템
 - ✅ 다크모드/라이트모드/시스템 테마 지원
 - ✅ 다국어 지원 (한국어/영어)
 - ✅ 반응형 UI 컴포넌트 시스템
+- ✅ Zustand 상태 관리
 - ✅ 타입 안전성 (TypeScript)
 
 ## 설치 및 설정
@@ -68,20 +70,31 @@ src/
 │   │   ├── login/        # 로그인 페이지
 │   │   ├── profile/      # 프로필 페이지
 │   │   ├── settings/     # 설정 페이지
+│   │   ├── ships/        # 배 목록 페이지
+│   │   ├── ship/[id]/    # 배 상세 페이지
 │   │   └── page.tsx      # 메인 페이지
 │   ├── auth/callback/    # OAuth 콜백 처리
 │   └── globals.css       # 전역 스타일
 ├── components/
 │   ├── ui/               # 재사용 가능한 UI 컴포넌트
-│   │   └── Button.tsx    # 버튼 컴포넌트
+│   │   ├── Button.tsx    # 버튼 컴포넌트
+│   │   ├── ErrorMessage.tsx # 에러 메시지 컴포넌트
+│   │   └── LoadingSpinner.tsx # 로딩 스피너 컴포넌트
 │   ├── Navigation.tsx    # 네비게이션 컴포넌트
-│   └── SettingsButton.tsx # 설정 버튼 컴포넌트
+│   ├── ShipCard.tsx      # 배 카드 컴포넌트
+│   ├── ShipForm.tsx      # 배 생성/수정 폼
+│   ├── MemberList.tsx    # 멤버 목록 컴포넌트
+│   └── MyShips.tsx       # 내 배 목록 컴포넌트
 ├── contexts/
 │   └── ThemeContext.tsx  # 테마 관리 컨텍스트
 ├── hooks/
-│   ├── useProfile.ts     # 프로필 관리 훅
+│   ├── useProfile.ts     # 프로필 관리 훅 (Zustand 기반)
 │   ├── useI18n.ts        # 다국어 훅
 │   └── useNavigation.ts  # 네비게이션 훅
+├── stores/               # Zustand 상태 관리
+│   ├── profileStore.ts   # 프로필 상태 관리
+│   ├── shipStore.ts      # 배 상태 관리
+│   └── index.ts          # Store exports
 ├── lib/
 │   ├── supabase/         # Supabase 클라이언트 설정
 │   ├── i18n.ts           # 다국어 설정
@@ -96,33 +109,51 @@ src/
 
 ## 사용자 권한
 
-- **basic**: 기본 사용자 권한
-- **premium**: 프리미엄 사용자 권한
-- **admin**: 관리자 권한
+- **titan**: 기본 사용자 권한 (배 조회만 가능)
+- **gaia**: 프리미엄 사용자 권한 (배 생성 가능)
+- **chaos**: 관리자 권한 (모든 권한)
 
 ## 주요 기능 설명
 
 ### 인증 시스템
+
 - 매직링크와 Google OAuth를 통한 안전한 로그인
 - 자동 프로필 생성 및 관리
-- 3단계 사용자 권한 시스템 (basic, premium, admin)
+- 3단계 사용자 권한 시스템 (titan, gaia, chaos)
+
+### 배(Ship) 관리 시스템
+
+- 배 생성, 수정, 삭제 (gaia, chaos 권한 필요)
+- 멤버 가입 시스템 (승인 필요/불필요 설정 가능)
+- 멤버 역할 관리 (captain, navigator, crew)
+- 실시간 멤버 요청 관리
+
+### 상태 관리
+
+- Zustand를 활용한 효율적인 상태 관리
+- Redux DevTools 연동으로 개발 편의성 향상
+- 타입 안전성을 보장하는 TypeScript 기반 store
 
 ### 테마 시스템
+
 - 라이트모드, 다크모드, 시스템 테마 지원
 - 사용자 설정에 따른 테마 저장
 - 시스템 테마 변화 자동 감지
 
 ### 다국어 지원
+
 - 한국어/영어 완전 지원
 - URL 기반 언어 라우팅 (/ko/, /en/)
 - 브라우저 언어 설정 자동 감지
 
 ### UI 컴포넌트
+
 - 재사용 가능한 Button 컴포넌트
 - 일관된 디자인 시스템
 - 반응형 레이아웃
 
 ### 인증 미들웨어
+
 - 로그인하지 않은 사용자는 로그인 페이지로 리다이렉트
 - 프로필이 없는 사용자는 프로필 페이지로 리다이렉트
 - 다국어 라우팅 자동 처리
@@ -144,9 +175,11 @@ src/
 ## 문제 해결
 
 ### 프로필이 생성되지 않는 경우
+
 - Supabase 데이터베이스에서 `profiles` 테이블과 트리거가 올바르게 설정되었는지 확인합니다.
 - RLS 정책이 올바르게 설정되었는지 확인합니다.
 
 ### Google 로그인이 작동하지 않는 경우
+
 - Google Cloud Console에서 리다이렉트 URL이 올바르게 설정되었는지 확인합니다.
 - Supabase에서 Google OAuth 설정이 올바른지 확인합니다.

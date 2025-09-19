@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
+import { useShipActions } from "@/stores/shipStore";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -23,7 +23,7 @@ interface ShipFormData {
 export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const supabase = createClient();
+  const { createShip } = useShipActions();
 
   const [formData, setFormData] = useState<ShipFormData>({
     name: "",
@@ -66,20 +66,16 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
     setError(null);
 
     try {
-      const { data, error } = await supabase.rpc("create_ship", {
-        ship_name: formData.name.trim(),
-        ship_description: formData.description.trim() || null,
-        is_member_only: formData.memberOnly,
-        requires_approval: formData.memberApprovalRequired,
+      const ship = await createShip({
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        member_only: formData.memberOnly,
+        member_approval_required: formData.memberApprovalRequired,
       });
 
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
+      if (ship) {
         // 성공 시 배 상세 페이지로 이동
-        router.push(`/${locale}/ship/${data.public_id}`);
+        router.push(`/${locale}/ship/${ship.public_id}`);
         onSuccess?.();
       }
     } catch (err: any) {

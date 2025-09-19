@@ -2,29 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
+import { useShipStore, useShipActions } from "@/stores/shipStore";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipForm } from "@/components/ShipForm";
 import { ShipCard } from "@/components/ShipCard";
-import { Ship, ShipMember, Profile } from "@/types/database";
-
-interface ShipWithDetails extends Ship {
-  members?: (ShipMember & { profile: Profile })[];
-}
 
 export default function ShipsPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
 
-  const [ships, setShips] = useState<ShipWithDetails[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Zustand store에서 상태와 액션 가져오기
+  const { ships, loading: isLoading, error } = useShipStore();
+  const { fetchAllShips } = useShipActions();
+
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const canCreateShip = profile?.role === "gaia" || profile?.role === "chaos";
@@ -33,35 +28,9 @@ export default function ShipsPage() {
     if (profile) {
       fetchAllShips();
     }
-  }, [profile]);
+  }, [profile, fetchAllShips]);
 
-  const fetchAllShips = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // 모든 배 조회
-      const { data: shipsData, error: shipsError } = await supabase
-        .from("ships")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (shipsError) {
-        throw shipsError;
-      }
-
-      if (shipsData) {
-        setShips(shipsData);
-      }
-    } catch (err: any) {
-      console.error("Error fetching ships:", err);
-      setError(err.message || "배 목록을 불러오는 중 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleShipClick = (ship: ShipWithDetails) => {
+  const handleShipClick = (ship: any) => {
     router.push(`/${locale}/ship/${ship.public_id}`);
   };
 

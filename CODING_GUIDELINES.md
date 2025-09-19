@@ -21,10 +21,11 @@
 
 ### 데이터 흐름
 
-- **상태 관리**: 로컬 상태는 `useState`, 전역 상태는 Context API
-- **Props drilling 최소화**: 필요한 경우 Context 사용
+- **상태 관리**: 로컬 상태는 `useState`, 전역 상태는 Zustand Store
+- **Props drilling 최소화**: Zustand store를 통한 전역 상태 공유
 - **비동기 처리**: 모든 API 호출에 적절한 로딩/에러 상태
 - **의존성 관리**: `useEffect` 의존성 배열을 정확히 설정하여 불필요한 재렌더링 방지
+- **Store 패턴**: 기능별로 store를 분리하여 관리 (profileStore, shipStore 등)
 
 ### 에러 처리
 
@@ -77,12 +78,15 @@ const title = "Ships";
 - **일관된 상태**: 라우트 이동과 새로고침에서 동일한 화면 표시 보장
 
 ```typescript
-// ✅ 좋은 예: 프로필 로딩 완료 후에만 배 정보 가져오기
+// ✅ 좋은 예: Zustand store 사용
+const { profile, loading } = useProfileStore();
+const { fetchShipDetails } = useShipActions();
+
 useEffect(() => {
-  if (!profileLoading && shipPublicId) {
-    fetchShipDetails();
+  if (!loading && shipPublicId) {
+    fetchShipDetails(shipPublicId);
   }
-}, [profileLoading, shipPublicId]);
+}, [loading, shipPublicId]);
 
 // ❌ 나쁜 예: 중복 호출로 인한 상태 불일치
 useEffect(() => {
@@ -217,12 +221,21 @@ src/hooks/
 └── index.ts          # export 정리
 ```
 
+### Store 파일
+
+```
+src/stores/
+├── [feature]Store.ts # 기능별 Zustand store
+└── index.ts          # Store exports
+```
+
 ## 🏷️ 네이밍 컨벤션
 
 ### 파일명
 
 - **컴포넌트**: PascalCase (`UserProfile.tsx`)
 - **훅**: camelCase with use prefix (`useUserProfile.ts`)
+- **Store**: camelCase with Store suffix (`profileStore.ts`)
 - **유틸리티**: camelCase (`formatDate.ts`)
 - **페이지**: 소문자 (`page.tsx`)
 
@@ -273,9 +286,11 @@ npm run format
 ### 주요 라이브러리
 
 - `@supabase/ssr`: Supabase SSR 지원
+- `zustand`: 상태 관리
+- `@redux-devtools/extension`: 개발 도구 (Redux DevTools)
 - `next-intl`: 국제화
-- `react-hook-form`: 폼 관리
-- `zod`: 스키마 검증
+- `tailwind-merge`: Tailwind CSS 클래스 병합
+- `clsx`: 조건부 클래스명 처리
 
 ---
 

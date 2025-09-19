@@ -19,6 +19,7 @@ export function useProfile() {
     fetchProfile,
     initialized,
     initializing,
+    initializeAuthListener,
   } = useProfileStore();
 
   useEffect(() => {
@@ -26,7 +27,15 @@ export function useProfile() {
     if (!initialized && !initializing) {
       fetchProfile();
     }
-  }, [initialized, initializing]); // fetchProfile 의존성 제거
+  }, [initialized, initializing, fetchProfile]);
+
+  useEffect(() => {
+    // 인증 상태 변화 감지 리스너 초기화
+    const cleanup = initializeAuthListener();
+
+    // 컴포넌트 언마운트 시 리스너 정리
+    return cleanup;
+  }, [initializeAuthListener]);
 
   return {
     profile,

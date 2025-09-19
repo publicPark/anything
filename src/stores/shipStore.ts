@@ -10,20 +10,9 @@ import {
   Profile,
   ShipMemberRole,
   ApprovalStatus,
+  ShipWithDetails,
+  ShipMemberRequestWithProfile,
 } from "@/types/database";
-
-// 확장된 타입들
-export interface ShipWithDetails extends Ship {
-  members?: (ShipMember & { profiles: Profile })[];
-  member_requests?: (ShipMemberRequest & { profiles: Profile })[];
-  userRole?: ShipMemberRole;
-  isMember?: boolean;
-  hasPendingRequest?: boolean;
-}
-
-export interface ShipMemberRequestWithProfile extends ShipMemberRequest {
-  profiles: Profile | undefined;
-}
 
 export interface ShipDetailState {
   // 배 정보
@@ -187,8 +176,10 @@ export const useShipStore = create<ShipDetailState>()(
             ]);
           }
         } catch (err: any) {
-          console.error("Error fetching ship details:", err);
-          setError(err.message || "배 정보를 불러오는 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "배 정보를 불러오는 중 오류가 발생했습니다.";
+          console.error("Failed to fetch ship details:", errorMessage);
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -214,8 +205,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           setShips(ships || []);
         } catch (err: any) {
-          console.error("Error fetching ships:", err);
-          setError(err.message || "배 목록을 불러오는 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "배 목록을 불러오는 중 오류가 발생했습니다.";
+          console.error("Failed to fetch ships:", errorMessage);
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -245,13 +238,16 @@ export const useShipStore = create<ShipDetailState>()(
             .order("requested_at", { ascending: false });
 
           if (error) {
-            console.error("Error fetching member requests:", error);
+            console.error("Failed to fetch member requests:", error.message);
             return;
           }
 
           setMemberRequests(data || []);
         } catch (err) {
-          console.error("Error fetching member requests:", err);
+          console.error(
+            "Failed to fetch member requests:",
+            err instanceof Error ? err.message : String(err)
+          );
         }
       },
 
@@ -279,13 +275,16 @@ export const useShipStore = create<ShipDetailState>()(
             .order("reviewed_at", { ascending: false });
 
           if (error) {
-            console.error("Error fetching rejected requests:", error);
+            console.error("Failed to fetch rejected requests:", error.message);
             return;
           }
 
           setRejectedRequests(data || []);
         } catch (err) {
-          console.error("Error fetching rejected requests:", err);
+          console.error(
+            "Failed to fetch rejected requests:",
+            err instanceof Error ? err.message : String(err)
+          );
         }
       },
 
@@ -312,13 +311,16 @@ export const useShipStore = create<ShipDetailState>()(
             .order("joined_at", { ascending: true });
 
           if (error) {
-            console.error("Error fetching members:", error);
+            console.error("Failed to fetch members:", error.message);
             return;
           }
 
           setMembers(data || []);
         } catch (err) {
-          console.error("Error fetching members:", err);
+          console.error(
+            "Failed to fetch members:",
+            err instanceof Error ? err.message : String(err)
+          );
         }
       },
 
@@ -341,8 +343,9 @@ export const useShipStore = create<ShipDetailState>()(
 
           return data;
         } catch (err: any) {
-          console.error("Error creating ship:", err);
-          setError(err.message || "배 생성 중 오류가 발생했습니다.");
+          const errorMessage = err.message || "배 생성 중 오류가 발생했습니다.";
+          console.error("Failed to create ship:", errorMessage);
+          setError(errorMessage);
           return null;
         }
       },
@@ -367,8 +370,10 @@ export const useShipStore = create<ShipDetailState>()(
           setCurrentShip(data);
           return data;
         } catch (err: any) {
-          console.error("Error updating ship:", err);
-          setError(err.message || "배 정보 업데이트 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "배 정보 업데이트 중 오류가 발생했습니다.";
+          console.error("Failed to update ship:", errorMessage);
+          setError(errorMessage);
           return null;
         }
       },
@@ -393,8 +398,9 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error joining ship:", err);
-          setError(err.message || "배 가입 중 오류가 발생했습니다.");
+          const errorMessage = err.message || "배 가입 중 오류가 발생했습니다.";
+          console.error("Failed to join ship:", errorMessage);
+          setError(errorMessage);
           return false;
         } finally {
           setIsJoining(false);
@@ -418,8 +424,9 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error leaving ship:", err);
-          setError(err.message || "배 탈퇴 중 오류가 발생했습니다.");
+          const errorMessage = err.message || "배 탈퇴 중 오류가 발생했습니다.";
+          console.error("Failed to leave ship:", errorMessage);
+          setError(errorMessage);
           return false;
         }
       },
@@ -447,8 +454,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error approving member request:", err);
-          setError(err.message || "멤버 요청 승인 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "멤버 요청 승인 중 오류가 발생했습니다.";
+          console.error("Failed to approve member request:", errorMessage);
+          setError(errorMessage);
           return false;
         } finally {
           setIsProcessingRequest(false);
@@ -478,8 +487,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error rejecting member request:", err);
-          setError(err.message || "멤버 요청 거부 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "멤버 요청 거부 중 오류가 발생했습니다.";
+          console.error("Failed to reject member request:", errorMessage);
+          setError(errorMessage);
           return false;
         } finally {
           setIsProcessingRequest(false);
@@ -512,8 +523,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error resetting rejected request:", err);
-          setError(err.message || "요청 리셋 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "요청 리셋 중 오류가 발생했습니다.";
+          console.error("Failed to reset rejected request:", errorMessage);
+          setError(errorMessage);
           return false;
         } finally {
           setIsProcessingRequest(false);
@@ -542,8 +555,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error deleting rejected request:", err);
-          setError(err.message || "요청 삭제 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "요청 삭제 중 오류가 발생했습니다.";
+          console.error("Failed to delete rejected request:", errorMessage);
+          setError(errorMessage);
           return false;
         } finally {
           setIsProcessingRequest(false);
@@ -567,8 +582,10 @@ export const useShipStore = create<ShipDetailState>()(
 
           return true;
         } catch (err: any) {
-          console.error("Error changing member role:", err);
-          setError(err.message || "멤버 역할 변경 중 오류가 발생했습니다.");
+          const errorMessage =
+            err.message || "멤버 역할 변경 중 오류가 발생했습니다.";
+          console.error("Failed to change member role:", errorMessage);
+          setError(errorMessage);
           return false;
         }
       },

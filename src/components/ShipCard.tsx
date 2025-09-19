@@ -1,17 +1,14 @@
 "use client";
 
 import { useI18n } from "@/hooks/useI18n";
-import { Ship, ShipMember, Profile } from "@/types/database";
+import { Ship, ShipMember, Profile, ShipMemberRole } from "@/types/database";
 
-type ShipMemberRole = "captain" | "navigator" | "crew";
-
-// 스타일 상수 - 기존 글로벌 컬러 시스템 사용
+// 스타일 상수 - Tailwind CSS 디자인 토큰 사용
 const ROLE_STYLES = {
-  captain: "bg-error-100 text-error-800",
-  navigator: "bg-info-100 text-info-800",
-  crew: "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
+  captain: "bg-destructive/10 text-destructive",
+  navigator: "bg-info text-info-foreground",
+  crew: "bg-muted text-muted-foreground",
 } as const;
-
 
 interface ShipWithDetails extends Ship {
   members?: (ShipMember & { profile: Profile })[];

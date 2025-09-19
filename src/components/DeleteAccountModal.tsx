@@ -54,7 +54,7 @@ export default function DeleteAccountModal({
         .eq("id", user.id);
 
       if (profileError) {
-        console.error("Profile deletion error:", profileError);
+        console.error("Failed to delete profile:", profileError.message);
         // Continue with account deletion even if profile deletion fails
       }
 
@@ -81,14 +81,14 @@ export default function DeleteAccountModal({
       await supabase.auth.signOut();
       onSuccess();
     } catch (err) {
-      console.error("Account deletion error:", err);
-      setError(
+      const errorMessage =
         err instanceof Error
           ? err.message
           : locale === "en"
           ? "Failed to delete account. Please try again."
-          : "계정 삭제에 실패했습니다. 다시 시도해주세요."
-      );
+          : "계정 삭제에 실패했습니다. 다시 시도해주세요.";
+      console.error("Failed to delete account:", errorMessage);
+      setError(errorMessage);
     } finally {
       setIsDeleting(false);
     }

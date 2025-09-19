@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     if (!exchangeError) {
       return redirectToSuccess(origin, next, request);
     } else {
-      console.error("Auth exchange error:", exchangeError);
+      console.error("Failed to exchange auth code:", exchangeError.message);
       return redirectToErrorPage(origin, {
         error: "exchange_error",
         errorCode: exchangeError.message,

@@ -10,9 +10,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipForm } from "@/components/ShipForm";
 import { ShipCard } from "@/components/ShipCard";
-import { Ship, ShipMember, Profile } from "@/types/database";
-
-type ShipMemberRole = "captain" | "navigator" | "crew";
+import { Ship, ShipMember, Profile, ShipMemberRole } from "@/types/database";
 
 interface ShipWithDetails extends Ship {
   members: (ShipMember & { profile: Profile })[];
@@ -75,7 +73,10 @@ export function MyShips() {
               .eq("ship_id", membership.ship.id);
 
             if (membersError) {
-              console.error("Error fetching ship members:", membersError);
+              console.error(
+                "Failed to fetch ship members:",
+                membersError.message
+              );
             }
 
             return {
@@ -89,8 +90,10 @@ export function MyShips() {
         setShips(shipsWithDetails);
       }
     } catch (err: any) {
-      console.error("Error fetching user ships:", err);
-      setError(err.message || "배 목록을 불러오는 중 오류가 발생했습니다.");
+      const errorMessage =
+        err.message || "배 목록을 불러오는 중 오류가 발생했습니다.";
+      console.error("Failed to fetch user ships:", errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

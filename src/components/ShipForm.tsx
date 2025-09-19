@@ -79,8 +79,9 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
         onSuccess?.();
       }
     } catch (err: any) {
-      console.error("Ship creation error:", err);
-      setError(err.message || t("ships.errorCreatingShip"));
+      const errorMessage = err.message || t("ships.errorCreatingShip");
+      console.error("Failed to create ship:", errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

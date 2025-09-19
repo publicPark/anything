@@ -2,6 +2,19 @@ export type UserRole = "titan" | "gaia" | "chaos";
 export type ShipMemberRole = "captain" | "navigator" | "crew";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
+// 확장된 타입들
+export interface ShipWithDetails extends Ship {
+  members?: (ShipMember & { profiles: Profile })[];
+  userRole?: ShipMemberRole;
+  isMember?: boolean;
+  hasPendingRequest?: boolean;
+  hasRejectedRequest?: boolean;
+}
+
+export interface ShipMemberRequestWithProfile extends ShipMemberRequest {
+  profiles: Profile | undefined;
+}
+
 export interface Profile {
   id: string;
   username: string;

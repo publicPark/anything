@@ -210,8 +210,10 @@ export const useProfileStore = create<ProfileState>()(
             setProfile(data);
           }
         } catch (err) {
-          console.error("ProfileStore: Error in fetchProfile:", err);
-          setError(err instanceof Error ? err.message : "Unknown error");
+          const errorMessage =
+            err instanceof Error ? err.message : "Unknown error";
+          console.error("Profile fetch failed:", errorMessage);
+          setError(errorMessage);
         } finally {
           setLoading(false);
           set({ initialized: true, initializing: false });
@@ -257,14 +259,8 @@ export const useProfileStore = create<ProfileState>()(
         const { fetchProfile, clearProfile, initialized } = get();
         const supabase = createClient();
 
-        console.log(
-          "🔧 ProfileStore: initializeAuthListener called, initialized:",
-          initialized
-        );
-
         // 이미 초기화되었다면 중복 실행 방지
         if (initialized) {
-          console.log("🔧 ProfileStore: Already initialized, skipping");
           return () => {}; // 빈 cleanup 함수 반환
         }
 
@@ -278,7 +274,6 @@ export const useProfileStore = create<ProfileState>()(
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange((event) => {
-          console.log("🔧 ProfileStore: Auth state changed:", event);
           if (event === "SIGNED_OUT") {
             clearProfile();
           } else if (event === "SIGNED_IN") {
@@ -288,7 +283,6 @@ export const useProfileStore = create<ProfileState>()(
         });
 
         return () => {
-          console.log("🔧 ProfileStore: Cleaning up auth listener");
           subscription.unsubscribe();
           set({ initialized: false });
         };

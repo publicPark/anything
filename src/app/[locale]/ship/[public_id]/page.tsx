@@ -10,9 +10,13 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
-import { Ship, ShipMember, Profile, ShipMemberRequest } from "@/types/database";
-
-type ShipMemberRole = "captain" | "navigator" | "crew";
+import {
+  Ship,
+  ShipMember,
+  Profile,
+  ShipMemberRequest,
+  ShipMemberRole,
+} from "@/types/database";
 
 interface ShipWithDetails extends Ship {
   members: (ShipMember & { profile: Profile })[];
@@ -155,7 +159,7 @@ export default function ShipDetailPage() {
           .eq("user_id", profile.id)
           .eq("status", "rejected")
           .maybeSingle();
-        
+
         hasRejectedRequest = !!userRejectedRequest;
       }
 
@@ -177,8 +181,9 @@ export default function ShipDetailPage() {
         await fetchRejectedRequests(shipData.id);
       }
     } catch (err: any) {
-      console.error("Error fetching ship details:", err);
-      setError(err.message || t("ships.errorLoadingShip"));
+      const errorMessage = err.message || t("ships.errorLoadingShip");
+      console.error("Failed to fetch ship details:", errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -195,7 +200,10 @@ export default function ShipDetailPage() {
         .order("requested_at", { ascending: false });
 
       if (requestsError) {
-        console.error("Error fetching member requests:", requestsError);
+        console.error(
+          "Failed to fetch member requests:",
+          requestsError.message
+        );
         return;
       }
 
@@ -212,7 +220,7 @@ export default function ShipDetailPage() {
         .in("id", userIds);
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        console.error("Failed to fetch profiles:", profilesError.message);
         setMemberRequests([]);
         return;
       }
@@ -230,7 +238,10 @@ export default function ShipDetailPage() {
 
       setMemberRequests(requestsWithProfiles);
     } catch (err) {
-      console.error("Error fetching member requests:", err);
+      console.error(
+        "Failed to fetch member requests:",
+        err instanceof Error ? err.message : String(err)
+      );
     }
   };
 
@@ -243,7 +254,10 @@ export default function ShipDetailPage() {
       );
 
       if (requestsError) {
-        console.error("Error fetching rejected requests:", requestsError);
+        console.error(
+          "Failed to fetch rejected requests:",
+          requestsError.message
+        );
         return;
       }
 
@@ -260,7 +274,7 @@ export default function ShipDetailPage() {
         .in("id", userIds);
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        console.error("Failed to fetch profiles:", profilesError.message);
         setRejectedRequests([]);
         return;
       }
@@ -276,7 +290,10 @@ export default function ShipDetailPage() {
 
       setRejectedRequests(requestsWithProfiles);
     } catch (err) {
-      console.error("Error fetching rejected requests:", err);
+      console.error(
+        "Failed to fetch rejected requests:",
+        err instanceof Error ? err.message : String(err)
+      );
     }
   };
 
@@ -310,7 +327,10 @@ export default function ShipDetailPage() {
       // 성공 시 페이지 새로고침
       await fetchShipDetails();
     } catch (err: any) {
-      console.error("Error joining ship:", err);
+      console.error(
+        "Failed to join ship:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorJoiningShip"));
     } finally {
       setIsJoining(false);
@@ -345,11 +365,14 @@ export default function ShipDetailPage() {
       // 승인 요청 목록과 배 정보 새로고침
       await fetchMemberRequests(ship.id);
       await fetchShipDetails();
-      
+
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
     } catch (err: any) {
-      console.error("Error approving request:", err);
+      console.error(
+        "Failed to approve member request:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || "Failed to approve request");
       setIsProcessingRequest(false);
     }
@@ -383,11 +406,14 @@ export default function ShipDetailPage() {
       // 승인 요청 목록 새로고침
       await fetchMemberRequests(ship.id);
       await fetchRejectedRequests(ship.id);
-      
+
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
     } catch (err: any) {
-      console.error("Error rejecting request:", err);
+      console.error(
+        "Failed to reject member request:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || "Failed to reject request");
       setIsProcessingRequest(false);
     }
@@ -400,10 +426,13 @@ export default function ShipDetailPage() {
     setError(null);
 
     try {
-      const { error } = await supabase.rpc("reset_rejected_request_to_pending", {
-        request_uuid: requestId,
-        review_msg: null,
-      });
+      const { error } = await supabase.rpc(
+        "reset_rejected_request_to_pending",
+        {
+          request_uuid: requestId,
+          review_msg: null,
+        }
+      );
 
       if (error) {
         throw error;
@@ -418,11 +447,14 @@ export default function ShipDetailPage() {
       // 요청 목록 새로고침
       await fetchMemberRequests(ship.id);
       await fetchRejectedRequests(ship.id);
-      
+
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
     } catch (err: any) {
-      console.error("Error resetting rejected request:", err);
+      console.error(
+        "Failed to reset rejected request:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || "Failed to reset rejected request");
       setIsProcessingRequest(false);
     }
@@ -448,7 +480,10 @@ export default function ShipDetailPage() {
       // 거부된 요청 목록 새로고침
       await fetchRejectedRequests(ship.id);
     } catch (err: any) {
-      console.error("Error deleting rejected request:", err);
+      console.error(
+        "Failed to delete rejected request:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || "Failed to delete rejected request");
     } finally {
       setIsProcessingRequest(false);
@@ -476,7 +511,10 @@ export default function ShipDetailPage() {
       // 성공 시 페이지 새로고침
       await fetchShipDetails();
     } catch (err: any) {
-      console.error("Error leaving ship:", err);
+      console.error(
+        "Failed to leave ship:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorLeavingShip"));
     }
   };
@@ -498,7 +536,10 @@ export default function ShipDetailPage() {
       // 성공 시 홈으로 이동
       router.push(`/${locale}`);
     } catch (err: any) {
-      console.error("Error deleting ship:", err);
+      console.error(
+        "Failed to delete ship:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorDeletingShip"));
     }
   };
@@ -550,7 +591,10 @@ export default function ShipDetailPage() {
       setIsEditing(false);
       await fetchShipDetails(); // 배 정보 새로고침
     } catch (err: any) {
-      console.error("Error updating ship:", err);
+      console.error(
+        "Failed to update ship:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorUpdatingShip"));
     }
   };
@@ -569,7 +613,10 @@ export default function ShipDetailPage() {
 
       await fetchShipDetails();
     } catch (err: any) {
-      console.error("Error changing member role:", err);
+      console.error(
+        "Failed to change member role:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorChangingRole"));
     }
   }
@@ -592,7 +639,10 @@ export default function ShipDetailPage() {
 
       await fetchShipDetails();
     } catch (err: any) {
-      console.error("Error removing member:", err);
+      console.error(
+        "Failed to remove member:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorRemovingMember"));
     }
   }
@@ -614,7 +664,10 @@ export default function ShipDetailPage() {
 
       await fetchShipDetails();
     } catch (err: any) {
-      console.error("Error transferring captaincy:", err);
+      console.error(
+        "Failed to transfer captaincy:",
+        err instanceof Error ? err.message : String(err)
+      );
       setError(err.message || t("ships.errorTransferringCaptaincy"));
     }
   }

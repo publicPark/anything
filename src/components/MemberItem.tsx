@@ -56,10 +56,10 @@ export function MemberItem({
             <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${
                 member.role === "captain"
-                  ? "bg-error-100 text-error-800"
+                  ? "role-captain"
                   : member.role === "mechanic"
-                  ? "bg-info-100 text-info-800"
-                  : "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
+                  ? "role-mechanic"
+                  : "role-crew"
               }`}
             >
               {t(`ships.roles.${member.role}`)}
@@ -71,6 +71,17 @@ export function MemberItem({
       {/* 관리 기능은 관리 모드에서만 표시 */}
       {showManagement && canManage && (
         <div className="flex flex-col sm:flex-row gap-2">
+          {/* 자기 강등 버튼: mechanic이 자신을 crew로 강등 */}
+          {isCurrentUser && member.role === "mechanic" && (
+            <Button
+              onClick={() => onDemoteToCrew(member.id)}
+              size="sm"
+              variant="secondary"
+              className="w-full sm:w-auto whitespace-nowrap"
+            >
+              {t("ships.demoteToCrew")}
+            </Button>
+          )}
           {/* 승격 버튼: 선원을 항해사로 승격 (선장만 가능) */}
           {member.role === "crew" && canTransferCaptaincy && (
             <Button
@@ -107,15 +118,17 @@ export function MemberItem({
             </Button>
           )}
 
-          {/* 제거 버튼: 멤버 제거 */}
-          <Button
-            onClick={() => onRemoveMember(member.id)}
-            size="sm"
-            variant="secondary"
-            className="w-full sm:w-auto text-destructive hover:text-destructive-hover border-destructive/20 hover:border-destructive/40 whitespace-nowrap"
-          >
-            {t("ships.removeMember")}
-          </Button>
+          {/* 제거 버튼: 멤버 제거 (자신 제외) */}
+          {!isCurrentUser && (
+            <Button
+              onClick={() => onRemoveMember(member.id)}
+              size="sm"
+              variant="secondary"
+              className="w-full sm:w-auto text-destructive hover:text-destructive-hover border-destructive/20 hover:border-destructive/40 whitespace-nowrap"
+            >
+              {t("ships.removeMember")}
+            </Button>
+          )}
         </div>
       )}
     </div>

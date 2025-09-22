@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
@@ -11,6 +11,7 @@ import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
 import { CabinManage } from "@/components/CabinManage";
+import { ShipTabs } from "@/components/ShipTabs";
 import {
   Ship,
   ShipMember,
@@ -43,10 +44,9 @@ export default function ShipDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
-  const [showMemberManagement, setShowMemberManagement] = useState(false);
-  const [showMemberView, setShowMemberView] = useState(false);
-  const [showCabinManagement, setShowCabinManagement] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("viewMembers");
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: "",
     description: "",
@@ -60,12 +60,59 @@ export default function ShipDetailPage() {
 
   const shipPublicId = params.public_id as string;
 
+  // 에러 처리 함수
+  const handleError = (err: unknown, defaultMessage: string) => {
+    console.error(defaultMessage, err);
+
+    let message = defaultMessage;
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (err && typeof err === "object") {
+      // Supabase 에러 객체 처리
+      const errorObj = err as any;
+      if (errorObj.message) {
+        message = errorObj.message;
+      } else if (errorObj.error?.message) {
+        message = errorObj.error.message;
+      } else if (errorObj.details) {
+        message = errorObj.details;
+      } else if (errorObj.hint) {
+        message = errorObj.hint;
+      }
+    } else if (typeof err === "string") {
+      message = err;
+    }
+
+    setError(message);
+  };
+
   // 프로필 로딩이 완료된 후에만 배 정보 가져오기 (멤버십 상태 정확히 반영)
   useEffect(() => {
     if (!profileLoading && shipPublicId) {
       fetchShipDetails();
     }
   }, [profileLoading, shipPublicId]);
+
+  // 승인 요청이 있으면 자동으로 멤버 가입 신청 탭으로 이동
+  useEffect(() => {
+    if (
+      memberRequests.length > 0 &&
+      (ship?.userRole === "captain" || ship?.userRole === "mechanic")
+    ) {
+      setActiveTab("memberRequests");
+    }
+  }, [memberRequests.length, ship?.userRole]);
+
+  // crew 사용자가 관리 탭에 접근하려고 하면 viewMembers로 리다이렉트
+  useEffect(() => {
+    if (
+      ship?.userRole === "crew" &&
+      (activeTab === "memberRequests" || activeTab === "cabinsManage")
+    ) {
+      setActiveTab("viewMembers");
+    }
+  }, [ship?.userRole, activeTab]);
 
   const fetchShipDetails = async () => {
     if (!shipPublicId) return;
@@ -183,9 +230,7 @@ export default function ShipDetailPage() {
         await fetchRejectedRequests(shipData.id);
       }
     } catch (err: any) {
-      const errorMessage = err.message || t("ships.errorLoadingShip");
-      console.error("Failed to fetch ship details:", errorMessage);
-      setError(errorMessage);
+      handleError(err, t("ships.errorLoadingShip"));
     } finally {
       setIsLoading(false);
     }
@@ -492,35 +537,6 @@ export default function ShipDetailPage() {
     }
   };
 
-  const handleLeaveShip = async () => {
-    if (!profile || !ship) return;
-
-    if (!confirm(t("ships.confirmLeaveShip"))) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("ship_members")
-        .delete()
-        .eq("ship_id", ship.id)
-        .eq("user_id", profile.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // 성공 시 페이지 새로고침
-      await fetchShipDetails();
-    } catch (err: any) {
-      console.error(
-        "Failed to leave ship:",
-        err instanceof Error ? err.message : String(err)
-      );
-      setError(err.message || t("ships.errorLeavingShip"));
-    }
-  };
-
   const handleDeleteShip = async () => {
     if (!ship) return;
 
@@ -575,12 +591,21 @@ export default function ShipDetailPage() {
   }) => {
     if (!ship) return;
 
+    // 입력값 검증
+    if (!data.name.trim()) {
+      setError(t("ships.shipNameRequired"));
+      return;
+    }
+
     try {
+      setError(null); // 이전 에러 클리어
+      setIsSaving(true);
+
       const { error } = await supabase
         .from("ships")
         .update({
-          name: data.name,
-          description: data.description,
+          name: data.name.trim(),
+          description: data.description.trim(),
           member_only: data.member_only,
           member_approval_required: data.member_approval_required,
         })
@@ -592,87 +617,96 @@ export default function ShipDetailPage() {
 
       setIsEditing(false);
       await fetchShipDetails(); // 배 정보 새로고침
+
+      // 성공 메시지 (선택사항)
+      console.log("팀 정보가 성공적으로 업데이트되었습니다.");
     } catch (err: any) {
       console.error(
         "Failed to update ship:",
         err instanceof Error ? err.message : String(err)
       );
       setError(err.message || t("ships.errorUpdatingShip"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // 멤버 역할 변경 함수
-  async function handleChangeRole(memberId: string, newRole: ShipMemberRole) {
-    try {
-      const { error } = await supabase.rpc("change_member_role", {
-        member_uuid: memberId,
-        new_role: newRole,
+  // 탭 생성 함수
+  const createTabs = useCallback(() => {
+    if (!ship) return [];
+
+    const tabs = [
+      {
+        id: "viewMembers",
+        label: t("ships.viewMembers"),
+        content: (
+          <div className="space-y-6">
+            <MemberList
+              members={ship.members}
+              currentUserId={profile?.id}
+              showMemberManagement={
+                ship.userRole === "captain" || ship.userRole === "mechanic"
+              }
+              showMemberView={true}
+              userRole={ship.userRole}
+              shipId={ship.id}
+              onRefresh={fetchShipDetails}
+            />
+          </div>
+        ),
+      },
+    ];
+
+    // 관리자 전용 탭들
+    if (ship.userRole === "captain" || ship.userRole === "mechanic") {
+      // 멤버 가입 신청 탭
+      tabs.push({
+        id: "memberRequests",
+        label: `${t("ships.memberRequests")}${
+          memberRequests.length > 0 ? ` (${memberRequests.length})` : ""
+        }`,
+        content: (
+          <div className="space-y-6">
+            <MemberRequestList
+              requests={memberRequests}
+              rejectedRequests={rejectedRequests}
+              onApproveRequest={handleApproveRequest}
+              onRejectRequest={handleRejectRequest}
+              onResetRejectedRequest={handleResetRejectedRequest}
+              onDeleteRejectedRequest={handleDeleteRejectedRequest}
+              isProcessing={isProcessingRequest}
+              showRejectedRequests={true}
+            />
+          </div>
+        ),
       });
 
-      if (error) {
-        throw error;
-      }
-
-      await fetchShipDetails();
-    } catch (err: any) {
-      console.error(
-        "Failed to change member role:",
-        err instanceof Error ? err.message : String(err)
-      );
-      setError(err.message || t("ships.errorChangingRole"));
-    }
-  }
-
-  // 멤버 제거 함수
-  async function handleRemoveMember(memberId: string) {
-    if (!confirm(t("ships.confirmRemoveMember"))) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("ship_members")
-        .delete()
-        .eq("id", memberId);
-
-      if (error) {
-        throw error;
-      }
-
-      await fetchShipDetails();
-    } catch (err: any) {
-      console.error(
-        "Failed to remove member:",
-        err instanceof Error ? err.message : String(err)
-      );
-      setError(err.message || t("ships.errorRemovingMember"));
-    }
-  }
-
-  // 선장 양도 함수
-  async function handleTransferCaptaincy(memberId: string, memberName: string) {
-    if (!confirm(t("ships.transferCaptaincyConfirm", { name: memberName }))) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.rpc("transfer_captaincy", {
-        new_captain_member_uuid: memberId,
+      // 객실 관리 탭
+      tabs.push({
+        id: "cabinsManage",
+        label: t("ships.cabinsManage"),
+        content: (
+          <div className="space-y-6">
+            <CabinManage shipId={ship.id} userRole={ship.userRole} />
+          </div>
+        ),
       });
-
-      if (error) {
-        throw error;
-      }
-
-      await fetchShipDetails();
-    } catch (err: any) {
-      console.error(
-        "Failed to transfer captaincy:",
-        err instanceof Error ? err.message : String(err)
-      );
-      setError(err.message || t("ships.errorTransferringCaptaincy"));
     }
-  }
+
+    return tabs;
+  }, [
+    ship,
+    profile?.id,
+    memberRequests,
+    rejectedRequests,
+    handleApproveRequest,
+    handleRejectRequest,
+    handleResetRejectedRequest,
+    handleDeleteRejectedRequest,
+    isProcessingRequest,
+    fetchShipDetails,
+    t,
+  ]);
 
   if (isLoading || profileLoading) {
     return (
@@ -705,65 +739,28 @@ export default function ShipDetailPage() {
         profile={profile}
         locale={locale}
         onJoinShip={handleJoinShip}
-        onLeaveShip={handleLeaveShip}
         onDeleteShip={handleDeleteShip}
         onEditStart={handleEditStart}
         onEditSave={handleEditSave}
         onEditCancel={handleEditCancel}
-        onToggleMemberManagement={() =>
-          setShowMemberManagement(!showMemberManagement)
-        }
-        onToggleMemberView={() => setShowMemberView(!showMemberView)}
-        onToggleCabinManagement={() =>
-          setShowCabinManagement(!showCabinManagement)
-        }
         onViewCabins={() =>
           router.push(`/${locale}/ship/${shipPublicId}/cabins`)
         }
         isJoining={isJoining}
         isEditing={isEditing}
+        isSaving={isSaving}
         editFormData={editFormData}
         setEditFormData={setEditFormData}
       />
 
-      <MemberList
-        members={ship.members}
-        currentUserId={profile?.id}
-        showMemberManagement={showMemberManagement}
-        showMemberView={showMemberView}
-        userRole={ship.userRole}
-        onPromoteToMechanic={(memberId) =>
-          handleChangeRole(memberId, "mechanic")
-        }
-        onDemoteToCrew={(memberId) => handleChangeRole(memberId, "crew")}
-        onTransferCaptaincy={handleTransferCaptaincy}
-        onRemoveMember={handleRemoveMember}
-      />
-
-      {/* 승인 요청 목록 (선장/mechanic만 볼 수 있음) */}
-      {(ship.userRole === "captain" || ship.userRole === "mechanic") && (
-        <>
-          {/* 대기 중인 요청이 있으면 항상 보이고, 없으면 멤버 관리 버튼을 눌렀을 때만 보임 */}
-          {(memberRequests.length > 0 || showMemberManagement) && (
-            <MemberRequestList
-              requests={memberRequests}
-              rejectedRequests={rejectedRequests}
-              onApproveRequest={handleApproveRequest}
-              onRejectRequest={handleRejectRequest}
-              onResetRejectedRequest={handleResetRejectedRequest}
-              onDeleteRejectedRequest={handleDeleteRejectedRequest}
-              isProcessing={isProcessingRequest}
-              showRejectedRequests={showMemberManagement}
-            />
-          )}
-        </>
+      {/* 탭 시스템 - member_only 배가 아니거나 멤버인 경우에만 표시 */}
+      {(!ship.member_only || ship.isMember) && (
+        <ShipTabs
+          tabs={createTabs()}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
       )}
-
-      {/* 객실 관리 (mechanic 이상만 볼 수 있음) */}
-      {(ship.userRole === "captain" || ship.userRole === "mechanic") &&
-        showCabinManagement && (
-          <CabinManage shipId={ship.id} userRole={ship.userRole} />
-        )}
     </div>
   );
 }

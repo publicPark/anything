@@ -1,18 +1,18 @@
 {
   "metadata": {
-    "title": "Teamteam",
-    "description": "Create teams and gather members",
-    "keywords": "teams, gatherings, groups, members",
-    "author": "Teamteam Members",
-    "ogTitle": "Teamteam - Create teams and gather members",
-    "ogDescription": "Create teams and gather members. Teams, gatherings, groups, members",
+    "title": "Tacja",
+    "description": "Gather around the table and have meetings together.",
+    "keywords": "teams, gatherings, groups, members, meetings, meeting rooms, meeting room reservation",
+    "author": "Tacja Members",
+    "ogTitle": "Tacja - Gather around the table and have meetings together.",
+    "ogDescription": "Gather around the table and have meetings together. Teams, gatherings, groups, members",
     "ogImage": "/og-image-en.png",
     "twitterCard": "summary_large_image",
-    "twitterTitle": "Teamteam - Create teams and gather members",
-    "twitterDescription": "Create teams and gather members. Teams, gatherings, groups, members"
+    "twitterTitle": "Tacja - Gather around the table and have meetings together.",
+    "twitterDescription": "Gather around the table and have meetings together."
   },
   "navigation": {
-    "brand": "Teamteam",
+    "brand": "",
     "home": "Home",
     "login": "Login",
     "logout": "Logout",
@@ -21,11 +21,11 @@
   },
   "home": {
     "title": "Home",
-    "description": "Main page of the Teamteam website",
+    "description": "Main page of the Tacja website",
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome!",
-    "subtitle": "What is Teamteam?",
-    "subdescription": "Join teams and collaborate on projects together!\nTeamteam is a platform where multiple teams come together.",
+    "subtitle": "What is Tacja?",
+    "subdescription": "Gather around the table and have meetings together.\nLogin is optional.",
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
@@ -82,6 +82,9 @@
   },
   "ships": {
     "title": "Teams",
+    "viewMembers": "Members",
+    "memberRequests": "Member Requests",
+    "cabinsManage": "Cabins Manage",
     "createShip": "Create Team",
     "myShips": "My Teams",
     "shipName": "Team Name",
@@ -110,7 +113,6 @@
       "crew": "Crew"
     },
     "manageMembers": "Manage Members",
-    "viewMembers": "View Members",
     "promoteToMechanic": "Promote to Mechanic",
     "demoteToCrew": "Demote to Crew",
     "removeMember": "Remove",
@@ -135,6 +137,8 @@
     "errorLoadingShip": "An error occurred while loading team information.",
     "errorJoiningShip": "An error occurred while joining the team.",
     "confirmLeaveShip": "Are you sure you want to leave this team?",
+    "cannotLeaveAsCaptain": "Captain cannot leave the team. Please transfer captaincy to another mechanic first.",
+    "cannotLeaveAsMechanic": "Mechanics cannot leave the team. Please demote yourself to crew first.",
     "errorLeavingShip": "An error occurred while leaving the team.",
     "confirmDeleteShip": "Are you sure you want to delete this team? This action cannot be undone.",
     "errorDeletingShip": "An error occurred while deleting the team.",
@@ -154,7 +158,6 @@
     "requestMessagePlaceholder": "Briefly explain why you'd like to join this team (optional)",
     "pendingApproval": "Pending Approval",
     "approvalRequired": "This team requires approval for membership",
-    "memberRequests": "Member Requests",
     "approveRequest": "Approve",
     "rejectRequest": "Reject",
     "approveRequestConfirm": "Are you sure you want to approve this application?",
@@ -203,12 +206,14 @@
     "errorDeletingCabin": "An error occurred while deleting the cabin",
     "errorLoadingCabins": "An error occurred while loading cabins",
     "cabinNameRequired": "Please enter a cabin name",
-    "insufficientPermissionsCabin": "Mechanic+ role required"
+    "insufficientPermissionsCabin": "Mechanic+ role required",
+    "errorGeneric": "An error occurred while processing"
   },
   "common": {
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "processing": "Processing..."
   },
   "errors": {
     "auth": {

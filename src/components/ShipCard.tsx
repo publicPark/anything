@@ -5,13 +5,13 @@ import { Ship, ShipMember, Profile, ShipMemberRole } from "@/types/database";
 
 // 스타일 상수 - Tailwind CSS 디자인 토큰 사용
 const ROLE_STYLES = {
-  captain: "bg-destructive/10 text-destructive",
-  mechanic: "bg-info text-info-foreground",
-  crew: "bg-muted text-muted-foreground",
+  captain: "px-2 py-1 text-xs font-medium rounded-full role-captain",
+  mechanic: "px-2 py-1 text-xs font-medium rounded-full role-mechanic",
+  crew: "px-2 py-1 text-xs font-medium rounded-full role-crew",
 } as const;
 
 interface ShipWithDetails extends Ship {
-  members?: (ShipMember & { profile: Profile })[];
+  members?: (ShipMember & { profiles: Profile })[];
   userRole?: ShipMemberRole;
 }
 
@@ -45,11 +45,7 @@ export function ShipCard({
         </h3>
 
         {showUserRole && ship.userRole && (
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              ROLE_STYLES[ship.userRole]
-            }`}
-          >
+          <span className={ROLE_STYLES[ship.userRole]}>
             {t(`ships.roles.${ship.userRole}`)}
           </span>
         )}

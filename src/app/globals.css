@@ -2,51 +2,49 @@
 
 :root {
   /* 기본 색상 - 의미론적 시스템 */
-  --background: #f5f5f5;        /* 연한 회색 배경 (원래 카드색) */
-  --foreground: #171717;        /* 기본 텍스트 */
-  --muted: #f9fafb;            /* 밝은 흰색 배경 (카드, 섹션 등) */
-  --muted-foreground: #737373;  /* 연한 텍스트 */
-  --border: #d1d5db;           /* 테두리 */
-  --input: #ffffff;            /* 입력 필드 배경 */
-  --ring: #6366f1;             /* 포커스 링 */
-  
+  --background: #f5f5f5; /* 연한 회색 배경 (원래 카드색) */
+  --foreground: #171717; /* 기본 텍스트 */
+  --muted: #f9fafb; /* 밝은 흰색 배경 (카드, 섹션 등) */
+  --muted-foreground: #737373; /* 연한 텍스트 */
+  --border: #d1d5db; /* 테두리 */
+  --input: #ffffff; /* 입력 필드 배경 */
+  --ring: #6b7280; /* 포커스 링 - 그레이 톤 */
+
   /* 버튼 색상 */
-  --primary: #3b82f6;          /* 파란색 - 눈에 잘 띄는 색상 */
+  --primary: #374151; /* 다크 그레이 - 메인 컬러 */
   --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #2563eb;    /* 조금 더 어두운 파란색 */
-  --primary-active: #1d4ed8;   /* 더 어두운 파란색 */
-  --secondary: #ffffff;        /* 보조 버튼 배경 */
+  --primary-hover: #1f2937; /* 더 어두운 그레이 */
+  --primary-active: #111827; /* 가장 어두운 그레이 */
+  --secondary: #ffffff; /* 보조 버튼 배경 */
   --secondary-foreground: #171717; /* 보조 버튼 텍스트 */
-  --secondary-hover: #f5f5f5;  /* 보조 버튼 호버 */
+  --secondary-hover: #f5f5f5; /* 보조 버튼 호버 */
   --secondary-active: #e5e5e5; /* 보조 버튼 활성 */
-  --destructive: #dc2626;      /* 위험 버튼 배경 */
+  --destructive: #dc2626; /* 위험 버튼 배경 */
   --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 */
   --destructive-hover: #b91c1c; /* 위험 버튼 호버 */
   --destructive-active: #991b1b; /* 위험 버튼 활성 */
-  
+
   /* 상태별 색상 - 특정 용도로만 사용 */
   --success-100: #d1fae5;
   --success-600: #059669;
   --success-800: #065f46;
-  
+
   --error-100: #fee2e2;
   --error-600: #dc2626;
   --error-800: #991b1b;
-  
+
   --warning-100: #fef3c7;
   --warning-600: #d97706;
   --warning-800: #92400e;
-  
+
   --info-100: #dbeafe;
   --info-600: #2563eb;
   --info-800: #1e40af;
-  
+
   /* 중성 색상 - 라이트모드 */
   --neutral-200: #e5e5e5;
   --neutral-700: #404040;
   --neutral-800: #262626;
-  
-  
 }
 
 @theme inline {
@@ -58,7 +56,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
+
   /* 버튼 색상 */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -72,26 +70,26 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-hover: var(--destructive-hover);
   --color-destructive-active: var(--destructive-active);
-  
+
   /* 폰트 */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   /* Primary Color Variables - 사용하지 않음, 제거 예정 */
 
   /* Secondary Color Variables */
   --color-success-100: var(--success-100);
   --color-success-600: var(--success-600);
   --color-success-800: var(--success-800);
-  
+
   --color-error-100: var(--error-100);
   --color-error-600: var(--error-600);
   --color-error-800: var(--error-800);
-  
+
   --color-warning-100: var(--warning-100);
   --color-warning-600: var(--warning-600);
   --color-warning-800: var(--warning-800);
-  
+
   --color-info-100: var(--info-100);
   --color-info-600: var(--info-600);
   --color-info-800: var(--info-800);
@@ -100,60 +98,74 @@
 /* 다크모드 CSS 변수 */
 .dark {
   /* 기본 색상 - 의미론적 시스템 */
-  --background: #0a0a0a;        /* 어두운 배경 */
-  --foreground: #ededed;        /* 밝은 텍스트 */
-  --muted: #262626;            /* 어두운 연한 배경 */
-  --muted-foreground: #a3a3a3;  /* 연한 텍스트 */
-  --border: #404040;           /* 어두운 테두리 */
-  --input: #171717;            /* 어두운 입력 필드 배경 */
-  --ring: #6366f1;             /* 포커스 링 (동일) */
-  
+  --background: #0a0a0a; /* 어두운 배경 */
+  --foreground: #ededed; /* 밝은 텍스트 */
+  --muted: #262626; /* 어두운 연한 배경 */
+  --muted-foreground: #a3a3a3; /* 연한 텍스트 */
+  --border: #404040; /* 어두운 테두리 */
+  --input: #171717; /* 어두운 입력 필드 배경 */
+  --ring: #9ca3af; /* 포커스 링 - 밝은 그레이 톤 */
+
   /* 버튼 색상 - 다크모드 */
-  --primary: #3b82f6;          /* 파란색 - 눈에 잘 띄는 색상 */
+  --primary: #6b7280; /* 미디엄 그레이 - 다크모드 메인 컬러 */
   --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #2563eb;    /* 조금 더 어두운 파란색 */
-  --primary-active: #1d4ed8;   /* 더 어두운 파란색 */
-  --secondary: #262626;        /* 보조 버튼 배경 */
+  --primary-hover: #4b5563; /* 더 어두운 그레이 */
+  --primary-active: #374151; /* 가장 어두운 그레이 */
+  --secondary: #262626; /* 보조 버튼 배경 */
   --secondary-foreground: #ededed; /* 보조 버튼 텍스트 */
-  --secondary-hover: #404040;  /* 보조 버튼 호버 */
+  --secondary-hover: #404040; /* 보조 버튼 호버 */
   --secondary-active: #525252; /* 보조 버튼 활성 */
-  --destructive: #dc2626;      /* 위험 버튼 배경 (동일) */
+  --destructive: #dc2626; /* 위험 버튼 배경 (동일) */
   --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 (동일) */
   --destructive-hover: #b91c1c; /* 위험 버튼 호버 (동일) */
   --destructive-active: #991b1b; /* 위험 버튼 활성 (동일) */
-  
+
   /* Primary Colors - 다크모드용 (사용하지 않음, 제거 예정) */
-  
+
   /* Success Colors - 다크모드용 */
   --success-100: #064e3b;
   --success-600: #10b981;
   --success-800: #6ee7b7;
-  
+
   /* Error Colors - 다크모드용 */
   --error-100: #7f1d1d;
   --error-600: #ef4444;
   --error-800: #fca5a5;
-  
+
   /* Warning Colors - 다크모드용 */
   --warning-100: #78350f;
   --warning-600: #f59e0b;
   --warning-800: #fcd34d;
-  
+
   /* Info Colors - 다크모드용 */
   --info-100: #1e3a8a;
   --info-600: #3b82f6;
   --info-800: #93c5fd;
-  
+
   /* 중성 색상 - 다크모드 */
   --neutral-200: #262626;
   --neutral-700: #d4d4d4;
   --neutral-800: #e5e5e5;
-  
-  
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 역할별 뱃지 스타일 - 3단계 갈색 팔레트 */
+.role-captain {
+  background-color: #d9cdbf;
+  color: #000000;
+}
+
+.role-mechanic {
+  background-color: #8c5b49;
+  color: #ffffff;
+}
+
+.role-crew {
+  background-color: #593325;
+  color: #ffffff;
 }

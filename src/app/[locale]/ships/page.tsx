@@ -59,10 +59,7 @@ export default function ShipsPage() {
         </h1>
 
         {canCreateShip && (
-          <Button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
+          <Button onClick={() => setShowCreateForm(true)} variant="primary">
             {t("ships.createShip")}
           </Button>
         )}
@@ -105,10 +102,7 @@ export default function ShipsPage() {
               : t("ships.insufficientPermissions")}
           </p>
           {canCreateShip && (
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={() => setShowCreateForm(true)} variant="primary">
               {t("ships.createShip")}
             </Button>
           )}

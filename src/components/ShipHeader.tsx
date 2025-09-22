@@ -22,7 +22,6 @@ interface ShipHeaderProps {
   profile: Profile | null;
   locale: string;
   onJoinShip: (message?: string) => void;
-  onLeaveShip: () => void;
   onDeleteShip: () => void;
   onEditStart: () => void;
   onEditSave: (data: {
@@ -32,12 +31,10 @@ interface ShipHeaderProps {
     member_approval_required: boolean;
   }) => void;
   onEditCancel: () => void;
-  onToggleMemberManagement: () => void;
-  onToggleMemberView: () => void;
-  onToggleCabinManagement: () => void;
   onViewCabins: () => void;
   isJoining: boolean;
   isEditing: boolean;
+  isSaving?: boolean;
   editFormData: {
     name: string;
     description: string;
@@ -60,11 +57,9 @@ const SHIP_STATUS_STYLES = {
 } as const;
 
 const ROLE_STYLES = {
-  captain:
-    "px-3 py-1 text-sm font-medium rounded-full bg-error-100 text-error-800",
-  mechanic:
-    "px-3 py-1 text-sm font-medium rounded-full bg-info-100 text-info-800",
-  crew: "px-3 py-1 text-sm font-medium rounded-full bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
+  captain: "px-3 py-1 text-sm font-medium rounded-full role-captain",
+  mechanic: "px-3 py-1 text-sm font-medium rounded-full role-mechanic",
+  crew: "px-3 py-1 text-sm font-medium rounded-full role-crew",
 } as const;
 
 export function ShipHeader({
@@ -72,17 +67,14 @@ export function ShipHeader({
   profile,
   locale,
   onJoinShip,
-  onLeaveShip,
   onDeleteShip,
   onEditStart,
   onEditSave,
   onEditCancel,
-  onToggleMemberManagement,
-  onToggleMemberView,
-  onToggleCabinManagement,
   onViewCabins,
   isJoining,
   isEditing,
+  isSaving = false,
   editFormData,
   setEditFormData,
 }: ShipHeaderProps) {
@@ -264,7 +256,7 @@ export function ShipHeader({
             )}
           </div>
 
-          {!isEditing && (
+          {/* {!isEditing && (
             <div className="flex items-center space-x-2">
               {ship.member_only && (
                 <span className={SHIP_STATUS_STYLES.memberOnly}>
@@ -277,17 +269,34 @@ export function ShipHeader({
                 </span>
               )}
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between md:flex-row-reverse gap-4">
           <div className="flex flex-wrap gap-2">
             {isEditing ? (
               <>
-                <Button onClick={handleEditSave} variant="primary" size="sm">
-                  {t("ships.save")}
+                <Button
+                  onClick={handleEditSave}
+                  variant="primary"
+                  size="sm"
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <LoadingSpinner size="sm" className="mr-2" />
+                      {t("common.processing")}
+                    </>
+                  ) : (
+                    t("ships.save")
+                  )}
                 </Button>
-                <Button onClick={onEditCancel} variant="secondary" size="sm">
+                <Button
+                  onClick={onEditCancel}
+                  variant="secondary"
+                  size="sm"
+                  disabled={isSaving}
+                >
                   {t("ships.cancel")}
                 </Button>
               </>
@@ -370,52 +379,14 @@ export function ShipHeader({
                       {t(`ships.roles.${ship.userRole}`)}
                     </span>
                   )}
-                  {/* <span>
-                    {t("ships.memberCount", { count: ship.members.length })}
-                  </span> */}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {canManageMembers && (
-                    <Button
-                      onClick={onToggleMemberManagement}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      {t("ships.manageMembers")}
-                    </Button>
-                  )}
 
-                  {canManageMembers && (
+                  {(!ship.member_only || ship.isMember) && (
                     <Button
-                      onClick={onToggleCabinManagement}
+                      onClick={onViewCabins}
                       variant="secondary"
                       size="sm"
                     >
-                      {t("ships.manageCabins")}
-                    </Button>
-                  )}
-
-                  {ship.userRole === "crew" && (
-                    <Button
-                      onClick={onToggleMemberView}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      {t("ships.viewMembers")}
-                    </Button>
-                  )}
-
-                  <Button onClick={onViewCabins} variant="secondary" size="sm">
-                    {t("ships.viewCabins")}
-                  </Button>
-                  {ship.userRole && ship.userRole !== "captain" && (
-                    <Button
-                      onClick={onLeaveShip}
-                      variant="secondary"
-                      size="sm"
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      {t("ships.leave")}
+                      {t("ships.viewCabins")}
                     </Button>
                   )}
                 </div>

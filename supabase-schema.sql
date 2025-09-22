@@ -131,12 +131,30 @@ CREATE POLICY "Gaia+ users can create ships" ON ships
     )
   );
 
--- 3. 배 생성자만 배를 수정/삭제할 수 있음
-CREATE POLICY "Ship creators can update ships" ON ships
-  FOR UPDATE USING (created_by = auth.uid());
+-- 3. 배 생성자, captain, mechanic만 배를 수정할 수 있음
+DROP POLICY IF EXISTS "Ship creators can update ships" ON ships;
+CREATE POLICY "Ship creators and managers can update ships" ON ships
+  FOR UPDATE USING (
+    created_by = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM ship_members 
+      WHERE ship_id = ships.id 
+      AND user_id = auth.uid() 
+      AND role IN ('captain', 'mechanic')
+    )
+  );
 
-CREATE POLICY "Ship creators can delete ships" ON ships
-  FOR DELETE USING (created_by = auth.uid());
+DROP POLICY IF EXISTS "Ship creators can delete ships" ON ships;
+CREATE POLICY "Ship creators and captains can delete ships" ON ships
+  FOR DELETE USING (
+    created_by = auth.uid() OR
+    EXISTS (
+      SELECT 1 FROM ship_members 
+      WHERE ship_id = ships.id 
+      AND user_id = auth.uid() 
+      AND role = 'captain'
+    )
+  );
 
 -- 배 멤버 관련 정책들
 -- 1. 모든 사용자는 배 멤버를 조회할 수 있음
@@ -459,12 +477,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  user_id UUID;
+  current_user_id UUID;
   member_record ship_members;
   updated_member ship_members;
 BEGIN
   -- 현재 사용자 ID 가져오기
-  user_id := auth.uid();
+  current_user_id := auth.uid();
   
   -- 사용자가 로그인되어 있는지 확인
   IF current_user_id IS NULL THEN
@@ -477,12 +495,20 @@ BEGIN
     RAISE EXCEPTION 'Member not found';
   END IF;
   
-  -- 권한 확인 (선장 또는 mechanic)
+  -- 권한 확인
+  -- 1. 선장은 모든 멤버의 역할을 변경할 수 있음
+  -- 2. mechanic은 crew를 mechanic으로 승격하거나, 자신을 crew로 강등할 수 있음
   IF NOT EXISTS (
-    SELECT 1 FROM ship_members
-    WHERE ship_id = member_record.ship_id
-    AND user_id = user_id
-    AND role IN ('captain', 'mechanic')
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = member_record.ship_id
+    AND sm.user_id = current_user_id
+    AND (
+      sm.role = 'captain' OR  -- 선장은 모든 권한
+      (sm.role = 'mechanic' AND (
+        (member_record.role = 'crew' AND new_role = 'mechanic') OR  -- crew를 mechanic으로 승격
+        (member_record.user_id = current_user_id AND member_record.role = 'mechanic' AND new_role = 'crew')  -- 자신을 crew로 강등
+      ))
+    )
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;

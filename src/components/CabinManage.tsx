@@ -42,6 +42,33 @@ export function CabinManage({
 
   const canManageCabins = userRole === "captain" || userRole === "mechanic";
 
+  // 에러 처리 함수
+  const handleError = (err: unknown, defaultMessage: string) => {
+    console.error(defaultMessage, err);
+
+    let message = defaultMessage;
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (err && typeof err === "object") {
+      // Supabase 에러 객체 처리
+      const errorObj = err as any;
+      if (errorObj.message) {
+        message = errorObj.message;
+      } else if (errorObj.error?.message) {
+        message = errorObj.error.message;
+      } else if (errorObj.details) {
+        message = errorObj.details;
+      } else if (errorObj.hint) {
+        message = errorObj.hint;
+      }
+    } else if (typeof err === "string") {
+      message = err;
+    }
+
+    setError(message);
+  };
+
   useEffect(() => {
     if (canManageCabins) {
       fetchCabins();
@@ -66,8 +93,7 @@ export function CabinManage({
 
       setCabins(data || []);
     } catch (err: any) {
-      console.error("Failed to fetch cabins:", err);
-      setError(err.message || t("ships.errorLoadingCabins"));
+      handleError(err, t("ships.errorLoadingCabins"));
     } finally {
       setLoading(false);
     }
@@ -101,8 +127,7 @@ export function CabinManage({
       setShowCreateForm(false);
       onCabinCreated?.(data);
     } catch (err: any) {
-      console.error("Failed to create cabin:", err);
-      setError(err.message || t("ships.errorCreatingCabin"));
+      handleError(err, t("ships.errorCreatingCabin"));
     } finally {
       setSubmitting(false);
     }
@@ -138,8 +163,7 @@ export function CabinManage({
       setFormData({ name: "", description: "" });
       onCabinUpdated?.(data);
     } catch (err: any) {
-      console.error("Failed to update cabin:", err);
-      setError(err.message || t("ships.errorUpdatingCabin"));
+      handleError(err, t("ships.errorUpdatingCabin"));
     } finally {
       setSubmitting(false);
     }
@@ -165,8 +189,7 @@ export function CabinManage({
       setCabins((prev) => prev.filter((cabin) => cabin.id !== cabinId));
       onCabinDeleted?.(cabinId);
     } catch (err: any) {
-      console.error("Failed to delete cabin:", err);
-      setError(err.message || t("ships.errorDeletingCabin"));
+      handleError(err, t("ships.errorDeletingCabin"));
     }
   };
 
@@ -215,7 +238,7 @@ export function CabinManage({
         </h3>
         <Button
           onClick={() => setShowCreateForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          variant="primary"
           disabled={editingCabin !== null}
         >
           {t("ships.createCabin")}
@@ -275,17 +298,13 @@ export function CabinManage({
               />
             </div>
             <div className="flex gap-2">
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
+              <Button type="submit" disabled={submitting} variant="primary">
                 {submitting ? t("common.loading") : t("ships.save")}
               </Button>
               <Button
                 type="button"
                 onClick={editingCabin ? handleEditCancel : handleCreateCancel}
-                className="bg-gray-600 hover:bg-gray-700 text-white"
+                variant="secondary"
               >
                 {t("ships.cancel")}
               </Button>
@@ -299,10 +318,7 @@ export function CabinManage({
         {cabins.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">{t("ships.noCabins")}</p>
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={() => setShowCreateForm(true)} variant="primary">
               {t("ships.createFirstCabin")}
             </Button>
           </div>
@@ -329,14 +345,16 @@ export function CabinManage({
                 <div className="flex gap-2 ml-4">
                   <Button
                     onClick={() => handleEditStart(cabin)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white text-sm"
+                    variant="secondary"
+                    size="sm"
                     disabled={showCreateForm || editingCabin !== null}
                   >
                     {t("ships.editCabin")}
                   </Button>
                   <Button
                     onClick={() => handleDeleteCabin(cabin.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white text-sm"
+                    variant="destructive"
+                    size="sm"
                     disabled={showCreateForm || editingCabin !== null}
                   >
                     {t("ships.deleteCabin")}

@@ -1,5 +1,5 @@
 export type UserRole = "titan" | "gaia" | "chaos";
-export type ShipMemberRole = "captain" | "navigator" | "crew";
+export type ShipMemberRole = "captain" | "mechanic" | "crew";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 // 확장된 타입들

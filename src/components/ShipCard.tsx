@@ -6,7 +6,7 @@ import { Ship, ShipMember, Profile, ShipMemberRole } from "@/types/database";
 // 스타일 상수 - Tailwind CSS 디자인 토큰 사용
 const ROLE_STYLES = {
   captain: "bg-destructive/10 text-destructive",
-  navigator: "bg-info text-info-foreground",
+  mechanic: "bg-info text-info-foreground",
   crew: "bg-muted text-muted-foreground",
 } as const;
 

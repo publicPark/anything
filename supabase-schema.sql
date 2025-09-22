@@ -5,7 +5,7 @@
 -- 실행 순서: 1. 테이블 생성 → 2. 함수 생성 → 3. 트리거 생성 → 4. 정책 설정
 -- 
 -- 사용자 역할: titan (기본), gaia (프리미엄), chaos (관리자)
--- 배 멤버 역할: captain (선장), navigator (항해사), crew (선원)
+-- 배 멤버 역할: captain (선장), mechanic (정비사), crew (선원)
 
 -- ==============================================
 -- 1. ENUMS & TYPES
@@ -15,7 +15,7 @@
 CREATE TYPE user_role AS ENUM ('titan', 'gaia', 'chaos');
 
 -- 배 멤버 역할 열거형
-CREATE TYPE ship_member_role AS ENUM ('captain', 'navigator', 'crew');
+CREATE TYPE ship_member_role AS ENUM ('captain', 'mechanic', 'crew');
 
 -- 멤버 승인 요청 상태 열거형
 CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected');
@@ -135,14 +135,14 @@ CREATE POLICY "Anyone can view ship members" ON ship_members
 CREATE POLICY "Anyone can join ships" ON ship_members
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- 3. 선장과 항해사는 멤버를 관리할 수 있음
-CREATE POLICY "Captains and navigators can manage members" ON ship_members
+-- 3. 선장과 mechanic은 멤버를 관리할 수 있음
+CREATE POLICY "Captains and mechanics can manage members" ON ship_members
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_members.ship_id
       AND sm.user_id = auth.uid()
-      AND sm.role IN ('captain', 'navigator')
+      AND sm.role IN ('captain', 'mechanic')
     )
   );
 
@@ -166,7 +166,7 @@ CREATE POLICY "Users can view member requests" ON ship_member_requests
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_member_requests.ship_id
       AND sm.user_id = auth.uid()
-      AND sm.role IN ('captain', 'navigator')
+      AND sm.role IN ('captain', 'mechanic')
     )
   );
 
@@ -174,25 +174,25 @@ CREATE POLICY "Users can view member requests" ON ship_member_requests
 CREATE POLICY "Users can create member requests" ON ship_member_requests
   FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- 3. 선장과 항해사는 승인 요청을 수정할 수 있음 (승인/거부)
-CREATE POLICY "Captains and navigators can update member requests" ON ship_member_requests
+-- 3. 선장과 mechanic은 승인 요청을 수정할 수 있음 (승인/거부)
+CREATE POLICY "Captains and mechanics can update member requests" ON ship_member_requests
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_member_requests.ship_id
       AND sm.user_id = auth.uid()
-      AND sm.role IN ('captain', 'navigator')
+      AND sm.role IN ('captain', 'mechanic')
     )
   );
 
--- 4. 선장과 항해사는 승인 요청을 삭제할 수 있음
-CREATE POLICY "Captains and navigators can delete member requests" ON ship_member_requests
+-- 4. 선장과 mechanic은 승인 요청을 삭제할 수 있음
+CREATE POLICY "Captains and mechanics can delete member requests" ON ship_member_requests
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_member_requests.ship_id
       AND sm.user_id = auth.uid()
-      AND sm.role IN ('captain', 'navigator')
+      AND sm.role IN ('captain', 'mechanic')
     )
   );
 
@@ -427,12 +427,12 @@ BEGIN
     RAISE EXCEPTION 'Member not found';
   END IF;
   
-  -- 권한 확인 (선장 또는 항해사)
+  -- 권한 확인 (선장 또는 mechanic)
   IF NOT EXISTS (
-    SELECT 1 FROM ship_members 
-    WHERE ship_id = member_record.ship_id 
-    AND user_id = user_id 
-    AND role IN ('captain', 'navigator')
+    SELECT 1 FROM ship_members
+    WHERE ship_id = member_record.ship_id
+    AND user_id = user_id
+    AND role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -485,7 +485,7 @@ BEGIN
     SELECT 1 FROM ship_members sm
     WHERE sm.ship_id = request_record.ship_id 
     AND sm.user_id = current_user_id 
-    AND sm.role IN ('captain', 'navigator')
+    AND sm.role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -551,7 +551,7 @@ BEGIN
     SELECT 1 FROM ship_members sm
     WHERE sm.ship_id = request_record.ship_id 
     AND sm.user_id = current_user_id 
-    AND sm.role IN ('captain', 'navigator')
+    AND sm.role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -607,7 +607,7 @@ BEGIN
     SELECT 1 FROM ship_members sm
     WHERE sm.ship_id = request_record.ship_id 
     AND sm.user_id = current_user_id 
-    AND sm.role IN ('captain', 'navigator')
+    AND sm.role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -661,7 +661,7 @@ BEGIN
     SELECT 1 FROM ship_members sm
     WHERE sm.ship_id = request_record.ship_id 
     AND sm.user_id = current_user_id 
-    AND sm.role IN ('captain', 'navigator')
+    AND sm.role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -707,7 +707,7 @@ BEGIN
     SELECT 1 FROM ship_members sm
     WHERE sm.ship_id = ship_uuid 
     AND sm.user_id = current_user_id 
-    AND sm.role IN ('captain', 'navigator')
+    AND sm.role IN ('captain', 'mechanic')
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
@@ -759,9 +759,9 @@ BEGIN
     RAISE EXCEPTION 'Member not found';
   END IF;
   
-  -- 새 선장이 항해사인지 확인
-  IF new_captain_record.role != 'navigator' THEN
-    RAISE EXCEPTION 'Only navigators can be promoted to captain';
+  -- 새 선장이 mechanic인지 확인
+  IF new_captain_record.role != 'mechanic' THEN
+    RAISE EXCEPTION 'Only mechanics can be promoted to captain';
   END IF;
   
   -- 현재 사용자가 선장인지 확인
@@ -783,9 +783,9 @@ BEGIN
     WHERE id = new_captain_member_uuid
     RETURNING * INTO updated_member;
     
-    -- 현재 선장을 항해사로 변경
-    UPDATE ship_members 
-    SET role = 'navigator' 
+    -- 현재 선장을 mechanic으로 변경
+    UPDATE ship_members
+    SET role = 'mechanic'
     WHERE id = current_captain_record.id;
     
     RETURN updated_member;

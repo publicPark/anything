@@ -125,7 +125,7 @@ src/
 
 - 배 생성, 수정, 삭제 (gaia, chaos 권한 필요)
 - 멤버 가입 시스템 (승인 필요/불필요 설정 가능)
-- 멤버 역할 관리 (captain, navigator, crew)
+- 멤버 역할 관리 (captain, mechanic, crew)
 - 실시간 멤버 요청 관리
 
 ### 상태 관리

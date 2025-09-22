@@ -4,7 +4,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { MemberItem } from "@/components/MemberItem";
 import { ShipMember, Profile } from "@/types/database";
 
-type ShipMemberRole = "captain" | "navigator" | "crew";
+type ShipMemberRole = "captain" | "mechanic" | "crew";
 
 interface MemberListProps {
   members: (ShipMember & { profile: Profile })[];
@@ -12,7 +12,7 @@ interface MemberListProps {
   showMemberManagement: boolean;
   showMemberView: boolean;
   userRole: ShipMemberRole | undefined;
-  onPromoteToNavigator: (memberId: string) => void;
+  onPromoteToMechanic: (memberId: string) => void;
   onDemoteToCrew: (memberId: string) => void;
   onTransferCaptaincy: (memberId: string, memberName: string) => void;
   onRemoveMember: (memberId: string) => void;
@@ -24,7 +24,7 @@ export function MemberList({
   showMemberManagement,
   showMemberView,
   userRole,
-  onPromoteToNavigator,
+  onPromoteToMechanic,
   onDemoteToCrew,
   onTransferCaptaincy,
   onRemoveMember,
@@ -32,7 +32,7 @@ export function MemberList({
   const { t } = useI18n();
 
   // 권한별 관리 가능 여부 결정
-  const canManageMembers = userRole === "captain" || userRole === "navigator";
+  const canManageMembers = userRole === "captain" || userRole === "mechanic";
   const canTransferCaptaincy = userRole === "captain";
 
   if (!showMemberManagement && !showMemberView) {
@@ -57,8 +57,8 @@ export function MemberList({
           if (userRole === "captain") {
             // 선장은 모든 멤버 관리 가능 (자신 제외)
             canManageThisMember = member.user_id !== currentUserId;
-          } else if (userRole === "navigator") {
-            // 항해사는 선원만 관리 가능 (자신, 다른 항해사, 선장 제외)
+          } else if (userRole === "mechanic") {
+            // mechanic은 선원만 관리 가능 (자신, 다른 mechanic, 선장 제외)
             canManageThisMember =
               member.role === "crew" && member.user_id !== currentUserId;
           }
@@ -71,7 +71,7 @@ export function MemberList({
               showManagement={showMemberManagement}
               canManage={canManageThisMember}
               canTransferCaptaincy={canTransferCaptaincy}
-              onPromoteToNavigator={onPromoteToNavigator}
+              onPromoteToMechanic={onPromoteToMechanic}
               onDemoteToCrew={onDemoteToCrew}
               onTransferCaptaincy={onTransferCaptaincy}
               onRemoveMember={onRemoveMember}

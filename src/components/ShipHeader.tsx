@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { JoinRequestModal } from "@/components/JoinRequestModal";
 import { Ship, ShipMember, Profile } from "@/types/database";
 
-type ShipMemberRole = "captain" | "navigator" | "crew";
+type ShipMemberRole = "captain" | "mechanic" | "crew";
 
 interface ShipWithDetails extends Ship {
   members: (ShipMember & { profile: Profile })[];
@@ -60,7 +60,7 @@ const SHIP_STATUS_STYLES = {
 const ROLE_STYLES = {
   captain:
     "px-3 py-1 text-sm font-medium rounded-full bg-error-100 text-error-800",
-  navigator:
+  mechanic:
     "px-3 py-1 text-sm font-medium rounded-full bg-info-100 text-info-800",
   crew: "px-3 py-1 text-sm font-medium rounded-full bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200",
 } as const;
@@ -86,9 +86,9 @@ export function ShipHeader({
   const [showJoinRequestModal, setShowJoinRequestModal] = useState(false);
 
   const canManageMembers =
-    ship?.userRole === "captain" || ship?.userRole === "navigator";
+    ship?.userRole === "captain" || ship?.userRole === "mechanic";
   const canEditShip =
-    ship?.userRole === "captain" || ship?.userRole === "navigator";
+    ship?.userRole === "captain" || ship?.userRole === "mechanic";
   const canDeleteShip = ship?.userRole === "captain";
 
   // member_only 배 접근 제어
@@ -315,7 +315,9 @@ export function ShipHeader({
                 ) : (
                   <Button
                     onClick={
-                      profile && !ship.hasPendingRequest && !ship.hasRejectedRequest
+                      profile &&
+                      !ship.hasPendingRequest &&
+                      !ship.hasRejectedRequest
                         ? handleJoinClick
                         : () => {
                             const currentPath = window.location.pathname;
@@ -324,7 +326,11 @@ export function ShipHeader({
                             )}`;
                           }
                     }
-                    disabled={isJoining || ship.hasPendingRequest || ship.hasRejectedRequest}
+                    disabled={
+                      isJoining ||
+                      ship.hasPendingRequest ||
+                      ship.hasRejectedRequest
+                    }
                     className={
                       ship.hasPendingRequest || ship.hasRejectedRequest
                         ? "bg-muted text-muted-foreground cursor-not-allowed"

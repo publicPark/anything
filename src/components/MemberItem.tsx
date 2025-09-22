@@ -4,7 +4,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { ShipMember, Profile } from "@/types/database";
 
-type ShipMemberRole = "captain" | "navigator" | "crew";
+type ShipMemberRole = "captain" | "mechanic" | "crew";
 
 interface MemberItemProps {
   member: ShipMember & { profile: Profile };
@@ -12,7 +12,7 @@ interface MemberItemProps {
   showManagement: boolean;
   canManage: boolean;
   canTransferCaptaincy: boolean;
-  onPromoteToNavigator: (memberId: string) => void;
+  onPromoteToMechanic: (memberId: string) => void;
   onDemoteToCrew: (memberId: string) => void;
   onTransferCaptaincy: (memberId: string, memberName: string) => void;
   onRemoveMember: (memberId: string) => void;
@@ -24,7 +24,7 @@ export function MemberItem({
   showManagement,
   canManage,
   canTransferCaptaincy,
-  onPromoteToNavigator,
+  onPromoteToMechanic,
   onDemoteToCrew,
   onTransferCaptaincy,
   onRemoveMember,
@@ -57,7 +57,7 @@ export function MemberItem({
               className={`px-2 py-1 text-xs font-medium rounded-full ${
                 member.role === "captain"
                   ? "bg-error-100 text-error-800"
-                  : member.role === "navigator"
+                  : member.role === "mechanic"
                   ? "bg-info-100 text-info-800"
                   : "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200"
               }`}
@@ -74,17 +74,17 @@ export function MemberItem({
           {/* 승격 버튼: 선원을 항해사로 승격 (선장만 가능) */}
           {member.role === "crew" && canTransferCaptaincy && (
             <Button
-              onClick={() => onPromoteToNavigator(member.id)}
+              onClick={() => onPromoteToMechanic(member.id)}
               size="sm"
               variant="secondary"
               className="w-full sm:w-auto whitespace-nowrap"
             >
-              {t("ships.promoteToNavigator")}
+              {t("ships.promoteToMechanic")}
             </Button>
           )}
 
-          {/* 선장 양도 버튼: 항해사를 선장으로 승격 (선장만 가능) */}
-          {member.role === "navigator" && canTransferCaptaincy && (
+          {/* 선장 양도 버튼: mechanic을 선장으로 승격 (선장만 가능) */}
+          {member.role === "mechanic" && canTransferCaptaincy && (
             <Button
               onClick={() => onTransferCaptaincy(member.id, memberName)}
               size="sm"
@@ -95,8 +95,8 @@ export function MemberItem({
             </Button>
           )}
 
-          {/* 강등 버튼: 항해사를 선원으로 강등 (선장만 가능) */}
-          {member.role === "navigator" && canTransferCaptaincy && (
+          {/* 강등 버튼: mechanic을 선원으로 강등 (선장만 가능) */}
+          {member.role === "mechanic" && canTransferCaptaincy && (
             <Button
               onClick={() => onDemoteToCrew(member.id)}
               size="sm"

@@ -172,10 +172,10 @@ export default function ShipDetailPage() {
         hasRejectedRequest,
       });
 
-      // 승인 요청 가져오기 (선장 또는 항해사만)
+      // 승인 요청 가져오기 (선장 또는 mechanic만)
       if (
         userMembership?.role === "captain" ||
-        userMembership?.role === "navigator"
+        userMembership?.role === "mechanic"
       ) {
         await fetchMemberRequests(shipData.id);
         await fetchRejectedRequests(shipData.id);
@@ -724,16 +724,16 @@ export default function ShipDetailPage() {
         showMemberManagement={showMemberManagement}
         showMemberView={showMemberView}
         userRole={ship.userRole}
-        onPromoteToNavigator={(memberId) =>
-          handleChangeRole(memberId, "navigator")
+        onPromoteToMechanic={(memberId) =>
+          handleChangeRole(memberId, "mechanic")
         }
         onDemoteToCrew={(memberId) => handleChangeRole(memberId, "crew")}
         onTransferCaptaincy={handleTransferCaptaincy}
         onRemoveMember={handleRemoveMember}
       />
 
-      {/* 승인 요청 목록 (선장/항해사만 볼 수 있음) */}
-      {(ship.userRole === "captain" || ship.userRole === "navigator") && (
+      {/* 승인 요청 목록 (선장/mechanic만 볼 수 있음) */}
+      {(ship.userRole === "captain" || ship.userRole === "mechanic") && (
         <>
           {/* 대기 중인 요청이 있으면 항상 보이고, 없으면 멤버 관리 버튼을 눌렀을 때만 보임 */}
           {(memberRequests.length > 0 || showMemberManagement) && (

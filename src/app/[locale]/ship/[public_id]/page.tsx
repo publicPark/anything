@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
+import { CabinManage } from "@/components/CabinManage";
 import {
   Ship,
   ShipMember,
@@ -44,6 +45,7 @@ export default function ShipDetailPage() {
   const [isJoining, setIsJoining] = useState(false);
   const [showMemberManagement, setShowMemberManagement] = useState(false);
   const [showMemberView, setShowMemberView] = useState(false);
+  const [showCabinManagement, setShowCabinManagement] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: "",
@@ -712,6 +714,12 @@ export default function ShipDetailPage() {
           setShowMemberManagement(!showMemberManagement)
         }
         onToggleMemberView={() => setShowMemberView(!showMemberView)}
+        onToggleCabinManagement={() =>
+          setShowCabinManagement(!showCabinManagement)
+        }
+        onViewCabins={() =>
+          router.push(`/${locale}/ship/${shipPublicId}/cabins`)
+        }
         isJoining={isJoining}
         isEditing={isEditing}
         editFormData={editFormData}
@@ -750,6 +758,12 @@ export default function ShipDetailPage() {
           )}
         </>
       )}
+
+      {/* 객실 관리 (mechanic 이상만 볼 수 있음) */}
+      {(ship.userRole === "captain" || ship.userRole === "mechanic") &&
+        showCabinManagement && (
+          <CabinManage shipId={ship.id} userRole={ship.userRole} />
+        )}
     </div>
   );
 }

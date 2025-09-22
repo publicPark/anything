@@ -56,6 +56,16 @@ export interface ShipMemberRequest {
   review_message: string | null;
 }
 
+export interface ShipCabin {
+  id: string;
+  ship_id: string;
+  name: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -88,6 +98,11 @@ export interface Database {
             "id" | "requested_at" | "reviewed_at" | "reviewed_by"
           >
         >;
+      };
+      ship_cabins: {
+        Row: ShipCabin;
+        Insert: Omit<ShipCabin, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<ShipCabin, "id" | "created_at" | "updated_at">>;
       };
     };
     Functions: {
@@ -146,6 +161,28 @@ export interface Database {
           new_role: ShipMemberRole;
         };
         Returns: ShipMember;
+      };
+      create_ship_cabin: {
+        Args: {
+          ship_uuid: string;
+          cabin_name: string;
+          cabin_description?: string;
+        };
+        Returns: ShipCabin;
+      };
+      update_ship_cabin: {
+        Args: {
+          cabin_uuid: string;
+          cabin_name: string;
+          cabin_description?: string;
+        };
+        Returns: ShipCabin;
+      };
+      delete_ship_cabin: {
+        Args: {
+          cabin_uuid: string;
+        };
+        Returns: boolean;
       };
     };
   };

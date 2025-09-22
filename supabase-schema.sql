@@ -71,6 +71,17 @@ CREATE TABLE ship_member_requests (
   UNIQUE(ship_id, user_id)
 );
 
+-- 배 객실 테이블
+CREATE TABLE ship_cabins (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ==============================================
 -- 3. ROW LEVEL SECURITY (RLS)
 -- ==============================================
@@ -80,6 +91,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_member_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ship_cabins ENABLE ROW LEVEL SECURITY;
 
 -- 프로필 조회 정책
 -- 1. 자신의 프로필 조회 가능
@@ -191,6 +203,44 @@ CREATE POLICY "Captains and mechanics can delete member requests" ON ship_member
     EXISTS (
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_member_requests.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 배 객실 관련 정책들
+-- 1. 모든 사용자는 객실을 조회할 수 있음
+CREATE POLICY "Anyone can view ship cabins" ON ship_cabins
+  FOR SELECT USING (true);
+
+-- 2. mechanic 이상의 사용자만 객실을 생성할 수 있음
+CREATE POLICY "Mechanics+ can create ship cabins" ON ship_cabins
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_cabins.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 3. mechanic 이상의 사용자만 객실을 수정할 수 있음
+CREATE POLICY "Mechanics+ can update ship cabins" ON ship_cabins
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_cabins.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 4. mechanic 이상의 사용자만 객실을 삭제할 수 있음
+CREATE POLICY "Mechanics+ can delete ship cabins" ON ship_cabins
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_cabins.ship_id
       AND sm.user_id = auth.uid()
       AND sm.role IN ('captain', 'mechanic')
     )
@@ -731,6 +781,140 @@ BEGIN
 END;
 $$;
 
+-- 객실 생성 함수
+CREATE OR REPLACE FUNCTION create_ship_cabin(
+  ship_uuid UUID,
+  cabin_name TEXT,
+  cabin_description TEXT DEFAULT NULL
+)
+RETURNS ship_cabins
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  new_cabin ship_cabins;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 권한 확인 (mechanic 이상)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = ship_uuid 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'mechanic')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
+  END IF;
+  
+  -- 객실 생성
+  INSERT INTO ship_cabins (ship_id, name, description, created_by)
+  VALUES (ship_uuid, cabin_name, cabin_description, current_user_id)
+  RETURNING * INTO new_cabin;
+  
+  RETURN new_cabin;
+END;
+$$;
+
+-- 객실 수정 함수
+CREATE OR REPLACE FUNCTION update_ship_cabin(
+  cabin_uuid UUID,
+  cabin_name TEXT,
+  cabin_description TEXT DEFAULT NULL
+)
+RETURNS ship_cabins
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  cabin_record ship_cabins;
+  updated_cabin ship_cabins;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 객실 정보 조회
+  SELECT * INTO cabin_record FROM ship_cabins WHERE id = cabin_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cabin not found';
+  END IF;
+  
+  -- 권한 확인 (mechanic 이상)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = cabin_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'mechanic')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
+  END IF;
+  
+  -- 객실 수정
+  UPDATE ship_cabins 
+  SET name = cabin_name, 
+      description = cabin_description
+  WHERE id = cabin_uuid
+  RETURNING * INTO updated_cabin;
+  
+  RETURN updated_cabin;
+END;
+$$;
+
+-- 객실 삭제 함수
+CREATE OR REPLACE FUNCTION delete_ship_cabin(
+  cabin_uuid UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  cabin_record ship_cabins;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 사용자가 로그인되어 있는지 확인
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User not authenticated';
+  END IF;
+  
+  -- 객실 정보 조회
+  SELECT * INTO cabin_record FROM ship_cabins WHERE id = cabin_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cabin not found';
+  END IF;
+  
+  -- 권한 확인 (mechanic 이상)
+  IF NOT EXISTS (
+    SELECT 1 FROM ship_members sm
+    WHERE sm.ship_id = cabin_record.ship_id 
+    AND sm.user_id = current_user_id 
+    AND sm.role IN ('captain', 'mechanic')
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
+  END IF;
+  
+  -- 객실 삭제
+  DELETE FROM ship_cabins WHERE id = cabin_uuid;
+  
+  RETURN TRUE;
+END;
+$$;
+
 -- 선장 양도 함수
 CREATE OR REPLACE FUNCTION transfer_captaincy(
   new_captain_member_uuid UUID
@@ -811,6 +995,11 @@ CREATE TRIGGER update_ships_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_ship_cabins_updated_at
+  BEFORE UPDATE ON ship_cabins
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- 사용자명 중복 체크 트리거
 CREATE TRIGGER check_username_unique_trigger
   BEFORE INSERT OR UPDATE ON profiles
@@ -836,3 +1025,6 @@ GRANT EXECUTE ON FUNCTION change_member_role(UUID, ship_member_role) TO authenti
 GRANT EXECUTE ON FUNCTION transfer_captaincy(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION approve_member_request(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION reject_member_request(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_ship_cabin(UUID, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION update_ship_cabin(UUID, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_ship_cabin(UUID) TO authenticated;

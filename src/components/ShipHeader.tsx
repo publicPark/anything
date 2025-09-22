@@ -34,6 +34,8 @@ interface ShipHeaderProps {
   onEditCancel: () => void;
   onToggleMemberManagement: () => void;
   onToggleMemberView: () => void;
+  onToggleCabinManagement: () => void;
+  onViewCabins: () => void;
   isJoining: boolean;
   isEditing: boolean;
   editFormData: {
@@ -77,6 +79,8 @@ export function ShipHeader({
   onEditCancel,
   onToggleMemberManagement,
   onToggleMemberView,
+  onToggleCabinManagement,
+  onViewCabins,
   isJoining,
   isEditing,
   editFormData,
@@ -381,6 +385,16 @@ export function ShipHeader({
                     </Button>
                   )}
 
+                  {canManageMembers && (
+                    <Button
+                      onClick={onToggleCabinManagement}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      {t("ships.manageCabins")}
+                    </Button>
+                  )}
+
                   {ship.userRole === "crew" && (
                     <Button
                       onClick={onToggleMemberView}
@@ -390,6 +404,10 @@ export function ShipHeader({
                       {t("ships.viewMembers")}
                     </Button>
                   )}
+
+                  <Button onClick={onViewCabins} variant="secondary" size="sm">
+                    {t("ships.viewCabins")}
+                  </Button>
                   {ship.userRole && ship.userRole !== "captain" && (
                     <Button
                       onClick={onLeaveShip}

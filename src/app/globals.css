@@ -8,38 +8,38 @@
   --muted-foreground: #737373; /* 연한 텍스트 */
   --border: #d1d5db; /* 테두리 */
   --input: #ffffff; /* 입력 필드 배경 */
-  --ring: #6b7280; /* 포커스 링 - 그레이 톤 */
+  --ring: #29d967; /* 포커스 링 - 메인 컬러 */
 
   /* 버튼 색상 */
-  --primary: #374151; /* 다크 그레이 - 메인 컬러 */
-  --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #1f2937; /* 더 어두운 그레이 */
-  --primary-active: #111827; /* 가장 어두운 그레이 */
+  --primary: #29d967; /* 메인 컬러 */
+  --primary-foreground: #000000; /* 메인 컬러 반대색상 - 검정색 */
+  --primary-hover: #24c25a; /* 더 어두운 메인 컬러 */
+  --primary-active: #1fab4d; /* 가장 어두운 메인 컬러 */
   --secondary: #ffffff; /* 보조 버튼 배경 */
-  --secondary-foreground: #171717; /* 보조 버튼 텍스트 */
+  --secondary-foreground: var(--foreground); /* 보조 버튼 텍스트 */
   --secondary-hover: #f5f5f5; /* 보조 버튼 호버 */
   --secondary-active: #e5e5e5; /* 보조 버튼 활성 */
-  --destructive: #dc2626; /* 위험 버튼 배경 */
-  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 */
-  --destructive-hover: #b91c1c; /* 위험 버튼 호버 */
-  --destructive-active: #991b1b; /* 위험 버튼 활성 */
+  --destructive: #d94b2b; /* 위험 버튼 배경 */
+  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 - 검정색 */
+  --destructive-hover: #b83e24; /* 위험 버튼 호버 */
+  --destructive-active: #9a331e; /* 위험 버튼 활성 */
 
-  /* 상태별 색상 - 특정 용도로만 사용 */
+  /* 상태별 색상 - 새로운 팔레트 */
   --success-100: #d1fae5;
-  --success-600: #059669;
-  --success-800: #065f46;
+  --success-600: #8fd9b6;
+  --success-800: #6bc49a;
 
   --error-100: #fee2e2;
-  --error-600: #dc2626;
-  --error-800: #991b1b;
+  --error-600: #d94b2b;
+  --error-800: #b83e24;
 
   --warning-100: #fef3c7;
-  --warning-600: #d97706;
-  --warning-800: #92400e;
+  --warning-600: #f2d022;
+  --warning-800: #d4a043;
 
   --info-100: #dbeafe;
-  --info-600: #2563eb;
-  --info-800: #1e40af;
+  --info-600: #36bbd9;
+  --info-800: #7d4fb0;
 
   /* 중성 색상 - 라이트모드 */
   --neutral-200: #e5e5e5;
@@ -104,42 +104,42 @@
   --muted-foreground: #a3a3a3; /* 연한 텍스트 */
   --border: #404040; /* 어두운 테두리 */
   --input: #171717; /* 어두운 입력 필드 배경 */
-  --ring: #9ca3af; /* 포커스 링 - 밝은 그레이 톤 */
+  --ring: #29d967; /* 포커스 링 - 메인 컬러 */
 
   /* 버튼 색상 - 다크모드 */
-  --primary: #6b7280; /* 미디엄 그레이 - 다크모드 메인 컬러 */
-  --primary-foreground: #ffffff; /* 흰색 텍스트 */
-  --primary-hover: #4b5563; /* 더 어두운 그레이 */
-  --primary-active: #374151; /* 가장 어두운 그레이 */
+  --primary: #29d967; /* 메인 컬러 */
+  --primary-foreground: #000000; /* 메인 컬러 반대색상 - 검정색 */
+  --primary-hover: #24c25a; /* 더 어두운 메인 컬러 */
+  --primary-active: #1fab4d; /* 가장 어두운 메인 컬러 */
   --secondary: #262626; /* 보조 버튼 배경 */
-  --secondary-foreground: #ededed; /* 보조 버튼 텍스트 */
+  --secondary-foreground: var(--foreground); /* 보조 버튼 텍스트 */
   --secondary-hover: #404040; /* 보조 버튼 호버 */
   --secondary-active: #525252; /* 보조 버튼 활성 */
-  --destructive: #dc2626; /* 위험 버튼 배경 (동일) */
-  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 (동일) */
-  --destructive-hover: #b91c1c; /* 위험 버튼 호버 (동일) */
-  --destructive-active: #991b1b; /* 위험 버튼 활성 (동일) */
+  --destructive: #d94b2b; /* 위험 버튼 배경 */
+  --destructive-foreground: #000000; /* 위험 버튼 텍스트 - 검정색 */
+  --destructive-hover: #b83e24; /* 위험 버튼 호버 */
+  --destructive-active: #9a331e; /* 위험 버튼 활성 */
 
   /* Primary Colors - 다크모드용 (사용하지 않음, 제거 예정) */
 
   /* Success Colors - 다크모드용 */
   --success-100: #064e3b;
-  --success-600: #10b981;
+  --success-600: #8fd9b6;
   --success-800: #6ee7b7;
 
   /* Error Colors - 다크모드용 */
   --error-100: #7f1d1d;
-  --error-600: #ef4444;
+  --error-600: #d94b2b;
   --error-800: #fca5a5;
 
   /* Warning Colors - 다크모드용 */
   --warning-100: #78350f;
-  --warning-600: #f59e0b;
+  --warning-600: #f2d022;
   --warning-800: #fcd34d;
 
   /* Info Colors - 다크모드용 */
   --info-100: #1e3a8a;
-  --info-600: #3b82f6;
+  --info-600: #36bbd9;
   --info-800: #93c5fd;
 
   /* 중성 색상 - 다크모드 */
@@ -154,18 +154,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* 역할별 뱃지 스타일 - 3단계 갈색 팔레트 */
+/* 역할별 뱃지 스타일 - 새로운 색상 팔레트 */
 .role-captain {
-  background-color: #d9cdbf;
+  background-color: #f2bbc5; /* 선장 - 기본 핑크색 */
   color: #000000;
 }
 
 .role-mechanic {
-  background-color: #8c5b49;
-  color: #ffffff;
+  background-color: #e6a5b0; /* 수리공 - 어두운 핑크색 */
+  color: #000000;
 }
 
 .role-crew {
-  background-color: #593325;
-  color: #ffffff;
+  background-color: #d98f9b; /* 선원 - 가장 어두운 핑크색 */
+  color: #000000;
 }

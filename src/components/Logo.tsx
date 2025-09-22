@@ -32,91 +32,83 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* 중앙 큰 원 */}
+          {/* 중앙 큰 원 - 메인 컬러 (초록색) */}
           <circle
             cx="12"
             cy="12"
             r="6"
-            fill="#374151"
-            stroke="#1f2937"
+            fill="#29d967"
+            stroke="#1fab4d"
             strokeWidth="0.5"
-            className="dark:fill-gray-500 dark:stroke-gray-600"
           />
 
-          {/* 왼쪽 위 작은 원 */}
+          {/* 왼쪽 위 작은 원 - role 컬러 (핑크색) */}
           <circle
             cx="6"
             cy="6"
             r="3"
-            fill="#6b7280"
-            stroke="#374151"
+            fill="#f2bbc5"
+            stroke="#e6a5b0"
             strokeWidth="0.5"
-            className="dark:fill-gray-400 dark:stroke-gray-500"
           />
 
-          {/* 오른쪽 위 작은 원 */}
+          {/* 오른쪽 위 작은 원 - role 컬러 (핑크색) */}
           <circle
             cx="18"
             cy="6"
             r="3"
-            fill="#6b7280"
-            stroke="#374151"
+            fill="#f2bbc5"
+            stroke="#e6a5b0"
             strokeWidth="0.5"
-            className="dark:fill-gray-400 dark:stroke-gray-500"
           />
 
-          {/* 왼쪽 아래 작은 원 */}
+          {/* 왼쪽 아래 작은 원 - role 컬러 (핑크색) */}
           <circle
             cx="6"
             cy="18"
             r="3"
-            fill="#6b7280"
-            stroke="#374151"
+            fill="#f2bbc5"
+            stroke="#e6a5b0"
             strokeWidth="0.5"
-            className="dark:fill-gray-400 dark:stroke-gray-500"
           />
 
-          {/* 오른쪽 아래 작은 원 */}
+          {/* 오른쪽 아래 작은 원 - role 컬러 (핑크색) */}
           <circle
             cx="18"
             cy="18"
             r="3"
-            fill="#6b7280"
-            stroke="#374151"
+            fill="#f2bbc5"
+            stroke="#e6a5b0"
             strokeWidth="0.5"
-            className="dark:fill-gray-400 dark:stroke-gray-500"
           />
 
-          {/* 연결선들 */}
+          {/* 연결선들 - 메인 컬러 (초록색) */}
           <line
             x1="9"
             y1="9"
             x2="9"
             y2="15"
-            stroke="#374151"
+            stroke="#29d967"
             strokeWidth="1"
             strokeLinecap="round"
-            className="dark:stroke-gray-500"
           />
           <line
             x1="15"
             y1="9"
             x2="15"
             y2="15"
-            stroke="#374151"
+            stroke="#29d967"
             strokeWidth="1"
             strokeLinecap="round"
-            className="dark:stroke-gray-500"
           />
           <line
             x1="9"
             y1="12"
             x2="15"
             y2="12"
-            stroke="#374151"
+            stroke="#29d967"
             strokeWidth="1"
             strokeLinecap="round"
-            className="dark:stroke-gray-500"
           />
         </svg>
       ) : (

@@ -48,7 +48,7 @@ export function MemberItem({
             <p className="font-medium text-foreground">{memberName}</p>
 
             {isCurrentUser && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary border border-primary/30">
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary text-primary-foreground border border-primary shadow-sm">
                 {t("ships.me")}
               </span>
             )}

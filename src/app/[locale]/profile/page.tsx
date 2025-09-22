@@ -208,11 +208,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-4 pt-4 border-t border-border">
-          <Button
-            variant="destructive"
-            onClick={handleLogout}
-            className="w-full"
-          >
+          <Button variant="secondary" onClick={handleLogout} className="w-full">
             {t("profile.logout")}
           </Button>
         </div>

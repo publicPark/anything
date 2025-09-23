@@ -71,13 +71,29 @@ CREATE TABLE ship_member_requests (
   UNIQUE(ship_id, user_id)
 );
 
--- 배 객실 테이블
+-- 배 선실 테이블
 CREATE TABLE ship_cabins (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 예약 상태 열거형
+CREATE TYPE reservation_status AS ENUM ('confirmed', 'cancelled');
+
+-- 배 선실 예약 테이블
+CREATE TABLE cabin_reservations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  cabin_id UUID REFERENCES ship_cabins(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL, -- 비회원 예약을 위해 NULL 허용
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  purpose TEXT NOT NULL,
+  status reservation_status DEFAULT 'confirmed' NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -92,6 +108,7 @@ ALTER TABLE ships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_member_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_cabins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cabin_reservations ENABLE ROW LEVEL SECURITY;
 
 -- 프로필 조회 정책
 -- 1. 자신의 프로필 조회 가능
@@ -226,12 +243,12 @@ CREATE POLICY "Captains and mechanics can delete member requests" ON ship_member
     )
   );
 
--- 배 객실 관련 정책들
--- 1. 모든 사용자는 객실을 조회할 수 있음
+-- 배 선실 관련 정책들
+-- 1. 모든 사용자는 선실을 조회할 수 있음
 CREATE POLICY "Anyone can view ship cabins" ON ship_cabins
   FOR SELECT USING (true);
 
--- 2. mechanic 이상의 사용자만 객실을 생성할 수 있음
+-- 2. mechanic 이상의 사용자만 선실을 생성할 수 있음
 CREATE POLICY "Mechanics+ can create ship cabins" ON ship_cabins
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -242,7 +259,7 @@ CREATE POLICY "Mechanics+ can create ship cabins" ON ship_cabins
     )
   );
 
--- 3. mechanic 이상의 사용자만 객실을 수정할 수 있음
+-- 3. mechanic 이상의 사용자만 선실을 수정할 수 있음
 CREATE POLICY "Mechanics+ can update ship cabins" ON ship_cabins
   FOR UPDATE USING (
     EXISTS (
@@ -253,12 +270,83 @@ CREATE POLICY "Mechanics+ can update ship cabins" ON ship_cabins
     )
   );
 
--- 4. mechanic 이상의 사용자만 객실을 삭제할 수 있음
+-- 4. mechanic 이상의 사용자만 선실을 삭제할 수 있음
 CREATE POLICY "Mechanics+ can delete ship cabins" ON ship_cabins
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM ship_members sm
       WHERE sm.ship_id = ship_cabins.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 선실 예약 관련 정책들
+-- 1. 모든 사용자는 예약을 조회할 수 있음 (members_only가 아닌 경우)
+-- members_only인 경우 같은 ship 멤버만 조회 가능
+CREATE POLICY "Anyone can view cabin reservations" ON cabin_reservations
+  FOR SELECT USING (
+    NOT EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
+      AND s.member_only = true
+    ) OR EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
+      AND s.member_only = true
+      AND sm.user_id = auth.uid()
+    )
+  );
+
+-- 2. 모든 사용자는 예약을 생성할 수 있음 (members_only가 아닌 경우)
+-- members_only인 경우 같은 ship 멤버만 생성 가능
+CREATE POLICY "Anyone can create cabin reservations" ON cabin_reservations
+  FOR INSERT WITH CHECK (
+    NOT EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
+      AND s.member_only = true
+    ) OR EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
+      AND s.member_only = true
+      AND sm.user_id = auth.uid()
+    )
+  );
+
+-- 3. 자신의 예약이거나 비회원 예약은 수정 가능
+-- mechanic 이상은 모든 예약 수정 가능
+CREATE POLICY "Users can update own reservations or guest reservations" ON cabin_reservations
+  FOR UPDATE USING (
+    user_id = auth.uid() OR 
+    user_id IS NULL OR -- 비회원 예약
+    EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 4. 자신의 예약이거나 비회원 예약은 삭제 가능
+-- mechanic 이상은 모든 예약 삭제 가능
+CREATE POLICY "Users can delete own reservations or guest reservations" ON cabin_reservations
+  FOR DELETE USING (
+    user_id = auth.uid() OR 
+    user_id IS NULL OR -- 비회원 예약
+    EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = cabin_reservations.cabin_id
       AND sm.user_id = auth.uid()
       AND sm.role IN ('captain', 'mechanic')
     )
@@ -807,7 +895,7 @@ BEGIN
 END;
 $$;
 
--- 객실 생성 함수
+-- 선실 생성 함수
 CREATE OR REPLACE FUNCTION create_ship_cabin(
   ship_uuid UUID,
   cabin_name TEXT,
@@ -839,7 +927,7 @@ BEGIN
     RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
   END IF;
   
-  -- 객실 생성
+  -- 선실 생성
   INSERT INTO ship_cabins (ship_id, name, description, created_by)
   VALUES (ship_uuid, cabin_name, cabin_description, current_user_id)
   RETURNING * INTO new_cabin;
@@ -848,7 +936,7 @@ BEGIN
 END;
 $$;
 
--- 객실 수정 함수
+-- 선실 수정 함수
 CREATE OR REPLACE FUNCTION update_ship_cabin(
   cabin_uuid UUID,
   cabin_name TEXT,
@@ -871,7 +959,7 @@ BEGIN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
-  -- 객실 정보 조회
+  -- 선실 정보 조회
   SELECT * INTO cabin_record FROM ship_cabins WHERE id = cabin_uuid;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Cabin not found';
@@ -887,7 +975,7 @@ BEGIN
     RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
   END IF;
   
-  -- 객실 수정
+  -- 선실 수정
   UPDATE ship_cabins 
   SET name = cabin_name, 
       description = cabin_description
@@ -898,7 +986,7 @@ BEGIN
 END;
 $$;
 
--- 객실 삭제 함수
+-- 선실 삭제 함수
 CREATE OR REPLACE FUNCTION delete_ship_cabin(
   cabin_uuid UUID
 )
@@ -918,7 +1006,7 @@ BEGIN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
-  -- 객실 정보 조회
+  -- 선실 정보 조회
   SELECT * INTO cabin_record FROM ship_cabins WHERE id = cabin_uuid;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Cabin not found';
@@ -934,8 +1022,186 @@ BEGIN
     RAISE EXCEPTION 'Insufficient permissions: Mechanic+ role required';
   END IF;
   
-  -- 객실 삭제
+  -- 선실 삭제
   DELETE FROM ship_cabins WHERE id = cabin_uuid;
+  
+  RETURN TRUE;
+END;
+$$;
+
+-- 선실 예약 생성 함수
+CREATE OR REPLACE FUNCTION create_cabin_reservation(
+  cabin_uuid UUID,
+  reservation_start_time TIMESTAMP WITH TIME ZONE,
+  reservation_end_time TIMESTAMP WITH TIME ZONE,
+  reservation_purpose TEXT
+)
+RETURNS cabin_reservations
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  cabin_record ship_cabins;
+  ship_record ships;
+  new_reservation cabin_reservations;
+BEGIN
+  -- 현재 사용자 ID 가져오기 (비회원일 수 있음)
+  current_user_id := auth.uid();
+  
+  -- 선실 정보 조회
+  SELECT * INTO cabin_record FROM ship_cabins WHERE id = cabin_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cabin not found';
+  END IF;
+  
+  -- 배 정보 조회
+  SELECT * INTO ship_record FROM ships WHERE id = cabin_record.ship_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Ship not found';
+  END IF;
+  
+  -- members_only인 경우 멤버 확인
+  IF ship_record.member_only = true THEN
+    IF current_user_id IS NULL THEN
+      RAISE EXCEPTION 'Authentication required for member-only ships';
+    END IF;
+    
+    IF NOT EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_record.id
+      AND sm.user_id = current_user_id
+    ) THEN
+      RAISE EXCEPTION 'Ship membership required';
+    END IF;
+  END IF;
+  
+  -- 시간 충돌 검사
+  IF EXISTS (
+    SELECT 1 FROM cabin_reservations cr
+    WHERE cr.cabin_id = cabin_uuid
+    AND cr.status = 'confirmed'
+    AND (
+      (reservation_start_time < cr.end_time AND reservation_end_time > cr.start_time)
+    )
+  ) THEN
+    RAISE EXCEPTION 'Time conflict: Another reservation exists during this time';
+  END IF;
+  
+  -- 예약 생성
+  INSERT INTO cabin_reservations (cabin_id, user_id, start_time, end_time, purpose)
+  VALUES (cabin_uuid, current_user_id, reservation_start_time, reservation_end_time, reservation_purpose)
+  RETURNING * INTO new_reservation;
+  
+  RETURN new_reservation;
+END;
+$$;
+
+-- 선실 예약 수정 함수
+CREATE OR REPLACE FUNCTION update_cabin_reservation(
+  reservation_uuid UUID,
+  new_start_time TIMESTAMP WITH TIME ZONE,
+  new_end_time TIMESTAMP WITH TIME ZONE,
+  new_purpose TEXT
+)
+RETURNS cabin_reservations
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  reservation_record cabin_reservations;
+  updated_reservation cabin_reservations;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 예약 정보 조회
+  SELECT * INTO reservation_record FROM cabin_reservations WHERE id = reservation_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Reservation not found';
+  END IF;
+  
+  -- 권한 확인 (자신의 예약이거나 비회원 예약이거나 mechanic 이상)
+  IF NOT (
+    reservation_record.user_id = current_user_id OR 
+    reservation_record.user_id IS NULL OR
+    EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = reservation_record.cabin_id
+      AND sm.user_id = current_user_id
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 시간 충돌 검사 (자신의 예약 제외)
+  IF EXISTS (
+    SELECT 1 FROM cabin_reservations cr
+    WHERE cr.cabin_id = reservation_record.cabin_id
+    AND cr.id != reservation_uuid
+    AND cr.status = 'confirmed'
+    AND (
+      (new_start_time < cr.end_time AND new_end_time > cr.start_time)
+    )
+  ) THEN
+    RAISE EXCEPTION 'Time conflict: Another reservation exists during this time';
+  END IF;
+  
+  -- 예약 수정
+  UPDATE cabin_reservations 
+  SET start_time = new_start_time,
+      end_time = new_end_time,
+      purpose = new_purpose
+  WHERE id = reservation_uuid
+  RETURNING * INTO updated_reservation;
+  
+  RETURN updated_reservation;
+END;
+$$;
+
+-- 선실 예약 삭제 함수
+CREATE OR REPLACE FUNCTION delete_cabin_reservation(
+  reservation_uuid UUID
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  current_user_id UUID;
+  reservation_record cabin_reservations;
+BEGIN
+  -- 현재 사용자 ID 가져오기
+  current_user_id := auth.uid();
+  
+  -- 예약 정보 조회
+  SELECT * INTO reservation_record FROM cabin_reservations WHERE id = reservation_uuid;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Reservation not found';
+  END IF;
+  
+  -- 권한 확인 (자신의 예약이거나 비회원 예약이거나 mechanic 이상)
+  IF NOT (
+    reservation_record.user_id = current_user_id OR 
+    reservation_record.user_id IS NULL OR
+    EXISTS (
+      SELECT 1 FROM ships s
+      JOIN ship_cabins sc ON s.id = sc.ship_id
+      JOIN ship_members sm ON s.id = sm.ship_id
+      WHERE sc.id = reservation_record.cabin_id
+      AND sm.user_id = current_user_id
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  ) THEN
+    RAISE EXCEPTION 'Insufficient permissions';
+  END IF;
+  
+  -- 예약 삭제
+  DELETE FROM cabin_reservations WHERE id = reservation_uuid;
   
   RETURN TRUE;
 END;
@@ -1026,6 +1292,11 @@ CREATE TRIGGER update_ship_cabins_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_cabin_reservations_updated_at
+  BEFORE UPDATE ON cabin_reservations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- 사용자명 중복 체크 트리거
 CREATE TRIGGER check_username_unique_trigger
   BEFORE INSERT OR UPDATE ON profiles
@@ -1054,3 +1325,6 @@ GRANT EXECUTE ON FUNCTION reject_member_request(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION create_ship_cabin(UUID, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION update_ship_cabin(UUID, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION delete_ship_cabin(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_cabin_reservation(UUID, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION update_cabin_reservation(UUID, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_cabin_reservation(UUID) TO authenticated;

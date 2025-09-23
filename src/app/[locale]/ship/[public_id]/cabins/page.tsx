@@ -86,7 +86,7 @@ export default function ShipCabinsPage() {
       </div>
 
       {/* 선실 목록 */}
-      <CabinList shipId={ship.id} />
+      <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
     </div>
   );
 }

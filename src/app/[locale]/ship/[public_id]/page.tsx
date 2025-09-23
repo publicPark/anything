@@ -681,7 +681,7 @@ export default function ShipDetailPage() {
         ),
       });
 
-      // 객실 관리 탭
+      // 선실 관리 탭
       tabs.push({
         id: "cabinsManage",
         label: t("ships.cabinsManage"),

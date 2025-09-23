@@ -1,6 +1,7 @@
 export type UserRole = "titan" | "gaia" | "chaos";
 export type ShipMemberRole = "captain" | "mechanic" | "crew";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
+export type ReservationStatus = "confirmed" | "cancelled";
 
 // 확장된 타입들
 export interface ShipWithDetails extends Ship {
@@ -66,6 +67,18 @@ export interface ShipCabin {
   updated_at: string;
 }
 
+export interface CabinReservation {
+  id: string;
+  cabin_id: string;
+  user_id: string | null;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  status: ReservationStatus;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -103,6 +116,13 @@ export interface Database {
         Row: ShipCabin;
         Insert: Omit<ShipCabin, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<ShipCabin, "id" | "created_at" | "updated_at">>;
+      };
+      cabin_reservations: {
+        Row: CabinReservation;
+        Insert: Omit<CabinReservation, "id" | "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<CabinReservation, "id" | "created_at" | "updated_at">
+        >;
       };
     };
     Functions: {
@@ -181,6 +201,30 @@ export interface Database {
       delete_ship_cabin: {
         Args: {
           cabin_uuid: string;
+        };
+        Returns: boolean;
+      };
+      create_cabin_reservation: {
+        Args: {
+          cabin_uuid: string;
+          reservation_start_time: string;
+          reservation_end_time: string;
+          reservation_purpose: string;
+        };
+        Returns: CabinReservation;
+      };
+      update_cabin_reservation: {
+        Args: {
+          reservation_uuid: string;
+          new_start_time: string;
+          new_end_time: string;
+          new_purpose: string;
+        };
+        Returns: CabinReservation;
+      };
+      delete_cabin_reservation: {
+        Args: {
+          reservation_uuid: string;
         };
         Returns: boolean;
       };

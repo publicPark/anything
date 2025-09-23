@@ -6,13 +6,17 @@ import { createClient } from "@/lib/supabase/client";
 import { ShipCabin } from "@/types/database";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Button } from "@/components/ui/Button";
+import { useRouter } from "next/navigation";
 
 interface CabinListProps {
   shipId: string;
+  shipPublicId: string;
 }
 
-export function CabinList({ shipId }: CabinListProps) {
+export function CabinList({ shipId, shipPublicId }: CabinListProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const [cabins, setCabins] = useState<ShipCabin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,8 +97,19 @@ export function CabinList({ shipId }: CabinListProps) {
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{new Date(cabin.created_at).toLocaleDateString()}</span>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">
+                  <span>{new Date(cabin.created_at).toLocaleDateString()}</span>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() =>
+                    router.push(`/ship/${shipPublicId}/cabin/${cabin.id}`)
+                  }
+                >
+                  {t("ships.reserveCabin")}
+                </Button>
               </div>
             </div>
           ))}

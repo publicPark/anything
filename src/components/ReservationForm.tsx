@@ -1,34 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
+import { useProfile } from "@/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { TimeTable } from "@/components/TimeTable";
+import { CabinReservation } from "@/types/database";
+import { useReservationStore } from "@/stores/reservationStore";
 
 interface ReservationFormProps {
   cabinId: string;
   onSuccess: () => void;
   onCancel: () => void;
+  existingReservations?: CabinReservation[];
 }
 
 export function ReservationForm({
   cabinId,
   onSuccess,
   onCancel,
+  existingReservations = [],
 }: ReservationFormProps) {
   const { t } = useI18n();
+  const { profile } = useProfile();
+  const { selectedStartTime, selectedEndTime, clearSelection } =
+    useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 오늘 날짜를 기본값으로 설정
+  const today = new Date().toISOString().split("T")[0];
+
   // 폼 데이터
   const [formData, setFormData] = useState({
-    date: "",
-    startTime: "",
-    endTime: "",
-    purpose: "",
+    date: today,
+    purpose: profile?.display_name ? `${profile.display_name}의 예약` : "",
   });
+
+  // 프로필이 로드되면 purpose 기본값 설정
+  useEffect(() => {
+    if (profile?.display_name && !formData.purpose) {
+      setFormData((prev) => ({
+        ...prev,
+        purpose: `${profile.display_name}의 예약`,
+      }));
+    }
+  }, [profile, formData.purpose]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -40,24 +60,23 @@ export function ReservationForm({
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateReservation = async () => {
+    if (isLoading) return;
 
+    // 필수 필드 검증
     if (
       !formData.date ||
-      !formData.startTime ||
-      !formData.endTime ||
+      !selectedStartTime ||
+      !selectedEndTime ||
       !formData.purpose.trim()
     ) {
       setError("모든 필드를 입력해주세요.");
       return;
     }
 
-    // 날짜와 시간을 결합하여 ISO 문자열 생성
-    const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
-    const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
-
-    // 종료 시간이 시작 시간보다 늦은지 확인
+    // 시간 검증
+    const startDateTime = new Date(`${formData.date}T${selectedStartTime}`);
+    const endDateTime = new Date(`${formData.date}T${selectedEndTime}`);
     if (endDateTime <= startDateTime) {
       setError("종료 시간은 시작 시간보다 늦어야 합니다.");
       return;
@@ -68,21 +87,18 @@ export function ReservationForm({
 
     try {
       const supabase = createClient();
-
-      const { data, error } = await supabase.rpc("create_cabin_reservation", {
+      const { error } = await supabase.rpc("create_cabin_reservation", {
         cabin_uuid: cabinId,
         reservation_start_time: startDateTime.toISOString(),
         reservation_end_time: endDateTime.toISOString(),
         reservation_purpose: formData.purpose.trim(),
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
+      clearSelection();
       onSuccess();
     } catch (err: any) {
-      console.error("Failed to create reservation:", err);
       setError(err.message || t("ships.errorGeneric"));
     } finally {
       setIsLoading(false);
@@ -95,7 +111,7 @@ export function ReservationForm({
         {t("ships.createReservation")}
       </h3>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         {/* 날짜 선택 */}
         <div>
           <label
@@ -112,45 +128,17 @@ export function ReservationForm({
             onChange={handleInputChange}
             min={new Date().toISOString().split("T")[0]} // 오늘 이후만 선택 가능
             className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            required
           />
         </div>
 
-        {/* 시작 시간 */}
+        {/* 시간 선택 */}
         <div>
-          <label
-            htmlFor="startTime"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            {t("ships.startTime")}
+          <label className="block text-sm font-medium text-foreground mb-2">
+            {t("ships.selectTime")}
           </label>
-          <input
-            type="time"
-            id="startTime"
-            name="startTime"
-            value={formData.startTime}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            required
-          />
-        </div>
-
-        {/* 종료 시간 */}
-        <div>
-          <label
-            htmlFor="endTime"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            {t("ships.endTime")}
-          </label>
-          <input
-            type="time"
-            id="endTime"
-            name="endTime"
-            value={formData.endTime}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            required
+          <TimeTable
+            selectedDate={formData.date}
+            reservations={existingReservations}
           />
         </div>
 
@@ -188,9 +176,10 @@ export function ReservationForm({
             {t("common.cancel")}
           </Button>
           <Button
-            type="submit"
+            type="button"
             variant="primary"
             disabled={isLoading}
+            onClick={handleCreateReservation}
             className="flex-1"
           >
             {isLoading ? (
@@ -203,7 +192,7 @@ export function ReservationForm({
             )}
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

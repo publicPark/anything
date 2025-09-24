@@ -88,7 +88,7 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-background rounded-lg shadow-lg">
+    <div className="max-w-md mx-auto p-6">
       <h2 className="text-2xl font-bold text-foreground mb-6">
         {t("ships.createShip")}
       </h2>

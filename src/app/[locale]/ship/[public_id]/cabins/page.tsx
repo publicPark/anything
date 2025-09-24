@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -9,12 +9,14 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CabinList } from "@/components/CabinList";
 import { Ship } from "@/types/database";
+import { Button } from "@/components/ui/Button";
 
 export default function ShipCabinsPage() {
   const { t, locale } = useI18n();
   const params = useParams();
   const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
+  const router = useRouter();
 
   const [ship, setShip] = useState<Ship | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,13 +79,23 @@ export default function ShipCabinsPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
+      <div className="mb-6">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => router.push(`/${locale}/ship/${shipPublicId}`)}
+        >
+          <b>{ship.name}</b>
+        </Button>
+      </div>
+
       {/* 배 헤더 */}
-      <div className="mb-8">
+      {/* <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">{ship.name}</h1>
         {ship.description && (
           <p className="text-muted-foreground">{ship.description}</p>
         )}
-      </div>
+      </div> */}
 
       {/* 선실 목록 */}
       <CabinList shipId={ship.id} shipPublicId={shipPublicId} />

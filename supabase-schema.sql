@@ -74,6 +74,7 @@ CREATE TABLE ship_member_requests (
 -- 배 선실 테이블
 CREATE TABLE ship_cabins (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  public_id TEXT UNIQUE NOT NULL,
   ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
@@ -355,6 +356,26 @@ CREATE POLICY "Users can delete own reservations or guest reservations" ON cabin
 -- ==============================================
 -- 4. UTILITY FUNCTIONS
 -- ==============================================
+
+-- Cabin Public ID 생성 함수
+CREATE OR REPLACE FUNCTION generate_cabin_public_id()
+RETURNS TEXT AS $$
+DECLARE
+  new_id TEXT;
+  counter INTEGER := 1;
+BEGIN
+  LOOP
+    new_id := 'CABIN' || LPAD(counter::TEXT, 6, '0');
+    
+    -- 중복 확인
+    IF NOT EXISTS (SELECT 1 FROM ship_cabins WHERE public_id = new_id) THEN
+      RETURN new_id;
+    END IF;
+    
+    counter := counter + 1;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
 -- updated_at 자동 업데이트 함수
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -928,8 +949,8 @@ BEGIN
   END IF;
   
   -- 선실 생성
-  INSERT INTO ship_cabins (ship_id, name, description, created_by)
-  VALUES (ship_uuid, cabin_name, cabin_description, current_user_id)
+  INSERT INTO ship_cabins (public_id, ship_id, name, description, created_by)
+  VALUES (generate_cabin_public_id(), ship_uuid, cabin_name, cabin_description, current_user_id)
   RETURNING * INTO new_cabin;
   
   RETURN new_cabin;

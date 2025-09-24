@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { ReservationForm } from "@/components/ReservationForm";
 import { ReservationItem } from "@/components/ReservationItem";
 import { ShipCabin, Ship, CabinReservation } from "@/types/database";
+import { calculateCabinStatus } from "@/lib/cabin-status";
+import { renderTextWithLinks } from "@/lib/text-helpers";
 
 export default function CabinDetailPage() {
   const { t, locale } = useI18n();
@@ -30,16 +32,43 @@ export default function CabinDetailPage() {
   >(null);
 
   const shipPublicId = params.public_id as string;
-  const cabinId = params.cabin_id as string;
+  const cabinPublicId = params.cabin_public_id as string;
 
   useEffect(() => {
-    if (!profileLoading && shipPublicId && cabinId) {
+    if (!profileLoading && shipPublicId && cabinPublicId) {
       fetchCabinDetails();
     }
-  }, [profileLoading, shipPublicId, cabinId]);
+  }, [profileLoading, shipPublicId, cabinPublicId]);
+
+  // Realtime 구독은 cabin이 로드된 후에 설정
+  useEffect(() => {
+    if (!cabin) return;
+
+    const channel = supabase
+      .channel("cabin-reservations-detail")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cabin_reservations",
+          filter: `cabin_id=eq.${cabin.id}`,
+        },
+        (payload) => {
+          console.log("Reservation change detected:", payload);
+          // 예약 변경 시 데이터 새로고침
+          fetchCabinDetails();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cabin]);
 
   const fetchCabinDetails = async () => {
-    if (!shipPublicId || !cabinId) return;
+    if (!shipPublicId || !cabinPublicId) return;
 
     setIsLoading(true);
     setError(null);
@@ -66,7 +95,7 @@ export default function CabinDetailPage() {
       const { data: cabinData, error: cabinError } = await supabase
         .from("ship_cabins")
         .select("*")
-        .eq("id", cabinId)
+        .eq("public_id", cabinPublicId)
         .eq("ship_id", shipData.id)
         .maybeSingle();
 
@@ -80,13 +109,15 @@ export default function CabinDetailPage() {
 
       setCabin(cabinData);
 
-      // 예약 목록 조회
+      // 예약 목록 조회 (현재 진행 중이거나 미래의 예약만)
+      const now = new Date().toISOString();
       const { data: reservationsData, error: reservationsError } =
         await supabase
           .from("cabin_reservations")
           .select("*")
-          .eq("cabin_id", cabinId)
+          .eq("cabin_id", cabinData.id)
           .eq("status", "confirmed")
+          .gte("end_time", now) // 종료 시간이 현재 시간 이후인 예약만
           .order("start_time", { ascending: true });
 
       if (reservationsError) {
@@ -152,7 +183,7 @@ export default function CabinDetailPage() {
           size="sm"
           onClick={() => router.push(`/${locale}/ship/${shipPublicId}/cabins`)}
         >
-          ← {t("ships.viewCabins")}
+          {t("cabins.viewAllCabins", { shipName: ship.name })}
         </Button>
       </div>
 
@@ -160,18 +191,34 @@ export default function CabinDetailPage() {
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              {cabin.name}
-            </h1>
-            <p className="text-muted-foreground">
-              {ship.name} • {t("ships.cabins")}
-            </p>
+            {/* <p className="text-muted-foreground mb-2">{ship.name}</p> */}
+            <h1 className="text-3xl font-bold text-foreground">{cabin.name}</h1>
           </div>
-          <div className="text-4xl">🏠</div>
+          <div className="flex flex-col items-end space-y-2">
+            <span
+              className={`px-3 py-1 text-sm font-medium rounded-full ${
+                calculateCabinStatus(reservations).status === "available"
+                  ? "bg-success-600 text-success-foreground"
+                  : "bg-destructive text-destructive-foreground"
+              }`}
+            >
+              {calculateCabinStatus(reservations).status === "available"
+                ? t("ships.available")
+                : t("ships.inUse")}
+            </span>
+            {calculateCabinStatus(reservations).currentReservation && (
+              <p className="text-sm text-muted-foreground">
+                {t("ships.currentlyUsedBy")}:{" "}
+                {calculateCabinStatus(reservations).currentReservation?.purpose}
+              </p>
+            )}
+          </div>
         </div>
 
         {cabin.description && (
-          <p className="text-foreground mb-6">{cabin.description}</p>
+          <p className="text-foreground mb-6 whitespace-pre-wrap">
+            {renderTextWithLinks(cabin.description)}
+          </p>
         )}
 
         <Button
@@ -187,9 +234,10 @@ export default function CabinDetailPage() {
       {showReservationForm && (
         <div className="mb-8">
           <ReservationForm
-            cabinId={cabinId}
+            cabinId={cabin.id}
             onSuccess={handleReservationSuccess}
             onCancel={handleReservationCancel}
+            existingReservations={reservations}
           />
         </div>
       )}
@@ -206,10 +254,6 @@ export default function CabinDetailPage() {
             <h3 className="text-xl font-semibold text-foreground mb-2">
               {t("ships.noReservations")}
             </h3>
-            <p className="text-muted-foreground">
-              {t("ships.createReservation")} 버튼을 클릭하여 첫 번째 예약을
-              만들어보세요.
-            </p>
           </div>
         ) : (
           <div className="space-y-4">

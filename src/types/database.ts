@@ -5,7 +5,7 @@ export type ReservationStatus = "confirmed" | "cancelled";
 
 // 확장된 타입들
 export interface ShipWithDetails extends Ship {
-  members?: (ShipMember & { profiles: Profile })[];
+  members?: (ShipMember & { profile: Profile })[];
   userRole?: ShipMemberRole;
   isMember?: boolean;
   hasPendingRequest?: boolean;
@@ -13,7 +13,7 @@ export interface ShipWithDetails extends Ship {
 }
 
 export interface ShipMemberRequestWithProfile extends ShipMemberRequest {
-  profiles: Profile | undefined;
+  profile: Profile | undefined;
 }
 
 export interface Profile {
@@ -59,6 +59,7 @@ export interface ShipMemberRequest {
 
 export interface ShipCabin {
   id: string;
+  public_id: string;
   ship_id: string;
   name: string;
   description: string | null;

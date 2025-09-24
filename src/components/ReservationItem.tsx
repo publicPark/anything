@@ -58,8 +58,44 @@ export function ReservationItem({
     }
   };
 
-  const formatDateTime = (dateTime: string) => {
-    return new Date(dateTime).toLocaleString();
+  const formatReservationTime = (startTime: string, endTime: string) => {
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const now = new Date();
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const startDateOnly = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate()
+    );
+
+    let dateLabel = "";
+    if (startDateOnly.getTime() === today.getTime()) {
+      dateLabel = "오늘";
+    } else if (startDateOnly.getTime() === tomorrow.getTime()) {
+      dateLabel = "내일";
+    } else {
+      const month = startDate.getMonth() + 1;
+      const day = startDate.getDate();
+      dateLabel = `${month}월 ${day}일`;
+    }
+
+    const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    return `${dateLabel} ${startTimeStr} - ${endTimeStr}`;
   };
 
   const getReservationType = () => {
@@ -81,12 +117,12 @@ export function ReservationItem({
           </h3>
           <div className="space-y-1 text-sm text-muted-foreground">
             <div>
-              <span className="font-medium">{t("ships.startTime")}:</span>{" "}
-              {formatDateTime(reservation.start_time)}
-            </div>
-            <div>
-              <span className="font-medium">{t("ships.endTime")}:</span>{" "}
-              {formatDateTime(reservation.end_time)}
+              <span className="font-medium">
+                {formatReservationTime(
+                  reservation.start_time,
+                  reservation.end_time
+                )}
+              </span>
             </div>
             {getReservationType() && (
               <div>

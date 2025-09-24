@@ -22,7 +22,7 @@ export interface ShipDetailState {
   // 멤버 관련
   memberRequests: ShipMemberRequestWithProfile[];
   rejectedRequests: ShipMemberRequestWithProfile[];
-  members: (ShipMember & { profiles: Profile })[];
+  members: (ShipMember & { profile: Profile })[];
 
   // UI 상태
   loading: boolean;
@@ -49,7 +49,7 @@ export interface ShipDetailState {
   setShips: (ships: ShipWithDetails[]) => void;
   setMemberRequests: (requests: ShipMemberRequestWithProfile[]) => void;
   setRejectedRequests: (requests: ShipMemberRequestWithProfile[]) => void;
-  setMembers: (members: (ShipMember & { profiles: Profile })[]) => void;
+  setMembers: (members: (ShipMember & { profile: Profile })[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setIsJoining: (isJoining: boolean) => void;

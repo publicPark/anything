@@ -219,6 +219,9 @@
     "myReservation": "My Reservation",
     "cabinNotFound": "Cabin not found",
     "errorLoadingCabin": "Error loading cabin information",
+    "available": "Available",
+    "inUse": "In Use",
+    "currentlyUsedBy": "Currently used by",
     "createFirstCabin": "Create your first cabin!",
     "cabinCreated": "Cabin created successfully",
     "cabinUpdated": "Cabin updated successfully",
@@ -258,5 +261,30 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "deleteAccount": "Delete Account"
+  },
+  "timetable": {
+    "selectedTime": "Selected time: {time}",
+    "timeRange": "{startTime} - {endTime}",
+    "selectTime": "Please select a time",
+    "completeSelection": "Please complete time selection",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "reservedTime": "Reserved time - {time} (Not selectable)",
+    "reservationStart": "Reservation start time - {time} (Selectable)",
+    "currentTime": "Current time - {time}",
+    "pastTime": "Past time - {time} (Not selectable)",
+    "reservedTimeNotification": "This time is reserved: {time}",
+    "pastTimeNotification": "This is a past time: {time}",
+    "reservationInRangeNotification": "Selected range includes reserved time"
+  },
+  "cabins": {
+    "currentReservation": "Current Reservation",
+    "endsAt": "Ends at {time}",
+    "nextReservation": "Next Reservation",
+    "startsAt": "Starts at {time}",
+    "noNextReservation": "No upcoming reservations",
+    "reservationTitle": "Reservation Title",
+    "reservationDescription": "Reservation Description",
+    "viewAllCabins": "View all cabins of {shipName}"
   }
 }

@@ -11,7 +11,7 @@ const ROLE_STYLES = {
 } as const;
 
 interface ShipWithDetails extends Ship {
-  members?: (ShipMember & { profiles: Profile })[];
+  members?: (ShipMember & { profile: Profile })[];
   userRole?: ShipMemberRole;
 }
 

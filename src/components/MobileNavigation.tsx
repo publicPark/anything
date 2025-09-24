@@ -195,7 +195,7 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
       {/* 오버레이 */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-foreground/50 z-40 md:hidden"
           onClick={onClose}
         />
       )}

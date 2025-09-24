@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CabinReservation } from "@/types/database";
 import { useReservationStore } from "@/stores/reservationStore";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useI18n } from "@/hooks/useI18n";
 
 /**
@@ -67,17 +68,67 @@ export function TimeTable({
   const [notification, setNotification] = useState<NotificationState | null>(
     null
   );
+  const [tooltip, setTooltip] = useState<{
+    message: string;
+    x: number;
+    y: number;
+    isBelow: boolean;
+  } | null>(null);
+  const [manualStartTime, setManualStartTime] = useState<string>("");
+  const [manualEndTime, setManualEndTime] = useState<string>("");
+
+  // 선택된 시간과 수동 입력 필드 동기화
+  useEffect(() => {
+    if (selectedStartTime && selectedEndTime) {
+      setManualStartTime(selectedStartTime);
+      setManualEndTime(selectedEndTime);
+    } else {
+      setManualStartTime("");
+      setManualEndTime("");
+    }
+  }, [selectedStartTime, selectedEndTime]);
+
+  /**
+   * 수동으로 입력된 시간을 검증하고 설정합니다.
+   */
+  const handleManualTimeInput = (startTime: string, endTime: string) => {
+    if (!startTime || !endTime) return;
+
+    // 시간 형식 검증 (HH:MM)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+      return;
+    }
+
+    // 시작 시간이 종료 시간보다 늦은지 확인
+    const start = new Date(`2000-01-01T${startTime}:00`);
+    const end = new Date(`2000-01-01T${endTime}:00`);
+
+    if (start >= end) {
+      return;
+    }
+
+    // 예약 범위 내에 예약이 있는지 확인
+    if (hasReservationInRange(startTime, endTime)) {
+      return;
+    }
+
+    // 시간 설정
+    setSelectedTimes(startTime, endTime);
+    setManualStartTime("");
+    setManualEndTime("");
+  };
 
   /**
    * 5분 단위로 시간 슬롯을 생성합니다.
-   * 0:00부터 47:55까지 48시간 동안의 모든 5분 단위 시간을 생성합니다.
+   * 0:00부터 23:55까지 24시간 동안의 모든 5분 단위 시간을 생성하고, 마지막에 24:00을 추가합니다.
    *
    * @returns 생성된 시간 슬롯 배열
    */
   const generateTimeSlots = (): TimeSlot[] => {
     const slots: TimeSlot[] = [];
 
-    for (let hour = 0; hour < 48; hour++) {
+    for (let hour = 0; hour < 24; hour++) {
       for (let minute = 0; minute < 60; minute += 5) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute
           .toString()
@@ -91,32 +142,40 @@ export function TimeTable({
         });
       }
     }
+
+    // 24:00 슬롯 추가
+    slots.push({
+      time: "24:00",
+      isReserved: false,
+      isSelected: false,
+      isStart: false,
+      isEnd: false,
+    });
+
     return slots;
   };
 
   /**
    * 슬롯 시간 문자열을 실제 Date 객체로 변환합니다.
-   * 24시간을 넘어가는 경우 다음 날로 처리합니다.
    *
    * @param slotTime - 변환할 시간 문자열 (HH:MM 형식)
    * @returns 변환된 Date 객체
    */
   const getSlotDateTime = (slotTime: string): Date => {
+    // 24:00은 다음날 00:00으로 처리
+    if (slotTime === "24:00") {
+      const slotDate = new Date(selectedDate);
+      slotDate.setDate(slotDate.getDate() + 1);
+      slotDate.setHours(0, 0, 0, 0);
+      return slotDate;
+    }
+
     const slotHour = parseInt(slotTime.split(":")[0]);
     const slotMinute = parseInt(slotTime.split(":")[1]);
 
-    let slotDate = new Date(selectedDate);
-    let actualHour = slotHour;
-
-    // 24시간을 넘어가면 다음 날로 처리
-    if (slotHour >= 24) {
-      slotDate.setDate(slotDate.getDate() + 1);
-      actualHour = slotHour - 24;
-    }
-
-    const slotDateTime = new Date(slotDate);
-    slotDateTime.setHours(actualHour, slotMinute, 0, 0);
-    return slotDateTime;
+    const slotDate = new Date(selectedDate);
+    slotDate.setHours(slotHour, slotMinute, 0, 0);
+    return slotDate;
   };
 
   /**
@@ -151,6 +210,10 @@ export function TimeTable({
    * @returns 분 단위 숫자
    */
   const timeStringToMinutes = (timeString: string): number => {
+    // 24:00은 1440분 (24시간)으로 처리
+    if (timeString === "24:00") {
+      return 24 * 60;
+    }
     const [hours, minutes] = timeString.split(":").map(Number);
     return hours * 60 + minutes;
   };
@@ -163,28 +226,29 @@ export function TimeTable({
    * @returns 시간 상태 정보 (비활성화, 현재 시간 여부)
    */
   const checkTimeStatus = (slotTime: string, isToday: boolean): TimeStatus => {
-    const now = new Date();
-    const currentTime = isToday
-      ? `${now.getHours().toString().padStart(2, "0")}:${
-          Math.floor(now.getMinutes() / 5) * 5
-        }`
-      : null;
+    if (!isToday) {
+      return { isDisabled: false, isCurrentTime: false };
+    }
 
-    const currentTimeSlot = isToday
-      ? `${now.getHours().toString().padStart(2, "0")}:${
-          Math.floor(now.getMinutes() / 5) * 5
-        }`
-      : null;
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // 현재 시간을 5분 단위로 반올림 (9:03 -> 9:00, 9:07 -> 9:05)
+    const roundedMinute = Math.floor(currentMinute / 5) * 5;
+    const currentTime = `${currentHour
+      .toString()
+      .padStart(2, "0")}:${roundedMinute.toString().padStart(2, "0")}`;
+
+    // 24:00 슬롯은 현재 시간이 될 수 없음
+    if (slotTime === "24:00") {
+      return { isDisabled: false, isCurrentTime: false };
+    }
 
     // 시간을 분 단위로 변환하여 정확한 비교
-    const isDisabled = Boolean(
-      isToday &&
-        currentTime &&
-        timeStringToMinutes(slotTime) < timeStringToMinutes(currentTime)
-    );
-    const isCurrentTime = Boolean(
-      isToday && currentTimeSlot && slotTime === currentTimeSlot
-    );
+    const isDisabled =
+      timeStringToMinutes(slotTime) < timeStringToMinutes(currentTime);
+    const isCurrentTime = slotTime === currentTime;
 
     return { isDisabled, isCurrentTime };
   };
@@ -195,26 +259,32 @@ export function TimeTable({
    * @param slots - 상태를 체크할 시간 슬롯 배열
    * @returns 상태가 업데이트된 시간 슬롯 배열
    */
-  const checkSlotStatus = (slots: TimeSlot[]): TimeSlot[] => {
-    const now = new Date();
-    const selectedDateObj = new Date(selectedDate);
-    const isToday = selectedDateObj.toDateString() === now.toDateString();
+  const checkSlotStatus = useCallback(
+    (slots: TimeSlot[]): TimeSlot[] => {
+      const now = new Date();
+      const selectedDateObj = new Date(selectedDate);
+      const isToday = selectedDateObj.toDateString() === now.toDateString();
 
-    return slots.map((slot) => {
-      const slotDateTime = getSlotDateTime(slot.time);
-      const { isReserved, isReservationStart } =
-        checkReservationStatus(slotDateTime);
-      const { isDisabled, isCurrentTime } = checkTimeStatus(slot.time, isToday);
+      return slots.map((slot) => {
+        const slotDateTime = getSlotDateTime(slot.time);
+        const { isReserved, isReservationStart } =
+          checkReservationStatus(slotDateTime);
+        const { isDisabled, isCurrentTime } = checkTimeStatus(
+          slot.time,
+          isToday
+        );
 
-      return {
-        ...slot,
-        isReserved,
-        isDisabled,
-        isCurrentTime,
-        isReservationStart,
-      };
-    });
-  };
+        return {
+          ...slot,
+          isReserved,
+          isDisabled,
+          isCurrentTime,
+          isReservationStart,
+        };
+      });
+    },
+    [selectedDate, reservations]
+  );
 
   // 시간 슬롯 업데이트
   useEffect(() => {
@@ -227,32 +297,26 @@ export function TimeTable({
     const isToday =
       new Date(selectedDate).toDateString() === now.toDateString();
     if (isToday) {
-      const currentTime = `${now.getHours().toString().padStart(2, "0")}:${
-        Math.floor(now.getMinutes() / 5) * 5
-      }`;
-      setTimeout(() => {
-        document.querySelector(`[data-time="${currentTime}"]`)?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100);
-    }
-  }, [selectedDate, reservations]);
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const roundedMinute = Math.floor(currentMinute / 5) * 5;
+      const currentTime = `${currentHour
+        .toString()
+        .padStart(2, "0")}:${roundedMinute.toString().padStart(2, "0")}`;
 
-  /**
-   * 사용자에게 알림 메시지를 표시합니다.
-   * 3초 후 자동으로 사라집니다.
-   *
-   * @param message - 표시할 메시지
-   * @param variant - 알림 타입 (기본값: destructive)
-   */
-  const showNotification = (
-    message: string,
-    variant: "default" | "destructive" | "success" = "destructive"
-  ): void => {
-    setNotification({ message, variant });
-    setTimeout(() => setNotification(null), 3000);
-  };
+      setTimeout(() => {
+        const targetElement = document.querySelector(
+          `[data-time="${currentTime}"]`
+        );
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 200); // 스크롤 시간을 조금 더 늘림
+    }
+  }, [selectedDate, reservations, checkSlotStatus]);
 
   /**
    * 선택된 시간 범위에 예약이 포함되어 있는지 확인합니다.
@@ -282,15 +346,13 @@ export function TimeTable({
     const slot = timeSlots.find((s) => s.time === time);
     if (!slot) return;
 
-    // 예약된 시간인 경우 (시작점 포함)
-    if (slot.isReserved) {
-      showNotification(t("timetable.reservedTimeNotification", { time }));
+    // 예약된 시간인 경우 (시작점 제외)
+    if (slot.isReserved && !slot.isReservationStart) {
       return;
     }
 
     // 비활성화된 시간인 경우
     if (slot.isDisabled) {
-      showNotification(t("timetable.pastTimeNotification", { time }));
       return;
     }
 
@@ -303,7 +365,6 @@ export function TimeTable({
       const endTime = time < selectedStartTime ? selectedStartTime : time;
 
       if (hasReservationInRange(startTime, endTime)) {
-        showNotification(t("timetable.reservationInRangeNotification"));
         return;
       }
 
@@ -313,83 +374,65 @@ export function TimeTable({
     }
   };
 
-  // 시간 슬롯 스타일 계산
-  const getSlotStyle = (slot: TimeSlot, index: number, totalSlots: number) => {
-    let baseStyle =
-      "h-8 text-xs border-y border-border cursor-pointer transition-colors flex-1 px-2 ";
-
-    // 첫 번째와 마지막 버튼에만 rounded 적용
-    if (index === 0) {
-      baseStyle += "border-l border-l-border rounded-l-md ";
-    } else {
-      // 중간 버튼들에는 왼쪽 구분선 추가
-      baseStyle += "border-l border-l-border ";
-    }
-    if (index === totalSlots - 1) {
-      baseStyle += "border-r border-r-border rounded-r-md ";
-    }
-
-    if (slot.isReserved) {
-      baseStyle +=
-        "bg-destructive text-destructive-foreground/70 cursor-not-allowed border-destructive/50 ";
-    } else if (slot.isDisabled) {
-      baseStyle +=
-        "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed border-muted-foreground/30 ";
-    } else if (selectedStartTime && selectedEndTime) {
-      // 완전히 선택된 상태
-      const slotTime = slot.time;
-      if (slotTime >= selectedStartTime && slotTime < selectedEndTime) {
-        baseStyle += "bg-primary text-primary-foreground ";
-      } else if (
-        slotTime === selectedStartTime ||
-        slotTime === selectedEndTime
-      ) {
-        baseStyle += "bg-primary text-primary-foreground ";
-      } else {
-        baseStyle += "bg-muted hover:bg-muted/80 ";
-      }
-    } else if (selectedStartTime && !selectedEndTime) {
-      // 시작 시간만 선택된 상태
-      if (slot.time === selectedStartTime) {
-        baseStyle += "bg-primary text-primary-foreground ";
-      } else if (hoveredTime && selectedStartTime) {
-        // hover 시 영역 표시
-        const startTime = selectedStartTime;
-        const endTime = hoveredTime;
-        const slotTime = slot.time;
-
-        if (startTime < endTime) {
-          if (slotTime >= startTime && slotTime < endTime) {
-            baseStyle += "bg-primary text-primary-foreground ";
-          } else {
-            baseStyle += "bg-muted hover:bg-muted/80 ";
-          }
-        } else {
-          if (slotTime >= endTime && slotTime < startTime) {
-            baseStyle += "bg-primary text-primary-foreground ";
-          } else {
-            baseStyle += "bg-muted hover:bg-muted/80 ";
-          }
-        }
-      } else {
-        baseStyle += "bg-muted hover:bg-muted/80 ";
-      }
-    } else {
-      baseStyle += "bg-muted hover:bg-muted/80 ";
-    }
-
-    return baseStyle;
-  };
-
   // 마우스 이벤트 핸들러
-  const handleMouseEnter = (time: string) => {
-    if (selectedStartTime && !selectedEndTime) {
-      setHoveredTime(time);
+  const handleMouseEnter = (time: string, event: React.MouseEvent) => {
+    setHoveredTime(time);
+
+    const slot = timeSlots.find((s) => s.time === time);
+    if (slot) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const message =
+        slot.isReserved && !slot.isReservationStart
+          ? t("timetable.reservedTime", { time: slot.time })
+          : slot.isReservationStart
+          ? t("timetable.reservationStart", { time: slot.time })
+          : slot.isCurrentTime
+          ? t("timetable.currentTime", { time: slot.time })
+          : slot.isDisabled
+          ? t("timetable.pastTime", { time: slot.time })
+          : slot.time;
+
+      setTooltip({
+        message,
+        x: rect.left + rect.width / 2,
+        y: rect.top - 30,
+        isBelow: false,
+      });
     }
   };
 
   const handleMouseLeave = () => {
     setHoveredTime(null);
+    setTooltip(null);
+  };
+
+  // 터치 이벤트 핸들러 (모바일용)
+  const handleTouchStart = (time: string) => {
+    // 터치 시작 시 툴팁 표시
+    const slot = timeSlots.find((s) => s.time === time);
+    if (slot) {
+      const message =
+        slot.isReserved && !slot.isReservationStart
+          ? t("timetable.reservedTime", { time: slot.time })
+          : slot.isReservationStart
+          ? t("timetable.reservationStart", { time: slot.time })
+          : slot.isCurrentTime
+          ? t("timetable.currentTime", { time: slot.time })
+          : slot.isDisabled
+          ? t("timetable.pastTime", { time: slot.time })
+          : slot.time;
+
+      setTooltip({
+        message,
+        x: 0,
+        y: 0,
+        isBelow: true,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => setTooltip(null), 2000); // 2초 후 툴팁 숨김
   };
 
   // 선택된 시간을 포맷팅하는 함수
@@ -417,47 +460,80 @@ export function TimeTable({
       dateLabel = `${month}월 ${day}일`;
     }
 
-    return t("timetable.timeRange", {
-      startTime: `${dateLabel} ${startTime}`,
-      endTime,
-    });
+    // 지속 시간 계산
+    const [startHours, startMinutes] = startTime.split(":").map(Number);
+    const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    let endTotalMinutes = endHours * 60 + endMinutes;
+
+    // 24시간을 넘어가는 경우 처리
+    if (endTotalMinutes < startTotalMinutes) {
+      endTotalMinutes += 24 * 60;
+    }
+
+    const durationMinutes = endTotalMinutes - startTotalMinutes;
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+
+    let durationStr = "";
+    if (hours > 0 && minutes > 0) {
+      durationStr = ` (${hours}시간 ${minutes}분)`;
+    } else if (hours > 0) {
+      durationStr = ` (${hours}시간)`;
+    } else {
+      durationStr = ` (${minutes}분)`;
+    }
+
+    return (
+      t("timetable.timeRange", {
+        startTime: `${dateLabel} ${startTime}`,
+        endTime,
+      }) + durationStr
+    );
   };
 
-  // 시간을 1시간 단위로 그룹화하되, 현재 시간대부터 24시간만 표시
+  // 시간을 1시간 단위로 그룹화 (00:00부터 23:00까지, 24:00은 별도 그룹)
   const groupedSlots = timeSlots.reduce((groups, slot) => {
-    const hour = slot.time.split(":")[0];
+    // 24:00은 별도 그룹으로 처리
+    if (slot.time === "24:00") {
+      if (!groups["24"]) {
+        groups["24"] = [];
+      }
+      groups["24"].push(slot);
+    } else {
+      const hour = slot.time.split(":")[0];
+      if (!groups[hour]) {
+        groups[hour] = [];
+      }
+      groups[hour].push(slot);
+    }
+    return groups;
+  }, {} as Record<string, TimeSlot[]>);
+
+  // 오늘 날짜일 때 지난 시간 rows 제거
+  const filteredGroupedSlots = (() => {
     const now = new Date();
     const selectedDateObj = new Date(selectedDate);
     const isToday = selectedDateObj.toDateString() === now.toDateString();
 
-    // 오늘 날짜일 때만 현재 시간 이전의 시간대는 제외하고, 24시간 후까지만 표시
-    if (isToday) {
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const slotHour = parseInt(hour);
-      const slotMinute = parseInt(slot.time.split(":")[1]);
-
-      // 현재 시간대보다 이전인 경우 제외 (예: 7:47이면 6:00 시간대는 제외)
-      if (slotHour < currentHour) {
-        return groups;
-      }
-
-      // 현재 시간 + 24시간보다 이후인 경우 제외
-      const currentTimeInMinutes = currentHour * 60 + currentMinute;
-      const maxTimeInMinutes = currentTimeInMinutes + 24 * 60; // 24시간 후
-      const slotTimeInMinutes = slotHour * 60;
-
-      if (slotTimeInMinutes > maxTimeInMinutes) {
-        return groups;
-      }
+    if (!isToday) {
+      return groupedSlots;
     }
 
-    if (!groups[hour]) {
-      groups[hour] = [];
-    }
-    groups[hour].push(slot);
-    return groups;
-  }, {} as Record<string, TimeSlot[]>);
+    const currentHour = now.getHours();
+    const filteredGroups: Record<string, TimeSlot[]> = {};
+
+    Object.entries(groupedSlots).forEach(([hour, slots]) => {
+      const hourNum = parseInt(hour);
+      // 현재 시간 이후의 시간대만 포함 (24:00은 항상 포함)
+      if (hour === "24" || hourNum >= currentHour) {
+        filteredGroups[hour] = slots;
+      }
+    });
+
+    return filteredGroups;
+  })();
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -470,32 +546,65 @@ export function TimeTable({
         />
       )}
 
-      <div className="text-sm text-muted-foreground">
+      <div
+        className={`rounded-t-lg p-3 mb-0 border ${
+          selectedStartTime && selectedEndTime
+            ? "bg-primary/5 border-primary"
+            : "bg-muted border-border"
+        }`}
+      >
         {selectedStartTime && !selectedEndTime && (
-          <p>{t("timetable.selectedTime", { time: selectedStartTime })}</p>
+          <p className="text-sm font-medium text-foreground">
+            {t("timetable.selectedTime", { time: selectedStartTime })}
+          </p>
         )}
         {selectedStartTime && selectedEndTime && (
-          <p>{formatSelectedTime(selectedStartTime, selectedEndTime)}</p>
+          <p className="text-sm font-medium text-foreground ">
+            {formatSelectedTime(selectedStartTime, selectedEndTime)}
+          </p>
         )}
-        {!selectedStartTime && <p>{t("timetable.selectTime")}</p>}
+        {!selectedStartTime && (
+          <p className="text-sm font-medium text-foreground">
+            {t("timetable.selectTime")}
+          </p>
+        )}
       </div>
 
-      <div className="max-h-80 overflow-auto border border-border p-4">
+      <div
+        className="max-h-60 w-full overflow-x-auto border-l border-r border-b border-border p-4"
+        style={{ overflowY: "auto" }}
+      >
         {/* 색상 설명 */}
-        <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground mb-4">
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-destructive rounded border border-border"></div>
-            <span>{t("ships.reservedTime")}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-primary rounded border border-border"></div>
-            <span>{t("ships.selectedTime")}</span>
-          </div>
-          <div className="flex items-center space-x-1">
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
+          <div className="flex items-center space-x-1 whitespace-nowrap">
             <div className="w-3 h-3 bg-muted rounded border border-border"></div>
             <span>{t("ships.availableTime")}</span>
           </div>
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 whitespace-nowrap">
+            <div className="w-3 h-3 bg-[var(--color-warning-600)]/30 rounded border border-border"></div>
+            <span>{t("ships.currentTime")}</span>
+          </div>
+          {selectedStartTime && selectedEndTime ? (
+            <div className="flex items-center space-x-1 whitespace-nowrap">
+              <div className="w-3 h-3 bg-primary rounded border border-border"></div>
+              <span>{t("ships.selectedTime")}</span>
+            </div>
+          ) : selectedStartTime && !selectedEndTime ? (
+            <div className="flex items-center space-x-1 whitespace-nowrap">
+              <div className="w-3 h-3 bg-[var(--color-success-100)] rounded border border-border"></div>
+              <span>{t("ships.selectingTime")}</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1 whitespace-nowrap">
+              <div className="w-3 h-3 bg-primary rounded border border-border"></div>
+              <span>{t("ships.selectedTime")}</span>
+            </div>
+          )}
+          <div className="flex items-center space-x-1 whitespace-nowrap">
+            <div className="w-3 h-3 bg-destructive/20 rounded border border-border"></div>
+            <span>{t("ships.reservedTime")}</span>
+          </div>
+          <div className="flex items-center space-x-1 whitespace-nowrap">
             <div className="w-3 h-3 bg-muted-foreground/50 rounded border border-border"></div>
             <span>{t("ships.pastTime")}</span>
           </div>
@@ -503,123 +612,167 @@ export function TimeTable({
 
         <div className="space-y-1">
           {/* 시간대별 행들 */}
-          {Object.entries(groupedSlots).map(([hour, slots], hourIndex) => {
-            const isTomorrowStart = parseInt(hour) === 24;
-            const isFirstHour = hourIndex === 0;
+          {Object.entries(filteredGroupedSlots)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([hour, slots]) => {
+              return (
+                <div key={hour}>
+                  <div className="relative">
+                    {/* 시간 라벨 - 슬롯 위에 오버레이 */}
+                    <div className="absolute top-1 left-1 z-10 text-sm font-medium text-foreground bg-background/20 backdrop-blur-sm px-1 rounded-br pointer-events-none">
+                      {hour === "24" ? "24:00" : `${hour}:00`}
+                    </div>
 
-            return (
-              <div key={hour}>
-                {/* 다음날 표시 */}
-                {isTomorrowStart && (
-                  <div className="text-sm font-medium text-foreground mb-2 mt-4">
-                    {t("common.nextDay")}
-                  </div>
-                )}
+                    {/* 5분 단위 버튼들 */}
+                    <div className="flex w-full">
+                      {slots.map((slot, index) => {
+                        const isFirst = index === 0;
+                        const isLast = index === slots.length - 1;
 
-                <div className="flex items-center gap-1">
-                  {/* 5분 단위 버튼들 */}
-                  <div className="flex flex-1">
-                    {slots.map((slot, index) => {
-                      const isFirst = index === 0;
-                      const isLast = index === slots.length - 1;
-
-                      return (
-                        <button
-                          key={slot.time}
-                          data-time={slot.time}
-                          onClick={() => handleTimeClick(slot.time)}
-                          onMouseEnter={() => handleMouseEnter(slot.time)}
-                          onMouseLeave={handleMouseLeave}
-                          disabled={false}
-                          className={`h-8 text-xs border-y border-border cursor-pointer transition-colors flex items-center justify-center px-1 flex-1 ${
-                            isFirst
-                              ? "border-l border-l-border rounded-l-md"
-                              : "border-l border-l-border"
-                          } ${
-                            isLast
-                              ? "border-r border-r-border rounded-r-md"
-                              : ""
-                          } ${
-                            slot.isReserved
-                              ? "bg-destructive text-destructive-foreground/70"
-                              : slot.isDisabled
-                              ? "bg-muted-foreground/50 text-muted-foreground"
-                              : selectedStartTime && selectedEndTime
-                              ? slot.time >= selectedStartTime &&
-                                slot.time < selectedEndTime
-                                ? "bg-primary text-primary-foreground"
-                                : slot.time === selectedStartTime ||
-                                  slot.time === selectedEndTime
-                                ? "bg-primary text-primary-foreground"
+                        return (
+                          <button
+                            key={slot.time}
+                            data-time={slot.time}
+                            onClick={() => handleTimeClick(slot.time)}
+                            onMouseEnter={(e) => handleMouseEnter(slot.time, e)}
+                            onMouseLeave={handleMouseLeave}
+                            onTouchStart={() => handleTouchStart(slot.time)}
+                            onTouchEnd={handleTouchEnd}
+                            disabled={false}
+                            className={`h-8 flex-1 text-xs border-y border-border cursor-pointer transition-all duration-200 flex items-center justify-center relative group ${
+                              isFirst
+                                ? "border-l border-l-border rounded-l-md"
+                                : "border-l border-l-border"
+                            } ${
+                              isLast
+                                ? "border-r border-r-border rounded-r-md"
+                                : ""
+                            } ${
+                              selectedStartTime && selectedEndTime
+                                ? slot.time >= selectedStartTime &&
+                                  slot.time < selectedEndTime
+                                  ? "bg-primary text-primary-foreground hover:bg-primary-hover"
+                                  : slot.time === selectedStartTime
+                                  ? "bg-primary text-primary-foreground hover:bg-primary-hover"
+                                  : slot.time === selectedEndTime
+                                  ? "bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)]/80"
+                                  : slot.isDisabled
+                                  ? "bg-muted-foreground/50 text-muted-foreground"
+                                  : slot.isReserved
+                                  ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                  : slot.isCurrentTime
+                                  ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
+                                  : hoveredTime === slot.time
+                                  ? "bg-[var(--color-success-100)] hover:bg-[var(--color-success-200)] hover:scale-105"
+                                  : "bg-muted hover:bg-muted/80 hover:scale-105"
+                                : selectedStartTime && !selectedEndTime
+                                ? slot.time === selectedStartTime
+                                  ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
+                                  : hoveredTime && selectedStartTime
+                                  ? (() => {
+                                      const startTime = selectedStartTime;
+                                      const endTime = hoveredTime;
+                                      const slotTime = slot.time;
+                                      if (startTime < endTime) {
+                                        return slotTime >= startTime &&
+                                          slotTime < endTime
+                                          ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
+                                          : slotTime === endTime
+                                          ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
+                                          : slot.isDisabled
+                                          ? "bg-muted-foreground/50 text-muted-foreground"
+                                          : slot.isReserved
+                                          ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                          : slot.isCurrentTime
+                                          ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
+                                          : "bg-muted hover:bg-muted/80 hover:scale-105";
+                                      } else {
+                                        return slotTime >= endTime &&
+                                          slotTime < startTime
+                                          ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
+                                          : slotTime === endTime
+                                          ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
+                                          : slot.isDisabled
+                                          ? "bg-muted-foreground/50 text-muted-foreground"
+                                          : slot.isReserved
+                                          ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                          : slot.isCurrentTime
+                                          ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
+                                          : "bg-muted hover:bg-muted/80 hover:scale-105";
+                                      }
+                                    })()
+                                  : slot.isDisabled
+                                  ? "bg-muted-foreground/50 text-muted-foreground"
+                                  : slot.isReserved
+                                  ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                  : slot.isCurrentTime
+                                  ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
+                                  : "bg-muted hover:bg-muted/80 hover:scale-105"
+                                : slot.isDisabled
+                                ? "bg-muted-foreground/50 text-muted-foreground"
                                 : slot.isCurrentTime
-                                ? "bg-amber-500/30 text-amber-900"
-                                : "bg-muted hover:bg-muted/80"
-                              : selectedStartTime && !selectedEndTime
-                              ? slot.time === selectedStartTime
-                                ? "bg-primary text-primary-foreground"
-                                : hoveredTime && selectedStartTime
-                                ? (() => {
-                                    const startTime = selectedStartTime;
-                                    const endTime = hoveredTime;
-                                    const slotTime = slot.time;
-                                    if (startTime < endTime) {
-                                      return slotTime >= startTime &&
-                                        slotTime < endTime
-                                        ? "bg-primary text-primary-foreground"
-                                        : slotTime === endTime
-                                        ? "bg-primary text-primary-foreground"
-                                        : slot.isCurrentTime
-                                        ? "bg-amber-500/30 text-amber-900"
-                                        : "bg-muted hover:bg-muted/80";
-                                    } else {
-                                      return slotTime >= endTime &&
-                                        slotTime < startTime
-                                        ? "bg-primary text-primary-foreground"
-                                        : slotTime === endTime
-                                        ? "bg-primary text-primary-foreground"
-                                        : slot.isCurrentTime
-                                        ? "bg-amber-500/30 text-amber-900"
-                                        : "bg-muted hover:bg-muted/80";
-                                    }
-                                  })()
-                                : slot.isCurrentTime
-                                ? "bg-amber-500/30 text-amber-900"
-                                : "bg-muted hover:bg-muted/80"
-                              : slot.isCurrentTime
-                              ? "bg-amber-500/30 text-amber-900 border-amber-500/50"
-                              : hoveredTime && slot.time === hoveredTime
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted hover:bg-muted/80"
-                          }`}
-                          title={
-                            slot.isReserved && !slot.isReservationStart
-                              ? t("timetable.reservedTime", { time: slot.time })
-                              : slot.isReservationStart
-                              ? t("timetable.reservationStart", {
-                                  time: slot.time,
-                                })
-                              : slot.isCurrentTime
-                              ? t("timetable.currentTime", { time: slot.time })
-                              : slot.isDisabled
-                              ? t("timetable.pastTime", { time: slot.time })
-                              : slot.time
-                          }
-                        >
-                          {parseInt(slot.time.split(":")[0]) >= 24
-                            ? `${(parseInt(slot.time.split(":")[0]) - 24)
-                                .toString()
-                                .padStart(2, "0")}:${slot.time.split(":")[1]}`
-                            : slot.time}
-                        </button>
-                      );
-                    })}
+                                ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
+                                : slot.isReserved
+                                ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                : hoveredTime && slot.time === hoveredTime
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-muted hover:bg-muted/80 hover:scale-105"
+                            }`}
+                          ></button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
+
+      {/* 수동 시간 입력 - 임시로 숨김 */}
+      {false && (
+        <div className="mt-4 p-3 bg-muted/50 rounded-md border border-border">
+          <p className="text-xs text-muted-foreground mb-2">
+            {t("timetable.manualTimeInput")}
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              value={manualStartTime}
+              onChange={(e) => setManualStartTime(e.target.value)}
+              className="flex-1 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="시작 시간"
+            />
+            <span className="text-xs text-muted-foreground">~</span>
+            <input
+              type="time"
+              value={manualEndTime}
+              onChange={(e) => setManualEndTime(e.target.value)}
+              className="flex-1 px-2 py-1 text-xs border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="종료 시간"
+            />
+            <button
+              onClick={() =>
+                handleManualTimeInput(manualStartTime, manualEndTime)
+              }
+              disabled={!manualStartTime || !manualEndTime}
+              className="px-3 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors"
+            >
+              {t("timetable.apply")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 툴팁 */}
+      {tooltip && (
+        <Tooltip
+          message={tooltip.message}
+          x={tooltip.x}
+          y={tooltip.y}
+          isBelow={tooltip.isBelow}
+        />
+      )}
     </div>
   );
 }

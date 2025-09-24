@@ -13,6 +13,7 @@ interface ReservationItemProps {
   currentUserId?: string;
   userRole?: "captain" | "mechanic" | "crew";
   onUpdate: () => void;
+  isCurrent?: boolean;
 }
 
 export function ReservationItem({
@@ -20,6 +21,7 @@ export function ReservationItem({
   currentUserId,
   userRole,
   onUpdate,
+  isCurrent = false,
 }: ReservationItemProps) {
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +128,13 @@ export function ReservationItem({
   };
 
   return (
-    <div className="bg-muted rounded-lg p-6 border border-border">
+    <div
+      className={`rounded-lg p-6 border ${
+        isCurrent
+          ? "bg-destructive/10 border-destructive/20 shadow-md"
+          : "bg-muted border-border"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           {getReservationType() && (

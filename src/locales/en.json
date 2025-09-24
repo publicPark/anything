@@ -209,8 +209,10 @@
     "selectDate": "Select Date",
     "selectTime": "Select Time",
     "timeSlotLegend": "Time Slot Legend",
+    "currentTime": "Current Time",
     "reservedTime": "Reserved Time",
     "selectedTime": "Selected Time",
+    "selectingTime": "Selecting Time",
     "availableTime": "Available Time",
     "pastTime": "Past Time",
     "noReservations": "No reservations",
@@ -242,13 +244,22 @@
     "errorLoadingCabins": "An error occurred while loading cabins",
     "cabinNameRequired": "Please enter a cabin name",
     "insufficientPermissionsCabin": "Mechanic+ role required",
-    "errorGeneric": "An error occurred while processing"
+    "errorGeneric": "An error occurred while processing",
+    "currentReservations": "Currently Active",
+    "todayReservations": "Today's Reservations",
+    "upcomingReservations": "Upcoming Reservations",
+    "noTodayReservations": "No meetings scheduled for today",
+    "noUpcomingReservations": "No upcoming reservations"
   },
   "common": {
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "nextDay": "Next Day",
+    "close": "Close"
   },
   "errors": {
     "auth": {
@@ -283,8 +294,10 @@
     "currentTime": "Current time - {time}",
     "pastTime": "Past time - {time} (Not selectable)",
     "reservedTimeNotification": "This time is reserved: {time}",
-    "pastTimeNotification": "This is a past time: {time}",
-    "reservationInRangeNotification": "Selected range includes reserved time"
+    "pastTimeNotification": "Past time cannot be selected.",
+    "reservationInRangeNotification": "Selected range includes reserved time",
+    "manualTimeInput": "Manual Time Input",
+    "apply": "Apply"
   },
   "cabins": {
     "currentReservation": "Current Reservation",
@@ -295,11 +308,5 @@
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",
     "viewAllCabins": "View all cabins of {shipName}"
-  },
-  "common": {
-    "today": "Today",
-    "tomorrow": "Tomorrow",
-    "nextDay": "Next Day",
-    "close": "Close"
   }
 }

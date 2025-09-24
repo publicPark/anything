@@ -44,6 +44,12 @@ export function ReservationForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    // 날짜가 변경되면 선택된 시간 초기화
+    if (name === "date" && formData.date !== value) {
+      clearSelection();
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -113,15 +119,9 @@ export function ReservationForm({
 
   return (
     <div className={isModal ? "p-6" : ""}>
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* 날짜 선택 */}
         <div>
-          <label
-            htmlFor="date"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            {t("ships.selectDate")}
-          </label>
           <input
             type="date"
             id="date"
@@ -135,9 +135,6 @@ export function ReservationForm({
 
         {/* 시간 선택 */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            {t("ships.selectTime")}
-          </label>
           <TimeTable
             selectedDate={formData.date}
             reservations={existingReservations}
@@ -146,19 +143,13 @@ export function ReservationForm({
 
         {/* 예약 목적 */}
         <div>
-          <label
-            htmlFor="purpose"
-            className="block text-sm font-medium text-foreground mb-2"
-          >
-            {t("ships.reservationPurpose")}
-          </label>
           <textarea
             id="purpose"
             name="purpose"
             value={formData.purpose}
             onChange={handleInputChange}
             placeholder={t("ships.reservationPurposePlaceholder")}
-            rows={3}
+            rows={1}
             className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             required
           />
@@ -167,9 +158,10 @@ export function ReservationForm({
         {error && <ErrorMessage message={error} />}
 
         {/* 버튼 */}
-        <div className="pt-4">
+        <div>
           <Button
             type="button"
+            size="md"
             variant="primary"
             disabled={isLoading}
             onClick={handleCreateReservation}

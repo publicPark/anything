@@ -209,8 +209,10 @@
     "selectDate": "날짜 선택",
     "selectTime": "시간 선택",
     "timeSlotLegend": "시간대 색상 설명",
+    "currentTime": "현재 시간",
     "reservedTime": "이미 예약된 시간",
     "selectedTime": "선택한 시간",
+    "selectingTime": "선택 중인 시간",
     "availableTime": "예약 가능한 시간",
     "pastTime": "지난 시간",
     "noReservations": "예약이 없습니다",
@@ -228,7 +230,7 @@
     "inUse": "사용 중",
     "currentlyUsedBy": "현재 사용 중",
     "reservationStatus": "예약 현황",
-    "currentReservation": "현재 예약",
+    "currentReservation": "현재 진행 중",
     "nextReservation": "다음 예약",
     "noCurrentReservation": "현재 사용중인 예약이 없습니다",
     "createFirstCabin": "첫 번째 선실을 만들어보세요!",
@@ -242,13 +244,22 @@
     "errorLoadingCabins": "선실 목록을 불러오는 중 오류가 발생했습니다",
     "cabinNameRequired": "선실 이름을 입력해주세요",
     "insufficientPermissionsCabin": "mechanic 이상의 권한이 필요합니다",
-    "errorGeneric": "작업 중 오류가 발생했습니다"
+    "errorGeneric": "작업 중 오류가 발생했습니다",
+    "currentReservations": "현재 예약",
+    "todayReservations": "오늘의 예약",
+    "upcomingReservations": "다가오는 예약",
+    "noTodayReservations": "오늘 예약된 회의가 없습니다",
+    "noUpcomingReservations": "예정된 예약이 없습니다"
   },
   "common": {
     "loading": "로딩 중...",
     "error": "오류",
     "success": "성공",
-    "processing": "처리 중..."
+    "processing": "처리 중...",
+    "today": "오늘",
+    "tomorrow": "내일",
+    "nextDay": "다음날",
+    "close": "닫기"
   },
   "errors": {
     "auth": {
@@ -283,8 +294,10 @@
     "currentTime": "현재 시간 - {time}",
     "pastTime": "과거 시간 - {time} (선택 불가)",
     "reservedTimeNotification": "예약된 시간입니다: {time}",
-    "pastTimeNotification": "과거 시간입니다: {time}",
-    "reservationInRangeNotification": "선택 범위에 예약이 포함되어 있습니다"
+    "pastTimeNotification": "과거 시간은 선택할 수 없습니다.",
+    "reservationInRangeNotification": "선택 범위에 예약이 포함되어 있습니다",
+    "manualTimeInput": "직접 시간 입력",
+    "apply": "적용"
   },
   "cabins": {
     "currentReservation": "현재 예약",
@@ -295,11 +308,5 @@
     "reservationTitle": "예약 제목",
     "reservationDescription": "예약 설명",
     "viewAllCabins": "{shipName}의 모든 선실 보기"
-  },
-  "common": {
-    "today": "오늘",
-    "tomorrow": "내일",
-    "nextDay": "다음날",
-    "close": "닫기"
   }
 }

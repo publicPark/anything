@@ -72,7 +72,20 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
         throw cabinsError;
       }
 
-      // 예약 목록 조회
+      // 오늘 날짜 범위 계산
+      const today = new Date();
+      const startOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+      const endOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1
+      );
+
+      // 오늘의 예약 목록만 조회
       const { data: reservationsData, error: reservationsError } =
         await supabase
           .from("cabin_reservations")
@@ -81,7 +94,9 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
           .in(
             "cabin_id",
             (cabinsData || []).map((cabin) => cabin.id)
-          );
+          )
+          .gte("start_time", startOfDay.toISOString())
+          .lt("start_time", endOfDay.toISOString());
 
       if (reservationsError) {
         throw reservationsError;

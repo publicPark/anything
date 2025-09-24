@@ -15,6 +15,7 @@
   --primary-foreground: #000000; /* 메인 컬러 반대색상 - 검정색 */
   --primary-hover: #24c25a; /* 더 어두운 메인 컬러 */
   --primary-active: #1fab4d; /* 가장 어두운 메인 컬러 */
+  --primary-light: #d1fae5; /* 연한 메인 컬러 */
   --secondary: #ffffff; /* 보조 버튼 배경 */
   --secondary-foreground: var(--foreground); /* 보조 버튼 텍스트 */
   --secondary-hover: #f5f5f5; /* 보조 버튼 호버 */
@@ -26,8 +27,10 @@
 
   /* 상태별 색상 - 새로운 팔레트 */
   --success-100: #d1fae5;
+  --success-200: #bbf7d0;
   --success-600: #8fd9b6;
   --success-800: #6bc49a;
+  --success-foreground: #000000;
 
   --error-100: #fee2e2;
   --error-600: #d94b2b;
@@ -62,6 +65,7 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
   --color-primary-active: var(--primary-active);
+  --color-primary-light: var(--primary-light);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-hover: var(--secondary-hover);
@@ -79,8 +83,10 @@
 
   /* Secondary Color Variables */
   --color-success-100: var(--success-100);
+  --color-success-200: var(--success-200);
   --color-success-600: var(--success-600);
   --color-success-800: var(--success-800);
+  --color-success-foreground: var(--success-foreground);
 
   --color-error-100: var(--error-100);
   --color-error-600: var(--error-600);
@@ -111,12 +117,13 @@
   --primary-foreground: #000000; /* 메인 컬러 반대색상 - 검정색 */
   --primary-hover: #24c25a; /* 더 어두운 메인 컬러 */
   --primary-active: #1fab4d; /* 가장 어두운 메인 컬러 */
+  --primary-light: #064e3b; /* 연한 메인 컬러 */
   --secondary: #262626; /* 보조 버튼 배경 */
   --secondary-foreground: var(--foreground); /* 보조 버튼 텍스트 */
   --secondary-hover: #404040; /* 보조 버튼 호버 */
   --secondary-active: #525252; /* 보조 버튼 활성 */
   --destructive: #d94b2b; /* 위험 버튼 배경 */
-  --destructive-foreground: #000000; /* 위험 버튼 텍스트 - 검정색 */
+  --destructive-foreground: #ffffff; /* 위험 버튼 텍스트 - 흰색 */
   --destructive-hover: #b83e24; /* 위험 버튼 호버 */
   --destructive-active: #9a331e; /* 위험 버튼 활성 */
 
@@ -124,8 +131,10 @@
 
   /* Success Colors - 다크모드용 */
   --success-100: #064e3b;
-  --success-600: #8fd9b6;
+  --success-200: #065f46;
+  --success-600: #10b981;
   --success-800: #6ee7b7;
+  --success-foreground: #ffffff;
 
   /* Error Colors - 다크모드용 */
   --error-100: #7f1d1d;
@@ -168,4 +177,13 @@ body {
 .role-crew {
   background-color: #d98f9b; /* 선원 - 가장 어두운 핑크색 */
   color: #000000;
+}
+
+/* 다크모드에서 뱃지 가독성 개선 */
+.dark .bg-success-600 {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .bg-destructive {
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }

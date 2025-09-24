@@ -25,6 +25,7 @@ module.exports = {
           100: "var(--success-100)",
           600: "var(--success-600)",
           800: "var(--success-800)",
+          foreground: "var(--success-foreground)",
         },
         error: {
           100: "var(--error-100)",

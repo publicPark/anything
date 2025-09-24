@@ -208,6 +208,11 @@
     "endTime": "종료 시간",
     "selectDate": "날짜 선택",
     "selectTime": "시간 선택",
+    "timeSlotLegend": "시간대 색상 설명",
+    "reservedTime": "이미 예약된 시간",
+    "selectedTime": "선택한 시간",
+    "availableTime": "예약 가능한 시간",
+    "pastTime": "지난 시간",
     "noReservations": "예약이 없습니다",
     "timeConflict": "시간 충돌",
     "timeConflictMessage": "선택한 시간에 이미 예약이 있습니다",
@@ -219,9 +224,13 @@
     "myReservation": "내 예약",
     "cabinNotFound": "선실을 찾을 수 없습니다",
     "errorLoadingCabin": "선실 정보를 불러오는 중 오류가 발생했습니다",
-    "available": "사용 가능",
+    "available": "비어있음",
     "inUse": "사용 중",
     "currentlyUsedBy": "현재 사용 중",
+    "reservationStatus": "예약 현황",
+    "currentReservation": "현재 예약",
+    "nextReservation": "다음 예약",
+    "noCurrentReservation": "현재 사용중인 예약이 없습니다",
     "createFirstCabin": "첫 번째 선실을 만들어보세요!",
     "cabinCreated": "선실이 성공적으로 생성되었습니다",
     "cabinUpdated": "선실이 성공적으로 수정되었습니다",
@@ -286,5 +295,11 @@
     "reservationTitle": "예약 제목",
     "reservationDescription": "예약 설명",
     "viewAllCabins": "{shipName}의 모든 선실 보기"
+  },
+  "common": {
+    "today": "오늘",
+    "tomorrow": "내일",
+    "nextDay": "다음날",
+    "close": "닫기"
   }
 }

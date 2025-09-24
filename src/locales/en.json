@@ -208,6 +208,11 @@
     "endTime": "End Time",
     "selectDate": "Select Date",
     "selectTime": "Select Time",
+    "timeSlotLegend": "Time Slot Legend",
+    "reservedTime": "Reserved Time",
+    "selectedTime": "Selected Time",
+    "availableTime": "Available Time",
+    "pastTime": "Past Time",
     "noReservations": "No reservations",
     "timeConflict": "Time Conflict",
     "timeConflictMessage": "Another reservation exists during this time",
@@ -222,6 +227,10 @@
     "available": "Available",
     "inUse": "In Use",
     "currentlyUsedBy": "Currently used by",
+    "reservationStatus": "Reservation Status",
+    "currentReservation": "Current Reservation",
+    "nextReservation": "Next Reservation",
+    "noCurrentReservation": "No current reservation",
     "createFirstCabin": "Create your first cabin!",
     "cabinCreated": "Cabin created successfully",
     "cabinUpdated": "Cabin updated successfully",
@@ -286,5 +295,11 @@
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",
     "viewAllCabins": "View all cabins of {shipName}"
+  },
+  "common": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "nextDay": "Next Day",
+    "close": "Close"
   }
 }

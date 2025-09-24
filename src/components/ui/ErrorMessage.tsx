@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/hooks/useI18n";
 
 interface ErrorMessageProps {
   message: string;
@@ -13,6 +14,7 @@ export function ErrorMessage({
   variant = "default",
   onClose,
 }: ErrorMessageProps) {
+  const { t } = useI18n();
   const variantClasses = {
     default: "bg-muted text-muted-foreground border-border",
     destructive: "bg-destructive/10 text-destructive border-destructive/20",
@@ -32,7 +34,7 @@ export function ErrorMessage({
         <button
           onClick={onClose}
           className="ml-2 text-current opacity-70 hover:opacity-100 transition-opacity"
-          aria-label="닫기"
+          aria-label={t("common.close")}
         >
           <svg
             className="w-4 h-4"

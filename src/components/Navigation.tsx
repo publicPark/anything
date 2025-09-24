@@ -119,19 +119,20 @@ export default function Navigation() {
                 >
                   {t("navigation.home")}
                 </Link>
-                {profile && (
-                  <Link
-                    href={getLocalizedPath("/ships")}
-                    className={cn(
-                      "px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 border border-transparent",
-                      isActive("/ships")
-                        ? "bg-primary text-primary-foreground shadow-md border-primary/20"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-border"
-                    )}
-                  >
-                    {t("ships.title")}
-                  </Link>
-                )}
+                {profile &&
+                  (profile.role === "gaia" || profile.role === "chaos") && (
+                    <Link
+                      href={getLocalizedPath("/ships")}
+                      className={cn(
+                        "px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 border border-transparent",
+                        isActive("/ships")
+                          ? "bg-primary text-primary-foreground shadow-md border-primary/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-background hover:border-border"
+                      )}
+                    >
+                      {t("ships.title")}
+                    </Link>
+                  )}
               </div>
             </div>
 

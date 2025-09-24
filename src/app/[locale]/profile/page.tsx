@@ -18,6 +18,9 @@ export default function ProfilePage() {
     display_name: "",
   });
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | null>(
+    null
+  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -70,8 +73,10 @@ export default function ProfilePage() {
       await updateProfile(formData);
       setIsEditing(false);
       setMessage(t("profile.updateSuccess"));
+      setMessageType("success");
     } catch {
       setMessage(t("profile.updateError"));
+      setMessageType("error");
     }
   };
 
@@ -120,13 +125,12 @@ export default function ProfilePage() {
         {message && (
           <ErrorMessage
             message={message}
-            variant={
-              message.includes("업데이트") || message.includes("updated")
-                ? "success"
-                : "destructive"
-            }
+            variant={messageType === "success" ? "success" : "destructive"}
             className="mb-4"
-            onClose={() => setMessage("")}
+            onClose={() => {
+              setMessage("");
+              setMessageType(null);
+            }}
           />
         )}
 

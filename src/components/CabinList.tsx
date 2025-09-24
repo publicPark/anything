@@ -14,6 +14,7 @@ import {
   groupReservationsByCabinId,
 } from "@/lib/cabin-status";
 import { renderTextWithLinks } from "@/lib/text-helpers";
+import Link from "next/link";
 
 interface CabinListProps {
   shipId: string;
@@ -21,7 +22,7 @@ interface CabinListProps {
 }
 
 export function CabinList({ shipId, shipPublicId }: CabinListProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [cabins, setCabins] = useState<CabinWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,6 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
           table: "cabin_reservations",
         },
         (payload) => {
-          console.log("Reservation change detected:", payload);
           // 예약 변경 시 데이터 새로고침
           fetchCabins();
         }
@@ -140,7 +140,14 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
               className="bg-muted rounded-lg p-6 border border-border hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3
+                  className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
+                  onClick={() =>
+                    router.push(
+                      `/${locale}/ship/${shipPublicId}/cabin/${cabin.public_id}`
+                    )
+                  }
+                >
                   {cabin.name}
                 </h3>
                 <span
@@ -215,18 +222,13 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
               )}
 
               <div className="w-full">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full"
-                  onClick={() =>
-                    router.push(
-                      `/ship/${shipPublicId}/cabin/${cabin.public_id}`
-                    )
-                  }
+                <Link
+                  href={`/${locale}/ship/${shipPublicId}/cabin/${cabin.public_id}?reserve=true`}
                 >
-                  {t("ships.reserveCabin")}
-                </Button>
+                  <Button variant="primary" size="md" className="w-full">
+                    {t("ships.reserveCabin")}
+                  </Button>
+                </Link>
               </div>
             </div>
           ))}

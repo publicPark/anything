@@ -14,15 +14,15 @@ import { useReservationStore } from "@/stores/reservationStore";
 interface ReservationFormProps {
   cabinId: string;
   onSuccess: () => void;
-  onCancel: () => void;
   existingReservations?: CabinReservation[];
+  isModal?: boolean;
 }
 
 export function ReservationForm({
   cabinId,
   onSuccess,
-  onCancel,
   existingReservations = [],
+  isModal = false,
 }: ReservationFormProps) {
   const { t } = useI18n();
   const { profile } = useProfile();
@@ -39,16 +39,6 @@ export function ReservationForm({
     date: today,
     purpose: profile?.display_name ? `${profile.display_name}의 예약` : "",
   });
-
-  // 프로필이 로드되면 purpose 기본값 설정
-  useEffect(() => {
-    if (profile?.display_name && !formData.purpose) {
-      setFormData((prev) => ({
-        ...prev,
-        purpose: `${profile.display_name}의 예약`,
-      }));
-    }
-  }, [profile, formData.purpose]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -74,9 +64,25 @@ export function ReservationForm({
       return;
     }
 
-    // 시간 검증
-    const startDateTime = new Date(`${formData.date}T${selectedStartTime}`);
-    const endDateTime = new Date(`${formData.date}T${selectedEndTime}`);
+    // 시간 검증 및 날짜 계산
+    const createDateTime = (dateStr: string, timeStr: string): Date => {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      const date = new Date(dateStr);
+
+      // 24시간을 넘어가면 다음 날로 처리
+      if (hours >= 24) {
+        date.setDate(date.getDate() + 1);
+        date.setHours(hours - 24, minutes, 0, 0);
+      } else {
+        date.setHours(hours, minutes, 0, 0);
+      }
+
+      return date;
+    };
+
+    const startDateTime = createDateTime(formData.date, selectedStartTime);
+    const endDateTime = createDateTime(formData.date, selectedEndTime);
+
     if (endDateTime <= startDateTime) {
       setError("종료 시간은 시작 시간보다 늦어야 합니다.");
       return;
@@ -106,11 +112,7 @@ export function ReservationForm({
   };
 
   return (
-    <div className="bg-muted rounded-lg p-6 border border-border">
-      <h3 className="text-xl font-semibold text-foreground mb-6">
-        {t("ships.createReservation")}
-      </h3>
-
+    <div className={isModal ? "p-6" : ""}>
       <div className="space-y-4">
         {/* 날짜 선택 */}
         <div>
@@ -127,7 +129,7 @@ export function ReservationForm({
             value={formData.date}
             onChange={handleInputChange}
             min={new Date().toISOString().split("T")[0]} // 오늘 이후만 선택 가능
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -157,30 +159,21 @@ export function ReservationForm({
             onChange={handleInputChange}
             placeholder={t("ships.reservationPurposePlaceholder")}
             rows={3}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             required
           />
         </div>
 
         {error && <ErrorMessage message={error} />}
 
-        {/* 버튼들 */}
-        <div className="flex space-x-3 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onCancel}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            {t("common.cancel")}
-          </Button>
+        {/* 버튼 */}
+        <div className="pt-4">
           <Button
             type="button"
             variant="primary"
             disabled={isLoading}
             onClick={handleCreateReservation}
-            className="flex-1"
+            className="w-full"
           >
             {isLoading ? (
               <div className="flex items-center space-x-2">

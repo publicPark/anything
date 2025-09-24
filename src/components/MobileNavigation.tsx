@@ -93,7 +93,7 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
         </svg>
       ),
     },
-    ...(profile
+    ...(profile && (profile.role === "gaia" || profile.role === "chaos")
       ? [
           {
             href: "/ships",

@@ -331,15 +331,15 @@ export function TimeTable({
 
     if (slot.isReserved) {
       baseStyle +=
-        "bg-destructive/30 text-destructive-foreground cursor-not-allowed border-destructive/50 ";
+        "bg-destructive text-destructive-foreground/70 cursor-not-allowed border-destructive/50 ";
     } else if (slot.isDisabled) {
       baseStyle +=
-        "bg-muted/70 text-muted-foreground/70 cursor-not-allowed border-muted-foreground/30 ";
+        "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed border-muted-foreground/30 ";
     } else if (selectedStartTime && selectedEndTime) {
       // 완전히 선택된 상태
       const slotTime = slot.time;
       if (slotTime >= selectedStartTime && slotTime < selectedEndTime) {
-        baseStyle += "bg-primary/30 text-primary-foreground ";
+        baseStyle += "bg-primary text-primary-foreground ";
       } else if (
         slotTime === selectedStartTime ||
         slotTime === selectedEndTime
@@ -360,13 +360,13 @@ export function TimeTable({
 
         if (startTime < endTime) {
           if (slotTime >= startTime && slotTime < endTime) {
-            baseStyle += "bg-primary/20 text-primary-foreground ";
+            baseStyle += "bg-primary text-primary-foreground ";
           } else {
             baseStyle += "bg-muted hover:bg-muted/80 ";
           }
         } else {
           if (slotTime >= endTime && slotTime < startTime) {
-            baseStyle += "bg-primary/20 text-primary-foreground ";
+            baseStyle += "bg-primary text-primary-foreground ";
           } else {
             baseStyle += "bg-muted hover:bg-muted/80 ";
           }
@@ -480,115 +480,144 @@ export function TimeTable({
         {!selectedStartTime && <p>{t("timetable.selectTime")}</p>}
       </div>
 
-      <div className="max-h-80 overflow-auto border border-border rounded-md p-4">
+      <div className="max-h-80 overflow-auto border border-border p-4">
+        {/* 색상 설명 */}
+        <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground mb-4">
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-destructive rounded border border-border"></div>
+            <span>{t("ships.reservedTime")}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-primary rounded border border-border"></div>
+            <span>{t("ships.selectedTime")}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-muted rounded border border-border"></div>
+            <span>{t("ships.availableTime")}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <div className="w-3 h-3 bg-muted-foreground/50 rounded border border-border"></div>
+            <span>{t("ships.pastTime")}</span>
+          </div>
+        </div>
+
         <div className="space-y-1">
           {/* 시간대별 행들 */}
-          {Object.entries(groupedSlots).map(([hour, slots]) => (
-            <div key={hour} className="flex items-center gap-1">
-              {/* 시간 라벨 */}
-              <div className="w-16 text-xs text-muted-foreground font-medium text-center">
-                {parseInt(hour) >= 24
-                  ? `${t("timetable.tomorrow")} ${(parseInt(hour) - 24)
-                      .toString()
-                      .padStart(2, "0")}:00`
-                  : `${t("timetable.today")} ${hour}:00`}
-              </div>
+          {Object.entries(groupedSlots).map(([hour, slots], hourIndex) => {
+            const isTomorrowStart = parseInt(hour) === 24;
+            const isFirstHour = hourIndex === 0;
 
-              {/* 5분 단위 버튼들 */}
-              <div className="flex flex-1">
-                {slots.map((slot, index) => {
-                  const isFirst = index === 0;
-                  const isLast = index === slots.length - 1;
+            return (
+              <div key={hour}>
+                {/* 다음날 표시 */}
+                {isTomorrowStart && (
+                  <div className="text-sm font-medium text-foreground mb-2 mt-4">
+                    {t("common.nextDay")}
+                  </div>
+                )}
 
-                  return (
-                    <button
-                      key={slot.time}
-                      data-time={slot.time}
-                      onClick={() => handleTimeClick(slot.time)}
-                      onMouseEnter={() => handleMouseEnter(slot.time)}
-                      onMouseLeave={handleMouseLeave}
-                      disabled={false}
-                      className={`h-8 text-xs border-y border-border cursor-pointer transition-colors flex items-center justify-center px-2 flex-1 ${
-                        isFirst
-                          ? "border-l border-l-border rounded-l-md"
-                          : "border-l border-l-border"
-                      } ${
-                        isLast ? "border-r border-r-border rounded-r-md" : ""
-                      } ${
-                        slot.isReserved
-                          ? "bg-destructive/30 text-destructive-foreground"
-                          : slot.isDisabled
-                          ? "bg-muted text-muted-foreground"
-                          : selectedStartTime && selectedEndTime
-                          ? slot.time >= selectedStartTime &&
-                            slot.time < selectedEndTime
-                            ? "bg-primary/30 text-primary-foreground"
-                            : slot.time === selectedStartTime ||
-                              slot.time === selectedEndTime
-                            ? "bg-primary text-primary-foreground"
-                            : slot.isCurrentTime
-                            ? "bg-amber-500/30 text-amber-900"
-                            : "bg-muted hover:bg-muted/80"
-                          : selectedStartTime && !selectedEndTime
-                          ? slot.time === selectedStartTime
-                            ? "bg-primary text-primary-foreground"
-                            : hoveredTime && selectedStartTime
-                            ? (() => {
-                                const startTime = selectedStartTime;
-                                const endTime = hoveredTime;
-                                const slotTime = slot.time;
-                                if (startTime < endTime) {
-                                  return slotTime >= startTime &&
-                                    slotTime < endTime
-                                    ? "bg-primary/20 text-primary-foreground"
-                                    : slotTime === endTime
-                                    ? "bg-primary/40 text-primary-foreground"
-                                    : slot.isCurrentTime
-                                    ? "bg-amber-500/30 text-amber-900"
-                                    : "bg-muted hover:bg-muted/80";
-                                } else {
-                                  return slotTime >= endTime &&
-                                    slotTime < startTime
-                                    ? "bg-primary/20 text-primary-foreground"
-                                    : slotTime === endTime
-                                    ? "bg-primary/40 text-primary-foreground"
-                                    : slot.isCurrentTime
-                                    ? "bg-amber-500/30 text-amber-900"
-                                    : "bg-muted hover:bg-muted/80";
-                                }
-                              })()
-                            : slot.isCurrentTime
-                            ? "bg-amber-500/30 text-amber-900"
-                            : "bg-muted hover:bg-muted/80"
-                          : slot.isCurrentTime
-                          ? "bg-amber-500/30 text-amber-900 border-amber-500/50"
-                          : hoveredTime && slot.time === hoveredTime
-                          ? "bg-primary/40 text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                      title={
-                        slot.isReserved && !slot.isReservationStart
-                          ? t("timetable.reservedTime", { time: slot.time })
-                          : slot.isReservationStart
-                          ? t("timetable.reservationStart", { time: slot.time })
-                          : slot.isCurrentTime
-                          ? t("timetable.currentTime", { time: slot.time })
-                          : slot.isDisabled
-                          ? t("timetable.pastTime", { time: slot.time })
-                          : slot.time
-                      }
-                    >
-                      {parseInt(slot.time.split(":")[0]) >= 24
-                        ? `${(parseInt(slot.time.split(":")[0]) - 24)
-                            .toString()
-                            .padStart(2, "0")}:${slot.time.split(":")[1]}`
-                        : slot.time}
-                    </button>
-                  );
-                })}
+                <div className="flex items-center gap-1">
+                  {/* 5분 단위 버튼들 */}
+                  <div className="flex flex-1">
+                    {slots.map((slot, index) => {
+                      const isFirst = index === 0;
+                      const isLast = index === slots.length - 1;
+
+                      return (
+                        <button
+                          key={slot.time}
+                          data-time={slot.time}
+                          onClick={() => handleTimeClick(slot.time)}
+                          onMouseEnter={() => handleMouseEnter(slot.time)}
+                          onMouseLeave={handleMouseLeave}
+                          disabled={false}
+                          className={`h-8 text-xs border-y border-border cursor-pointer transition-colors flex items-center justify-center px-1 flex-1 ${
+                            isFirst
+                              ? "border-l border-l-border rounded-l-md"
+                              : "border-l border-l-border"
+                          } ${
+                            isLast
+                              ? "border-r border-r-border rounded-r-md"
+                              : ""
+                          } ${
+                            slot.isReserved
+                              ? "bg-destructive text-destructive-foreground/70"
+                              : slot.isDisabled
+                              ? "bg-muted-foreground/50 text-muted-foreground"
+                              : selectedStartTime && selectedEndTime
+                              ? slot.time >= selectedStartTime &&
+                                slot.time < selectedEndTime
+                                ? "bg-primary text-primary-foreground"
+                                : slot.time === selectedStartTime ||
+                                  slot.time === selectedEndTime
+                                ? "bg-primary text-primary-foreground"
+                                : slot.isCurrentTime
+                                ? "bg-amber-500/30 text-amber-900"
+                                : "bg-muted hover:bg-muted/80"
+                              : selectedStartTime && !selectedEndTime
+                              ? slot.time === selectedStartTime
+                                ? "bg-primary text-primary-foreground"
+                                : hoveredTime && selectedStartTime
+                                ? (() => {
+                                    const startTime = selectedStartTime;
+                                    const endTime = hoveredTime;
+                                    const slotTime = slot.time;
+                                    if (startTime < endTime) {
+                                      return slotTime >= startTime &&
+                                        slotTime < endTime
+                                        ? "bg-primary text-primary-foreground"
+                                        : slotTime === endTime
+                                        ? "bg-primary text-primary-foreground"
+                                        : slot.isCurrentTime
+                                        ? "bg-amber-500/30 text-amber-900"
+                                        : "bg-muted hover:bg-muted/80";
+                                    } else {
+                                      return slotTime >= endTime &&
+                                        slotTime < startTime
+                                        ? "bg-primary text-primary-foreground"
+                                        : slotTime === endTime
+                                        ? "bg-primary text-primary-foreground"
+                                        : slot.isCurrentTime
+                                        ? "bg-amber-500/30 text-amber-900"
+                                        : "bg-muted hover:bg-muted/80";
+                                    }
+                                  })()
+                                : slot.isCurrentTime
+                                ? "bg-amber-500/30 text-amber-900"
+                                : "bg-muted hover:bg-muted/80"
+                              : slot.isCurrentTime
+                              ? "bg-amber-500/30 text-amber-900 border-amber-500/50"
+                              : hoveredTime && slot.time === hoveredTime
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted hover:bg-muted/80"
+                          }`}
+                          title={
+                            slot.isReserved && !slot.isReservationStart
+                              ? t("timetable.reservedTime", { time: slot.time })
+                              : slot.isReservationStart
+                              ? t("timetable.reservationStart", {
+                                  time: slot.time,
+                                })
+                              : slot.isCurrentTime
+                              ? t("timetable.currentTime", { time: slot.time })
+                              : slot.isDisabled
+                              ? t("timetable.pastTime", { time: slot.time })
+                              : slot.time
+                          }
+                        >
+                          {parseInt(slot.time.split(":")[0]) >= 24
+                            ? `${(parseInt(slot.time.split(":")[0]) - 24)
+                                .toString()
+                                .padStart(2, "0")}:${slot.time.split(":")[1]}`
+                            : slot.time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

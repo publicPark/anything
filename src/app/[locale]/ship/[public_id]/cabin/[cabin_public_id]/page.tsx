@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -18,6 +18,7 @@ export default function CabinDetailPage() {
   const { t, locale } = useI18n();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
 
@@ -26,7 +27,6 @@ export default function CabinDetailPage() {
   const [reservations, setReservations] = useState<CabinReservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showReservationForm, setShowReservationForm] = useState(false);
   const [userRole, setUserRole] = useState<
     "captain" | "mechanic" | "crew" | null
   >(null);
@@ -55,7 +55,6 @@ export default function CabinDetailPage() {
           filter: `cabin_id=eq.${cabin.id}`,
         },
         (payload) => {
-          console.log("Reservation change detected:", payload);
           // 예약 변경 시 데이터 새로고침
           fetchCabinDetails();
         }
@@ -145,18 +144,31 @@ export default function CabinDetailPage() {
     }
   };
 
-  const handleCreateReservation = () => {
-    setShowReservationForm(true);
-  };
-
   const handleReservationSuccess = () => {
-    setShowReservationForm(false);
     fetchCabinDetails(); // 예약 목록 새로고침
   };
 
-  const handleReservationCancel = () => {
-    setShowReservationForm(false);
+  // 현재 사용중인 예약과 다음 예약 찾기
+  const getCurrentAndNextReservations = () => {
+    const now = new Date();
+    const currentReservation = reservations.find((reservation) => {
+      if (reservation.status !== "confirmed") return false;
+      const start = new Date(reservation.start_time);
+      const end = new Date(reservation.end_time);
+      return now >= start && now < end;
+    });
+
+    const nextReservation = reservations.find((reservation) => {
+      if (reservation.status !== "confirmed") return false;
+      const start = new Date(reservation.start_time);
+      return start > now;
+    });
+
+    return { currentReservation, nextReservation };
   };
+
+  const { currentReservation, nextReservation } =
+    getCurrentAndNextReservations();
 
   if (profileLoading || isLoading) {
     return (
@@ -187,87 +199,131 @@ export default function CabinDetailPage() {
         </Button>
       </div>
 
-      {/* 선실 헤더 */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-4">
+      {/* 메인 컨텐츠 - 세로 배치 */}
+      <div className="space-y-8">
+        {/* 회의실 정보 - 좌우 분할 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 왼쪽 - 회의실 기본 정보 */}
           <div>
-            {/* <p className="text-muted-foreground mb-2">{ship.name}</p> */}
-            <h1 className="text-3xl font-bold text-foreground">{cabin.name}</h1>
-          </div>
-          <div className="flex flex-col items-end space-y-2">
-            <span
-              className={`px-3 py-1 text-sm font-medium rounded-full ${
-                calculateCabinStatus(reservations).status === "available"
-                  ? "bg-success-600 text-success-foreground"
-                  : "bg-destructive text-destructive-foreground"
-              }`}
-            >
-              {calculateCabinStatus(reservations).status === "available"
-                ? t("ships.available")
-                : t("ships.inUse")}
-            </span>
-            {calculateCabinStatus(reservations).currentReservation && (
-              <p className="text-sm text-muted-foreground">
-                {t("ships.currentlyUsedBy")}:{" "}
-                {calculateCabinStatus(reservations).currentReservation?.purpose}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  {cabin.name}
+                </h1>
+              </div>
+              <div className="flex flex-col items-end space-y-2">
+                <span
+                  className={`px-3 py-1 text-sm font-medium rounded-full ${
+                    calculateCabinStatus(reservations).status === "available"
+                      ? "bg-success-600 text-success-foreground"
+                      : "bg-destructive text-destructive-foreground"
+                  }`}
+                >
+                  {calculateCabinStatus(reservations).status === "available"
+                    ? t("ships.available")
+                    : t("ships.inUse")}
+                </span>
+              </div>
+            </div>
+
+            {cabin.description && (
+              <p className="text-foreground mb-6 whitespace-pre-wrap">
+                {renderTextWithLinks(cabin.description)}
               </p>
+            )}
+          </div>
+
+          {/* 오른쪽 - 현재/다음 예약 정보 */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">
+              {t("ships.reservationStatus")}
+            </h3>
+
+            {/* 현재 사용중인 예약 */}
+            {currentReservation ? (
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-2">
+                  {t("ships.currentReservation")}
+                </h4>
+                <ReservationItem
+                  reservation={currentReservation}
+                  currentUserId={profile?.id}
+                  userRole={userRole || undefined}
+                  onUpdate={fetchCabinDetails}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-4xl mb-2">✅</div>
+                <p className="text-sm text-muted-foreground">
+                  {t("ships.noCurrentReservation")}
+                </p>
+              </div>
+            )}
+
+            {/* 다음 예약 */}
+            {nextReservation && (
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-2">
+                  {t("ships.nextReservation")}
+                </h4>
+                <ReservationItem
+                  reservation={nextReservation}
+                  currentUserId={profile?.id}
+                  userRole={userRole || undefined}
+                  onUpdate={fetchCabinDetails}
+                />
+              </div>
             )}
           </div>
         </div>
 
-        {cabin.description && (
-          <p className="text-foreground mb-6 whitespace-pre-wrap">
-            {renderTextWithLinks(cabin.description)}
-          </p>
-        )}
+        {/* Divider */}
+        <hr className="border-border" />
 
-        <Button
-          variant="primary"
-          onClick={handleCreateReservation}
-          className="mb-6"
-        >
-          {t("ships.createReservation")}
-        </Button>
-      </div>
-
-      {/* 예약 폼 */}
-      {showReservationForm && (
-        <div className="mb-8">
+        {/* 예약 폼 - 고정 */}
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-6">
+            {t("ships.createReservation")}
+          </h2>
           <ReservationForm
             cabinId={cabin.id}
             onSuccess={handleReservationSuccess}
-            onCancel={handleReservationCancel}
             existingReservations={reservations}
+            isModal={false}
           />
         </div>
-      )}
 
-      {/* 예약 목록 */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-foreground">
-          {t("ships.reservations")}
-        </h2>
+        {/* Divider */}
+        <hr className="border-border" />
 
-        {reservations.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📅</div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              {t("ships.noReservations")}
-            </h3>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {reservations.map((reservation) => (
-              <ReservationItem
-                key={reservation.id}
-                reservation={reservation}
-                currentUserId={profile?.id}
-                userRole={userRole || undefined}
-                onUpdate={fetchCabinDetails}
-              />
-            ))}
-          </div>
-        )}
+        {/* 예약 목록 */}
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-6">
+            {t("ships.reservations")}
+          </h2>
+
+          {reservations.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📅</div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {t("ships.noReservations")}
+              </h3>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reservations.map((reservation) => (
+                <ReservationItem
+                  key={reservation.id}
+                  reservation={reservation}
+                  currentUserId={profile?.id}
+                  userRole={userRole || undefined}
+                  onUpdate={fetchCabinDetails}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

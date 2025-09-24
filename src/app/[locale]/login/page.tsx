@@ -13,6 +13,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | null>(
+    null
+  );
   const searchParams = useSearchParams();
   const supabase = createClient();
   const { t, locale } = useI18n();
@@ -40,8 +43,10 @@ export default function LoginPage() {
 
     if (error) {
       setMessage(error.message);
+      setMessageType("error");
     } else {
       setMessage(t("login.magicLinkSent"));
+      setMessageType("success");
     }
     setLoading(false);
   };
@@ -49,6 +54,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setMessage("");
+    setMessageType(null);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -59,6 +65,7 @@ export default function LoginPage() {
 
     if (error) {
       setMessage(error.message);
+      setMessageType("error");
       setLoading(false);
     }
   };
@@ -94,9 +101,7 @@ export default function LoginPage() {
           {message && (
             <div
               className={`text-sm ${
-                message.includes("링크") ||
-                message.includes("완료") ||
-                message.includes("sent")
+                messageType === "success"
                   ? "text-success-600"
                   : "text-destructive"
               }`}

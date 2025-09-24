@@ -112,7 +112,7 @@ export default function ShipDetailPage() {
     ) {
       setActiveTab("viewMembers");
     }
-  }, [ship?.userRole, activeTab]);
+  }, [ship?.userRole]);
 
   const fetchShipDetails = async () => {
     if (!shipPublicId) return;
@@ -619,7 +619,6 @@ export default function ShipDetailPage() {
       await fetchShipDetails(); // 배 정보 새로고침
 
       // 성공 메시지 (선택사항)
-      console.log("팀 정보가 성공적으로 업데이트되었습니다.");
     } catch (err: any) {
       console.error(
         "Failed to update ship:",

@@ -75,9 +75,9 @@ export function ReservationItem({
 
     let dateLabel = "";
     if (startDateOnly.getTime() === today.getTime()) {
-      dateLabel = "오늘";
+      dateLabel = t("common.today");
     } else if (startDateOnly.getTime() === tomorrow.getTime()) {
-      dateLabel = "내일";
+      dateLabel = t("common.tomorrow");
     } else {
       const month = startDate.getMonth() + 1;
       const day = startDate.getDate();
@@ -95,7 +95,24 @@ export function ReservationItem({
       hour12: false,
     });
 
-    return `${dateLabel} ${startTimeStr} - ${endTimeStr}`;
+    // 시간 길이 계산 (분 단위)
+    const durationMs = endDate.getTime() - startDate.getTime();
+    const durationMinutes = Math.round(durationMs / (1000 * 60));
+
+    // 시간 길이를 시간과 분으로 변환
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+
+    let durationStr = "";
+    if (hours > 0 && minutes > 0) {
+      durationStr = `${hours}시간 ${minutes}분`;
+    } else if (hours > 0) {
+      durationStr = `${hours}시간`;
+    } else {
+      durationStr = `${minutes}분`;
+    }
+
+    return `${dateLabel} ${startTimeStr} - ${endTimeStr} (${durationStr})`;
   };
 
   const getReservationType = () => {
@@ -112,6 +129,19 @@ export function ReservationItem({
     <div className="bg-muted rounded-lg p-6 border border-border">
       <div className="flex items-start justify-between">
         <div className="flex-1">
+          {getReservationType() && (
+            <div className="mb-2">
+              <span
+                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  isOwner
+                    ? "role-captain"
+                    : "bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                {getReservationType()}
+              </span>
+            </div>
+          )}
           <h3 className="text-lg font-semibold text-foreground mb-2">
             {reservation.purpose}
           </h3>
@@ -124,18 +154,13 @@ export function ReservationItem({
                 )}
               </span>
             </div>
-            {getReservationType() && (
-              <div>
-                <span className="font-medium">{getReservationType()}</span>
-              </div>
-            )}
           </div>
         </div>
 
         {canDelete && (
           <div className="flex space-x-2">
             <Button
-              variant="destructive"
+              variant="secondary"
               size="sm"
               onClick={handleDelete}
               disabled={isLoading}

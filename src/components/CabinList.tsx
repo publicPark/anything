@@ -8,6 +8,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
 import { CabinReservationSummary } from "@/components/CabinReservationSummary";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useRouter } from "next/navigation";
 import {
   CabinWithStatus,
@@ -67,7 +68,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
         .from("ship_cabins")
         .select("*")
         .eq("ship_id", shipId)
-        .order("created_at", { ascending: false });
+        .order("name", { ascending: true });
 
       if (cabinsError) {
         throw cabinsError;
@@ -166,17 +167,16 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
                 >
                   {cabin.name}
                 </h3>
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${
+                <StatusBadge
+                  label={
                     cabin.currentStatus === "available"
-                      ? "bg-success-600 text-success-foreground"
-                      : "bg-destructive text-destructive-foreground"
-                  }`}
-                >
-                  {cabin.currentStatus === "available"
-                    ? t("ships.available")
-                    : t("ships.inUse")}
-                </span>
+                      ? t("ships.available")
+                      : t("ships.inUse")
+                  }
+                  tone={cabin.currentStatus === "available" ? "success" : "destructive"}
+                  blinking={cabin.currentStatus !== "available"}
+                  className="px-2 py-1 text-xs"
+                />
               </div>
 
               {cabin.description && (

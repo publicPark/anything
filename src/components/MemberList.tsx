@@ -237,25 +237,30 @@ export function MemberList({
         />
       )}
 
-      <div className="space-y-4">
-        {sortedMembers.map((member) => {
+      <div className="space-y-0">
+        {sortedMembers.map((member, index) => {
           const canManageThisMember = getMemberManagementPermission(member);
+          const isLastMember = index === sortedMembers.length - 1;
 
           return (
-            <MemberItem
-              key={member.id}
-              member={member}
-              currentUserId={currentUserId}
-              showManagement={showMemberManagement}
-              canManage={canManageThisMember}
-              canTransferCaptaincy={canTransferCaptaincy}
-              onPromoteToMechanic={(memberId) =>
-                handleChangeRole(memberId, "mechanic")
-              }
-              onDemoteToCrew={(memberId) => handleChangeRole(memberId, "crew")}
-              onTransferCaptaincy={handleTransferCaptaincy}
-              onRemoveMember={handleRemoveMember}
-            />
+            <div key={member.id}>
+              <MemberItem
+                member={member}
+                currentUserId={currentUserId}
+                showManagement={showMemberManagement}
+                canManage={canManageThisMember}
+                canTransferCaptaincy={canTransferCaptaincy}
+                onPromoteToMechanic={(memberId) =>
+                  handleChangeRole(memberId, "mechanic")
+                }
+                onDemoteToCrew={(memberId) => handleChangeRole(memberId, "crew")}
+                onTransferCaptaincy={handleTransferCaptaincy}
+                onRemoveMember={handleRemoveMember}
+              />
+              {!isLastMember && (
+                <div className="my-4 border-t border-border/50"></div>
+              )}
+            </div>
           );
         })}
       </div>

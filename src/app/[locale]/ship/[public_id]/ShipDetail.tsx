@@ -13,6 +13,7 @@ import { MemberRequestList } from "@/components/MemberRequestList";
 import { CabinManage } from "@/components/CabinManage";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RoleBadge } from "@/components/ui/RoleBadge";
 import {
   Ship,
   ShipMember,
@@ -739,7 +740,11 @@ export default function ShipDetail() {
           {
             label: (
               <>
-                <b>{ship.name}</b> {t("ship.title")}
+                <span className="inline-flex items-center gap-2">
+                  <b>{ship.name}</b>
+                </span>{" "}
+                <span>{t("ship.title")}</span>
+                {ship.userRole ? <RoleBadge role={ship.userRole} size="sm" className="ml-2" /> : null}
               </>
             ),
             isCurrentPage: true,

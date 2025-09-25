@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ReservationForm } from "@/components/ReservationForm";
 import { CabinReservation } from "@/types/database";
 
 interface ReservationItemProps {
@@ -14,6 +15,10 @@ interface ReservationItemProps {
   userRole?: "captain" | "mechanic" | "crew";
   onUpdate: () => void;
   isCurrent?: boolean;
+  hideTypeBadge?: boolean;
+  leftExtra?: ReactNode;
+  cabinId?: string;
+  existingReservations?: CabinReservation[];
 }
 
 export function ReservationItem({
@@ -22,15 +27,40 @@ export function ReservationItem({
   userRole,
   onUpdate,
   isCurrent = false,
+  hideTypeBadge = false,
+  leftExtra,
+  cabinId,
+  existingReservations = [],
 }: ReservationItemProps) {
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // 실시간 시간 업데이트
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const isOwner = reservation.user_id === currentUserId;
   const isGuest = reservation.user_id === null;
   const canManage = userRole === "captain" || userRole === "mechanic";
   const canDelete = isOwner || isGuest || canManage;
+  const canEdit = isOwner || canManage;
+
+  const handleEdit = () => {
+    setShowEditModal(true);
+  };
+
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    onUpdate();
+  };
 
   const handleDelete = async () => {
     if (!confirm(t("ships.confirmDeleteReservation"))) {
@@ -107,6 +137,25 @@ export function ReservationItem({
     // 시간 길이를 시간과 분으로 변환
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
+
+    // 현재 진행 중인 예약의 남은 시간 계산
+    const getRemainingTime = () => {
+      if (!isCurrent) return null;
+      
+      const end = new Date(reservation.end_time);
+      const diff = end.getTime() - currentTime.getTime();
+      
+      if (diff <= 0) return null;
+      
+      const remainingHours = Math.floor(diff / (1000 * 60 * 60));
+      const remainingMinutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (remainingHours > 0) {
+        return `${remainingHours}시간 ${remainingMinutes}분`;
+      } else {
+        return `${remainingMinutes}분`;
+      }
+    };
 
     let durationStr = "";
     if (hours > 0 && minutes > 0) {
@@ -190,10 +239,10 @@ export function ReservationItem({
                 reservation.end_time
               );
             return (
-              <div className="font-semibold">
-                <span>{dateLabel} </span>
+              <div>
+                <span className="font-semibold">{dateLabel} </span>
                 <span className="font-bold">{timeLabel}</span>
-                <span> ({durationLabel})</span>
+                <span className="text-foreground"> ({durationLabel})</span>
               </div>
             );
           })()}
@@ -202,10 +251,12 @@ export function ReservationItem({
         <div className="ml-4 shrink-0">{renderStatusBadge()}</div>
       </div>
 
-      {/* Bottom: badge on the left, button on the right */}
+      {/* Bottom: left (slot/badge) / right (actions) */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {getReservationType() && (
+        <div className="flex items-center gap-2 min-h-[24px]">
+          {leftExtra ? (
+            leftExtra
+          ) : !hideTypeBadge && getReservationType() ? (
             <span
               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 isOwner
@@ -215,19 +266,31 @@ export function ReservationItem({
             >
               {getReservationType()}
             </span>
-          )}
+          ) : null}
         </div>
 
-        {canDelete && (
+        {(canEdit || canDelete) && (
           <div className="flex space-x-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
-              {isLoading ? <LoadingSpinner /> : t("ships.deleteReservation")}
-            </Button>
+            {canEdit && cabinId && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleEdit}
+                disabled={isLoading}
+              >
+                {t("ships.editReservation")}
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isLoading}
+              >
+                {isLoading ? <LoadingSpinner /> : t("ships.deleteReservation")}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -235,6 +298,32 @@ export function ReservationItem({
       {error && (
         <div className="mt-4">
           <ErrorMessage message={error} />
+        </div>
+      )}
+
+      {/* 수정 모달 */}
+      {showEditModal && cabinId && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-muted rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">{t("ships.editReservation")}</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <ReservationForm
+              cabinId={cabinId}
+              onSuccess={handleEditSuccess}
+              existingReservations={existingReservations.filter(r => r.id !== reservation.id)}
+              isModal={true}
+              editingReservation={reservation}
+            />
+          </div>
         </div>
       )}
     </div>

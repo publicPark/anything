@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import type { ReactNode } from "react";
 import { CabinReservation } from "@/types/database";
@@ -15,9 +16,37 @@ export function CabinReservationSummary({
   className,
 }: CabinReservationSummaryProps) {
   const { t } = useI18n();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // 실시간 시간 업데이트
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const { currentReservation, nextReservation } =
     calculateCabinStatus(reservations);
+
+  // 남은 시간 계산
+  const getRemainingTime = (endTime: string) => {
+    const end = new Date(endTime);
+    const now = currentTime;
+    const diff = end.getTime() - now.getTime();
+    
+    if (diff <= 0) return null;
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분`;
+    } else {
+      return `${minutes}분`;
+    }
+  };
 
   const renderStatusBadge = (type: "ongoing" | "upcoming"): ReactNode => {
     const base =
@@ -69,7 +98,21 @@ export function CabinReservationSummary({
                 { hour: "numeric", minute: "2-digit", hour12: true }
               )}
             </b>{" "}
-            {t("cabins.endsAtPlannedSuffix")}
+            {t("cabins.endsAtPlannedSuffix")},
+            {(() => {
+              const remainingTime = getRemainingTime(currentReservation.end_time);
+              if (remainingTime) {
+                return (
+                  <>
+                    {" "}
+                    <span className="text-foreground font-semibold">
+                      약 {remainingTime} {t("ships.remaining")}
+                    </span>
+                  </>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       )}

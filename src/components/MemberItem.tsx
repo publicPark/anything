@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/hooks/useI18n";
+import { RoleBadge } from "@/components/ui/RoleBadge";
 import { Button } from "@/components/ui/Button";
 import { ShipMember, Profile } from "@/types/database";
 
@@ -53,17 +54,7 @@ export function MemberItem({
               </span>
             )}
 
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded-full ${
-                member.role === "captain"
-                  ? "role-captain"
-                  : member.role === "mechanic"
-                  ? "role-mechanic"
-                  : "role-crew"
-              }`}
-            >
-              {t(`ships.roles.${member.role}`)}
-            </span>
+            <RoleBadge role={member.role as ShipMemberRole} size="md" />
           </div>
         </div>
       </div>

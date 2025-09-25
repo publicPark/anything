@@ -5,6 +5,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
 import { MyShips } from "@/components/MyShips";
+import { MyReservations } from "@/components/MyReservations";
 
 export default function Home() {
   const { profile, loading, error } = useProfile();
@@ -75,9 +76,14 @@ export default function Home() {
           </h3>
 
           {profile ? (
-            <div className="space-y-8">
-              <div className="max-w-6xl mx-auto">
-                <MyShips />
+            <div className="mx-auto max-w-6xl">
+              <div className="grid grid-cols-1 md:grid-cols-4 md:gap-8 gap-6 items-start">
+                <div className="md:col-span-2">
+                  <MyShips />
+                </div>
+                <div className="md:col-span-2">
+                  <MyReservations />
+                </div>
               </div>
             </div>
           ) : (

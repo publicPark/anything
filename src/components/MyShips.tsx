@@ -167,7 +167,7 @@ export function MyShips() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1">
           {ships.map((ship) => (
             <ShipCard
               key={ship.id}
@@ -175,7 +175,7 @@ export function MyShips() {
               onClick={() => handleShipClick(ship)}
               showUserRole={true}
               showMemberCount={true}
-              showCreatedAt={true}
+              showCreatedAt={false}
             />
           ))}
         </div>

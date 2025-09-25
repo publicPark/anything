@@ -374,11 +374,11 @@ export function ShipHeader({
             {!isEditing && (
               <div className="flex flex-col md:flex-row md:items-center gap-2">
                 <div className="flex items-center gap-2">
-                  {ship.userRole && (
+                  {/* {ship.userRole && (
                     <span className={ROLE_STYLES[ship.userRole]}>
                       {t(`ships.roles.${ship.userRole}`)}
                     </span>
-                  )}
+                  )} */}
 
                   {(!ship.member_only || ship.isMember) && (
                     <Button

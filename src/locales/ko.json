@@ -29,7 +29,10 @@
     "loading": "로딩 중...",
     "errorTitle": "오류가 발생했습니다",
     "retry": "다시 시도",
-    "goToLogin": "로그인"
+    "goToLogin": "로그인",
+    "myReservations": "내 예약",
+    "activeReservations": "안지난 예약",
+    "noMyReservations": "내 예약이 아직 없습니다"
   },
   "login": {
     "title": "로그인",
@@ -111,8 +114,8 @@
     "createdBy": "생성자",
     "createdAt": "생성일",
     "roles": {
-      "captain": "👑 선장",
-      "mechanic": "🔧 정비공",
+      "captain": "선장",
+      "mechanic": "정비공",
       "crew": "선원"
     },
     "manageMembers": "멤버 관리",
@@ -203,9 +206,10 @@
     "reservations": "예약",
     "reservation": "예약",
     "createReservation": "예약 생성",
+    "updateReservation": "예약 수정",
     "cancelReservation": "예약 신청서 닫기",
-    "editReservation": "예약 수정",
-    "deleteReservation": "예약 삭제",
+    "editReservation": "수정",
+    "deleteReservation": "삭제",
     "reservationPurpose": "예약 목적",
     "reservationPurposePlaceholder": "예약 목적을 입력하세요",
     "startTime": "시작 시간",
@@ -239,6 +243,7 @@
     "reservationStatus": "예약 현황",
     "currentReservation": "현재 진행 중",
     "nextReservation": "다음 예약",
+    "remaining": "남음",
     "noCurrentReservation": "현재 사용중인 예약이 없습니다",
     "createFirstCabin": "첫 번째 선실을 만들어보세요!",
     "cabinCreated": "선실이 성공적으로 생성되었습니다",
@@ -258,6 +263,7 @@
     "noTodayReservations": "오늘 예약은 더이상 없습니다",
     "noUpcomingReservations": "예정된 예약이 없습니다",
     "noPastReservations": "과거 예약이 없습니다",
+    "pastReservationsInfo": "지난 예약은 정비공이 쉽게 삭제할 수 있습니다.",
     "deleteAllPastReservations": "지난 예약 모두 삭제",
     "confirmDeleteAllPastReservations": "지난 예약을 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     "pastReservationsDeleted": "지난 예약이 삭제되었습니다",
@@ -267,6 +273,7 @@
   },
   "common": {
     "loading": "로딩 중...",
+    "loadMore": "더보기",
     "error": "오류",
     "success": "성공",
     "processing": "처리 중...",

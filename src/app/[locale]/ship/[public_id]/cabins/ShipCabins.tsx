@@ -11,6 +11,7 @@ import { CabinList } from "@/components/CabinList";
 import { Ship } from "@/types/database";
 import { Button } from "@/components/ui/Button";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RoleBadge } from "@/components/ui/RoleBadge";
 
 export default function ShipCabinsForm() {
   const { t, locale } = useI18n();
@@ -22,6 +23,7 @@ export default function ShipCabinsForm() {
   const [ship, setShip] = useState<Ship | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"captain" | "mechanic" | "crew" | null>(null);
 
   const shipPublicId = params.public_id as string;
 
@@ -54,6 +56,17 @@ export default function ShipCabinsForm() {
       }
 
       setShip(shipData);
+
+      // 사용자 역할 조회 (로그인된 경우)
+      if (profile) {
+        const { data: memberData } = await supabase
+          .from("ship_members")
+          .select("role")
+          .eq("ship_id", shipData.id)
+          .eq("user_id", profile.id)
+          .maybeSingle();
+        setUserRole((memberData?.role as any) || null);
+      }
     } catch (err: any) {
       console.error("Failed to fetch ship details:", err);
       setError(err.message || t("ships.errorLoadingShip"));
@@ -84,7 +97,12 @@ export default function ShipCabinsForm() {
       <Breadcrumb
         items={[
           {
-            label: <b>{ship.name}</b>,
+            label: (
+              <span className="flex items-center gap-2">
+                <b>{ship.name}</b>
+                {userRole && <RoleBadge role={userRole} size="sm" />}
+              </span>
+            ),
             onClick: () => router.push(`/${locale}/ship/${shipPublicId}`),
           },
           {

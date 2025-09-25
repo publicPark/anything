@@ -29,7 +29,10 @@
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
-    "goToLogin": "Login"
+    "goToLogin": "Login",
+    "myReservations": "My Reservations",
+    "activeReservations": "Active Reservations",
+    "noMyReservations": "You have no reservations yet"
   },
   "login": {
     "title": "Login",
@@ -203,9 +206,10 @@
     "reservations": "Reservations",
     "reservation": "Reservation",
     "createReservation": "Create Reservation",
+    "updateReservation": "Update Reservation",
     "cancelReservation": "Close Reservation Form",
-    "editReservation": "Edit Reservation",
-    "deleteReservation": "Delete Reservation",
+    "editReservation": "Edit",
+    "deleteReservation": "Delete",
     "reservationPurpose": "Purpose",
     "reservationPurposePlaceholder": "Enter the purpose of the reservation",
     "startTime": "Start Time",
@@ -239,6 +243,7 @@
     "reservationStatus": "Reservation Status",
     "currentReservation": "Current Reservation",
     "nextReservation": "Next Reservation",
+    "remaining": "remaining",
     "noCurrentReservation": "No current reservation",
     "createFirstCabin": "Create your first cabin!",
     "cabinCreated": "Cabin created successfully",
@@ -258,6 +263,7 @@
     "noTodayReservations": "No meetings scheduled for today",
     "noUpcomingReservations": "No upcoming reservations",
     "noPastReservations": "No past reservations",
+    "pastReservationsInfo": "Past reservations can be easily deleted by mechanics.",
     "deleteAllPastReservations": "Delete all past reservations",
     "confirmDeleteAllPastReservations": "Delete all past reservations? This action cannot be undone.",
     "pastReservationsDeleted": "Past reservations deleted",
@@ -267,6 +273,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "loadMore": "Load more",
     "error": "Error",
     "success": "Success",
     "processing": "Processing...",

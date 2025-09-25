@@ -638,7 +638,10 @@ export function TimeTable({
                             onMouseLeave={handleMouseLeave}
                             onTouchStart={() => handleTouchStart(slot.time)}
                             onTouchEnd={handleTouchEnd}
-                            disabled={false}
+                            aria-disabled={
+                              slot.isDisabled ||
+                              (slot.isReserved && !slot.isReservationStart)
+                            }
                             className={`h-8 flex-1 text-xs border-y border-border cursor-pointer transition-all duration-200 flex items-center justify-center relative group ${
                               isFirst
                                 ? "border-l border-l-border rounded-l-md"
@@ -656,10 +659,10 @@ export function TimeTable({
                                   ? "bg-primary text-primary-foreground hover:bg-primary-hover"
                                   : slot.time === selectedEndTime
                                   ? "bg-[var(--color-primary-light)] hover:bg-[var(--color-primary-light)]/80"
-                                  : slot.isDisabled
-                                  ? "bg-muted-foreground/50 text-muted-foreground"
+                                    : slot.isDisabled
+                                    ? "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed"
                                   : slot.isReserved
-                                  ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                    ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30 cursor-not-allowed"
                                   : slot.isCurrentTime
                                   ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
                                   : hoveredTime === slot.time
@@ -679,10 +682,10 @@ export function TimeTable({
                                           ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
                                           : slotTime === endTime
                                           ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
-                                          : slot.isDisabled
-                                          ? "bg-muted-foreground/50 text-muted-foreground"
+                                            : slot.isDisabled
+                                            ? "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed"
                                           : slot.isReserved
-                                          ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                            ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30 cursor-not-allowed"
                                           : slot.isCurrentTime
                                           ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
                                           : "bg-muted hover:bg-muted/80 hover:scale-105";
@@ -692,28 +695,28 @@ export function TimeTable({
                                           ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
                                           : slotTime === endTime
                                           ? "bg-[var(--color-success-100)] text-[var(--color-success-800)] hover:bg-[var(--color-success-200)]"
-                                          : slot.isDisabled
-                                          ? "bg-muted-foreground/50 text-muted-foreground"
+                                            : slot.isDisabled
+                                            ? "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed"
                                           : slot.isReserved
-                                          ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                            ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30 cursor-not-allowed"
                                           : slot.isCurrentTime
                                           ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
                                           : "bg-muted hover:bg-muted/80 hover:scale-105";
                                       }
                                     })()
                                   : slot.isDisabled
-                                  ? "bg-muted-foreground/50 text-muted-foreground"
+                                  ? "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed"
                                   : slot.isReserved
-                                  ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                  ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30 cursor-not-allowed"
                                   : slot.isCurrentTime
                                   ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
                                   : "bg-muted hover:bg-muted/80 hover:scale-105"
                                 : slot.isDisabled
-                                ? "bg-muted-foreground/50 text-muted-foreground"
+                                ? "bg-muted-foreground/50 text-muted-foreground cursor-not-allowed"
                                 : slot.isCurrentTime
                                 ? "bg-[var(--color-warning-600)]/30 text-foreground border-[var(--color-warning-600)]/50 hover:bg-[var(--color-warning-600)]/40"
                                 : slot.isReserved
-                                ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30"
+                                ? "bg-destructive/20 text-destructive/60 hover:bg-destructive/30 cursor-not-allowed"
                                 : hoveredTime && slot.time === hoveredTime
                                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                 : "bg-muted hover:bg-muted/80 hover:scale-105"

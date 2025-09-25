@@ -18,7 +18,7 @@ export function ErrorMessage({
   const variantClasses = {
     default: "bg-muted text-muted-foreground border-border",
     destructive: "bg-destructive/10 text-destructive border-destructive/20",
-    success: "bg-success-100 text-success-800 border-success-600",
+    success: "bg-muted text-success-800 border-success-600",
   };
 
   return (

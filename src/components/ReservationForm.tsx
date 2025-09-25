@@ -16,6 +16,7 @@ interface ReservationFormProps {
   onSuccess: () => void;
   existingReservations?: CabinReservation[];
   isModal?: boolean;
+  editingReservation?: CabinReservation;
 }
 
 export function ReservationForm({
@@ -23,22 +24,64 @@ export function ReservationForm({
   onSuccess,
   existingReservations = [],
   isModal = false,
+  editingReservation,
 }: ReservationFormProps) {
   const { t } = useI18n();
   const { profile } = useProfile();
-  const { selectedStartTime, selectedEndTime, clearSelection } =
+  const { selectedStartTime, selectedEndTime, clearSelection, setSelectedTimes } =
     useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 오늘 날짜를 기본값으로 설정
-  const today = new Date().toISOString().split("T")[0];
+  // 로컬 타임존 기준 YYYY-MM-DD 생성
+  const getLocalYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // 오늘 날짜를 기본값으로 설정 (로컬 기준)
+  const today = getLocalYYYYMMDD(new Date());
+
+  // 기존 예약 데이터로 폼 초기화
+  const getInitialFormData = () => {
+    if (editingReservation) {
+      const startDate = new Date(editingReservation.start_time);
+      return {
+        date: getLocalYYYYMMDD(startDate),
+        purpose: editingReservation.purpose,
+      };
+    }
+    return {
+      date: today,
+      purpose: profile?.display_name ? `${profile.display_name}의 예약` : "",
+    };
+  };
 
   // 폼 데이터
-  const [formData, setFormData] = useState({
-    date: today,
-    purpose: profile?.display_name ? `${profile.display_name}의 예약` : "",
-  });
+  const [formData, setFormData] = useState(getInitialFormData());
+
+  // 기존 예약 데이터가 있을 때 시간 선택 초기화
+  useEffect(() => {
+    if (editingReservation) {
+      const startDate = new Date(editingReservation.start_time);
+      const endDate = new Date(editingReservation.end_time);
+      
+      const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      
+      setSelectedTimes(startTimeStr, endTimeStr);
+    }
+  }, [editingReservation, setSelectedTimes]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -89,6 +132,20 @@ export function ReservationForm({
     const startDateTime = createDateTime(formData.date, selectedStartTime);
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
+
+    // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 5분 단위로 내림한 시각보다 빠르면 막기
+    const now = new Date();
+    const todayLocal = getLocalYYYYMMDD(now);
+    if (formData.date === todayLocal) {
+      const flooredNow = new Date(now);
+      flooredNow.setSeconds(0, 0);
+      flooredNow.setMinutes(Math.floor(flooredNow.getMinutes() / 5) * 5);
+      if (startDateTime < flooredNow) {
+        setError(t("timetable.pastTimeNotification"));
+        return;
+      }
+    }
+
     if (endDateTime <= startDateTime) {
       setError("종료 시간은 시작 시간보다 늦어야 합니다.");
       return;
@@ -99,14 +156,28 @@ export function ReservationForm({
 
     try {
       const supabase = createClient();
-      const { error } = await supabase.rpc("create_cabin_reservation", {
-        cabin_uuid: cabinId,
-        reservation_start_time: startDateTime.toISOString(),
-        reservation_end_time: endDateTime.toISOString(),
-        reservation_purpose: formData.purpose.trim(),
-      });
-
-      if (error) throw error;
+      
+      if (editingReservation) {
+        // 예약 수정
+        const { error } = await supabase.rpc("update_cabin_reservation", {
+          reservation_uuid: editingReservation.id,
+          new_start_time: startDateTime.toISOString(),
+          new_end_time: endDateTime.toISOString(),
+          new_purpose: formData.purpose.trim(),
+        });
+        
+        if (error) throw error;
+      } else {
+        // 예약 생성
+        const { error } = await supabase.rpc("create_cabin_reservation", {
+          cabin_uuid: cabinId,
+          reservation_start_time: startDateTime.toISOString(),
+          reservation_end_time: endDateTime.toISOString(),
+          reservation_purpose: formData.purpose.trim(),
+        });
+        
+        if (error) throw error;
+      }
 
       clearSelection();
       onSuccess();
@@ -128,7 +199,7 @@ export function ReservationForm({
             name="date"
             value={formData.date}
             onChange={handleInputChange}
-            min={new Date().toISOString().split("T")[0]} // 오늘 이후만 선택 가능
+            min={today} // 오늘 이후만 선택 가능 (로컬 기준)
             className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -173,7 +244,7 @@ export function ReservationForm({
                 <span>{t("common.processing")}</span>
               </div>
             ) : (
-              t("ships.createReservation")
+              editingReservation ? t("ships.updateReservation") : t("ships.createReservation")
             )}
           </Button>
         </div>

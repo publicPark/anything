@@ -11,7 +11,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipForm } from "@/components/ShipForm";
 import { ShipCard } from "@/components/ShipCard";
 
-export default function ShipsForm() {
+export default function ShipsList() {
   const { t, locale } = useI18n();
   const router = useRouter();
   const { profile, loading: profileLoading } = useProfile();

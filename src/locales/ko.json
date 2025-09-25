@@ -111,8 +111,8 @@
     "createdBy": "생성자",
     "createdAt": "생성일",
     "roles": {
-      "captain": "선장",
-      "mechanic": "정비공",
+      "captain": "👑 선장",
+      "mechanic": "🔧 정비공",
       "crew": "선원"
     },
     "manageMembers": "멤버 관리",
@@ -197,7 +197,7 @@
     "editCabin": "선실 수정",
     "deleteCabin": "선실 삭제",
     "manageCabins": "선실 관리",
-    "viewCabins": "선실 보기",
+    "viewCabins": "선실 목록",
     "noCabins": "등록된 선실이 없습니다",
     "reserveCabin": "예약하기",
     "reservations": "예약",
@@ -251,7 +251,9 @@
     "todayReservations": "오늘의 예약",
     "upcomingReservations": "다가오는 예약",
     "noTodayReservations": "오늘 예약된 회의가 없습니다",
-    "noUpcomingReservations": "예정된 예약이 없습니다"
+    "noUpcomingReservations": "예정된 예약이 없습니다",
+    "shipInfo": "의 정보",
+    "shipCabinsList": "선실 목록"
   },
   "common": {
     "loading": "로딩 중...",
@@ -309,6 +311,21 @@
     "noNextReservation": "다음 예약 없음",
     "reservationTitle": "예약 제목",
     "reservationDescription": "예약 설명",
-    "viewAllCabins": "{shipName}의 모든 선실 보기"
+    "viewAllCabins": "선실 목록"
+  },
+  "ship": {
+    "title": "팀 상세",
+    "description": "팀의 상세 정보를 확인하세요",
+    "cabinsTitle": "선실",
+    "cabinsDescription": "팀의 선실 목록을 확인하세요",
+    "notFoundTitle": "팀을 찾을 수 없습니다",
+    "notFoundDescription": "요청하신 팀을 찾을 수 없습니다",
+    "shipDetailDescription": "{shipName} 팀의 상세 정보를 확인하세요",
+    "shipCabinsDescription": "{shipName} 팀의 선실 목록을 확인하세요"
+  },
+  "cabin": {
+    "notFoundTitle": "선실을 찾을 수 없습니다",
+    "notFoundDescription": "요청하신 선실을 찾을 수 없습니다",
+    "cabinDetailDescription": "{shipName} 팀의 {cabinName} 선실 정보를 확인하세요"
   }
 }

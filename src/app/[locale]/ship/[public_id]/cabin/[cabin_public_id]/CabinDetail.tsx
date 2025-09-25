@@ -8,13 +8,14 @@ import { useProfile } from "@/hooks/useProfile";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ReservationForm } from "@/components/ReservationForm";
 import { ReservationItem } from "@/components/ReservationItem";
 import { ShipCabin, Ship, CabinReservation } from "@/types/database";
 import { calculateCabinStatus } from "@/lib/cabin-status";
 import { renderTextWithLinks } from "@/lib/text-helpers";
 
-export default function CabinDetailForm() {
+export default function CabinDetail() {
   const { t, locale } = useI18n();
   const params = useParams();
   const router = useRouter();
@@ -204,16 +205,24 @@ export default function CabinDetailForm() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">
-      {/* 뒤로가기 버튼 */}
-      <div className="mb-6">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => router.push(`/${locale}/ship/${shipPublicId}/cabins`)}
-        >
-          {t("cabins.viewAllCabins", { shipName: ship.name })}
-        </Button>
-      </div>
+      {/* Breadcrumbs */}
+      <Breadcrumb
+        items={[
+          {
+            label: ship.name,
+            onClick: () => router.push(`/${locale}/ship/${shipPublicId}`),
+          },
+          {
+            label: t("cabins.viewAllCabins"),
+            onClick: () =>
+              router.push(`/${locale}/ship/${shipPublicId}/cabins`),
+          },
+          {
+            label: cabin.name,
+            isCurrentPage: true,
+          },
+        ]}
+      />
 
       {/* 메인 컨텐츠 - 좌우 분할 레이아웃 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

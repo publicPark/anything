@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CabinList } from "@/components/CabinList";
 import { Ship } from "@/types/database";
 import { Button } from "@/components/ui/Button";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export default function ShipCabinsForm() {
   const { t, locale } = useI18n();
@@ -79,23 +80,30 @@ export default function ShipCabinsForm() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
-      <div className="mb-6">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => router.push(`/${locale}/ship/${shipPublicId}`)}
-        >
-          <b>{ship.name}</b>
-        </Button>
-      </div>
+      {/* Breadcrumbs */}
+      <Breadcrumb
+        items={[
+          {
+            label: <b>{ship.name}</b>,
+            onClick: () => router.push(`/${locale}/ship/${shipPublicId}`),
+          },
+          {
+            label: t("ships.shipCabinsList"),
+            isCurrentPage: true,
+          },
+        ]}
+      />
 
       {/* 배 헤더 */}
-      {/* <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{ship.name}</h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2 sr-only">
+          <b>{ship.name}</b>
+          {t("ships.shipCabinsList")}
+        </h1>
         {ship.description && (
-          <p className="text-muted-foreground">{ship.description}</p>
+          <p className="text-muted-foreground text-sm">{ship.description}</p>
         )}
-      </div> */}
+      </div>
 
       {/* 선실 목록 */}
       <CabinList shipId={ship.id} shipPublicId={shipPublicId} />

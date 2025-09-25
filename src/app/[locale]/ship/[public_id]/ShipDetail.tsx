@@ -27,7 +27,7 @@ interface ShipWithDetails extends Ship {
   hasPendingRequest?: boolean;
 }
 
-export default function ShipDetailForm() {
+export default function ShipDetail() {
   const { t, locale } = useI18n();
   const params = useParams();
   const router = useRouter();

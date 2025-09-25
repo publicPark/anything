@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import ShipDetailForm from "./ShipDetailForm";
+import { getTranslations, Locale } from "@/lib/i18n";
+import ShipDetail from "./ShipDetail";
 
 interface ShipDetailPageProps {
   params: Promise<{ locale: string; public_id: string }>;
@@ -11,6 +12,7 @@ export async function generateMetadata({
 }: ShipDetailPageProps): Promise<Metadata> {
   const { locale, public_id } = await params;
   const supabase = await createClient();
+  const t = getTranslations(locale as Locale);
 
   try {
     const { data: ship, error } = await supabase
@@ -21,27 +23,15 @@ export async function generateMetadata({
 
     if (error || !ship) {
       return {
-        title:
-          locale === "ko"
-            ? "배를 찾을 수 없습니다 - 예약시스템"
-            : "Ship Not Found - Reservation System",
-        description:
-          locale === "ko"
-            ? "요청하신 배를 찾을 수 없습니다."
-            : "The requested ship could not be found.",
+        title: `${t.ship.notFoundTitle} - ${t.metadata.title}`,
+        description: t.ship.notFoundDescription,
       };
     }
 
-    const title =
-      locale === "ko"
-        ? `${ship.name} - 예약시스템`
-        : `${ship.name} - Reservation System`;
-
+    const title = `${ship.name} - ${t.metadata.title}`;
     const description =
       ship.description ||
-      (locale === "ko"
-        ? `${ship.name} 배의 상세 정보를 확인하세요.`
-        : `View detailed information about ${ship.name} ship.`);
+      t.ship.shipDetailDescription.replace("{shipName}", ship.name);
 
     return {
       title,
@@ -60,18 +50,12 @@ export async function generateMetadata({
     };
   } catch {
     return {
-      title:
-        locale === "ko"
-          ? "배를 찾을 수 없습니다 - 예약시스템"
-          : "Ship Not Found - Reservation System",
-      description:
-        locale === "ko"
-          ? "요청하신 배를 찾을 수 없습니다."
-          : "The requested ship could not be found.",
+      title: `${t.ship.notFoundTitle} - ${t.metadata.title}`,
+      description: t.ship.notFoundDescription,
     };
   }
 }
 
 export default function ShipDetailPage() {
-  return <ShipDetailForm />;
+  return <ShipDetail />;
 }

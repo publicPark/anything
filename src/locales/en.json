@@ -111,8 +111,8 @@
     "createdBy": "Created by",
     "createdAt": "Created at",
     "roles": {
-      "captain": "Captain",
-      "mechanic": "Mechanic",
+      "captain": "👑 Captain",
+      "mechanic": "🔧 Mechanic",
       "crew": "Crew"
     },
     "manageMembers": "Manage Members",
@@ -251,7 +251,9 @@
     "todayReservations": "Today's Reservations",
     "upcomingReservations": "Upcoming Reservations",
     "noTodayReservations": "No meetings scheduled for today",
-    "noUpcomingReservations": "No upcoming reservations"
+    "noUpcomingReservations": "No upcoming reservations",
+    "shipInfo": "'s Info",
+    "shipCabinsList": "ㄴCabin List"
   },
   "common": {
     "loading": "Loading...",
@@ -309,6 +311,21 @@
     "noNextReservation": "No upcoming reservations",
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",
-    "viewAllCabins": "View all cabins of {shipName}"
+    "viewAllCabins": "Cabin List"
+  },
+  "ship": {
+    "title": "Team Details",
+    "description": "View detailed information about the team",
+    "cabinsTitle": "Rooms",
+    "cabinsDescription": "View room list for the team",
+    "notFoundTitle": "Team Not Found",
+    "notFoundDescription": "The requested team could not be found",
+    "shipDetailDescription": "View detailed information about {shipName} team",
+    "shipCabinsDescription": "View room list for {shipName} team"
+  },
+  "cabin": {
+    "notFoundTitle": "Room Not Found",
+    "notFoundDescription": "The requested room could not be found",
+    "cabinDetailDescription": "View {cabinName} room information for {shipName} team"
   }
 }

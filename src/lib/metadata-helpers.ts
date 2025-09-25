@@ -27,6 +27,13 @@ export function generateMetadata(locale: Locale, path?: string): Metadata {
     authors: [{ name: metadata.author }],
     creator: metadata.author,
     publisher: metadata.author,
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/icon.svg", type: "image/svg+xml" },
+      ],
+      apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    },
     robots: {
       index: true,
       follow: true,
@@ -89,6 +96,7 @@ function getPathTranslations(locale: Locale, path: string) {
     "/profile": "profile",
     "/settings": "settings",
     "/ships": "ships",
+    "/ship": "ship",
   };
 
   const translationKey = pathMap[path];

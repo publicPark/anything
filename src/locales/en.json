@@ -17,7 +17,8 @@
     "login": "Login",
     "logout": "Logout",
     "loading": "Loading...",
-    "profile": "Profile"
+    "profile": "Profile",
+    "admin": "Admin"
   },
   "home": {
     "title": "Home",
@@ -30,6 +31,7 @@
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
     "goToLogin": "Login",
+    "tutorial": "Tutorial",
     "myReservations": "My Reservations",
     "activeReservations": "Active Reservations",
     "noMyReservations": "You have no reservations yet"
@@ -214,9 +216,7 @@
     "reservationPurposePlaceholder": "Enter the purpose of the reservation",
     "startTime": "Start Time",
     "endTime": "End Time",
-    "selectDate": "Select Date",
     "selectTime": "Select Time",
-    "timeSlotLegend": "Time Slot Legend",
     "currentTime": "Current Time",
     "reservedTime": "Reserved Time",
     "selectedTime": "Selected Time",
@@ -341,6 +341,32 @@
     "notFoundDescription": "The requested team could not be found",
     "shipDetailDescription": "View detailed information about {shipName} team",
     "shipCabinsDescription": "View room list for {shipName} team"
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "System administration page",
+    "ships": "Ship Management",
+    "reservations": "Reservation Management",
+    "users": "User Management",
+    "searchUser": "Search",
+    "searchUserPlaceholder": "User code or name",
+    "username": "Username",
+    "displayName": "Name",
+    "role": "Role",
+    "adjustRole": "Adjust Role",
+    "noUsersFound": "No users found"
+  },
+  "reservations": {
+    "management": "Reservation Management",
+    "managementDescription": "Reservation management features for system administrators only.",
+    "pastReservations": "Past Reservations",
+    "pastReservationsDescription": "Delete all completed reservations at once.",
+    "deleteAllPast": "Delete All Past Reservations",
+    "confirmDeleteAllPast": "Are you sure you want to delete all past reservations? This action cannot be undone.",
+    "allPastReservationsDeleted": "{count} past reservations have been deleted.",
+    "noPastReservations": "No past reservations to delete.",
+    "errorDeletingPast": "Error occurred while deleting past reservations.",
+    "accessDenied": "You do not have permission to access this page."
   },
   "cabin": {
     "notFoundTitle": "Room Not Found",

@@ -129,6 +129,22 @@ CREATE POLICY "Anyone can view ship member profiles" ON profiles
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id);
 
+-- 카오스 역할 확인 함수 생성
+CREATE OR REPLACE FUNCTION is_chaos_user()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE id = auth.uid() 
+    AND role = 'chaos'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 카오스 역할은 모든 프로필 수정 가능 (관리자 권한)
+CREATE POLICY "Chaos can update any profile" ON profiles
+  FOR UPDATE USING (is_chaos_user());
+
 -- 프로필 삽입 정책 (자신의 프로필만 삽입 가능)
 CREATE POLICY "Users can insert own profile" ON profiles
   FOR INSERT WITH CHECK (auth.uid() = id);

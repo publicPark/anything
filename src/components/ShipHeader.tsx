@@ -244,7 +244,7 @@ export function ShipHeader({
                   {ship.name}
                 </h1>
                 {ship.description && (
-                  <p className="text-muted-foreground">{ship.description}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{ship.description}</p>
                 )}
                 {/* <div className="text-sm text-muted-foreground mt-2">
                   <span>
@@ -344,10 +344,11 @@ export function ShipHeader({
                       ship.hasPendingRequest ||
                       ship.hasRejectedRequest
                     }
+                    variant="secondary"
                     className={
                       ship.hasPendingRequest || ship.hasRejectedRequest
                         ? "bg-muted text-muted-foreground cursor-not-allowed"
-                        : "bg-primary hover:bg-primary-hover text-primary-foreground"
+                        : ""
                     }
                   >
                     {isJoining ? (
@@ -383,8 +384,7 @@ export function ShipHeader({
                   {(!ship.member_only || ship.isMember) && (
                     <Button
                       onClick={onViewCabins}
-                      variant="secondary"
-                      size="sm"
+                      variant="primary"
                     >
                       {t("ships.viewCabins")}
                     </Button>

@@ -78,11 +78,11 @@ export function MobileNavigation({ isOpen, onClose }: MobileNavigationProps) {
       href: "/",
       label: t("navigation.home"),
     },
-    ...(profile && (profile.role === "gaia" || profile.role === "chaos")
+    ...(profile && profile.role === "chaos"
       ? [
           {
-            href: "/ships",
-            label: t("ships.title"),
+            href: "/admin",
+            label: t("navigation.admin"),
           },
         ]
       : []),

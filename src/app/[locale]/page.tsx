@@ -91,20 +91,32 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-foreground mb-4">
                 {t("home.subtitle")}
               </h2>
-              <p className="text-muted-foreground mb-4 whitespace-pre-line">
+              <p className="text-muted-foreground mb-6 whitespace-pre-line">
                 {t("home.subdescription")}
               </p>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  const currentPath = window.location.pathname;
-                  window.location.href = `/${locale}/login?next=${encodeURIComponent(
-                    currentPath
-                  )}`;
-                }}
-              >
-                {t("home.goToLogin")}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const currentPath = window.location.pathname;
+                    window.location.href = `/${locale}/login?next=${encodeURIComponent(
+                      currentPath
+                    )}`;
+                  }}
+                  className="flex-1"
+                >
+                  {t("home.goToLogin")}
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    window.location.href = `/${locale}/ship/SHIP000003`;
+                  }}
+                  className="flex-1"
+                >
+                  {t("home.tutorial")}
+                </Button>
+              </div>
             </div>
           )}
         </div>

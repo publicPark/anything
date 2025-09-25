@@ -88,6 +88,7 @@ function getPathTranslations(locale: Locale, path: string) {
     "/login": "login",
     "/profile": "profile",
     "/settings": "settings",
+    "/ships": "ships",
   };
 
   const translationKey = pathMap[path];
@@ -107,7 +108,7 @@ function getPathTranslations(locale: Locale, path: string) {
  */
 export function generateStaticMetadata() {
   const locales: Locale[] = ["ko", "en"];
-  const paths = ["/", "/login", "/profile", "/settings"];
+  const paths = ["/", "/login", "/profile", "/settings", "/ships"];
 
   const metadata: Record<string, Metadata> = {};
 

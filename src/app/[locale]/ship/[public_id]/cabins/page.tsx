@@ -1,104 +1,76 @@
-"use client";
+import { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import ShipCabinsForm from "./ShipCabinsForm";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { useI18n } from "@/hooks/useI18n";
-import { useProfile } from "@/hooks/useProfile";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { CabinList } from "@/components/CabinList";
-import { Ship } from "@/types/database";
-import { Button } from "@/components/ui/Button";
+interface ShipCabinsPageProps {
+  params: Promise<{ locale: string; public_id: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ShipCabinsPageProps): Promise<Metadata> {
+  const { locale, public_id } = await params;
+  const supabase = await createClient();
+
+  try {
+    const { data: ship, error } = await supabase
+      .from("ships")
+      .select("name")
+      .eq("public_id", public_id)
+      .single();
+
+    if (error || !ship) {
+      return {
+        title:
+          locale === "ko"
+            ? "배를 찾을 수 없습니다 - 예약시스템"
+            : "Ship Not Found - Reservation System",
+        description:
+          locale === "ko"
+            ? "요청하신 배를 찾을 수 없습니다."
+            : "The requested ship could not be found.",
+      };
+    }
+
+    const title =
+      locale === "ko"
+        ? `${ship.name} 객실 - 예약시스템`
+        : `${ship.name} Cabins - Reservation System`;
+
+    const description =
+      locale === "ko"
+        ? `${ship.name} 배의 객실 목록을 확인하세요.`
+        : `View cabin list for ${ship.name} ship.`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "website",
+        locale: locale === "ko" ? "ko_KR" : "en_US",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+      },
+    };
+  } catch {
+    return {
+      title:
+        locale === "ko"
+          ? "배를 찾을 수 없습니다 - 예약시스템"
+          : "Ship Not Found - Reservation System",
+      description:
+        locale === "ko"
+          ? "요청하신 배를 찾을 수 없습니다."
+          : "The requested ship could not be found.",
+    };
+  }
+}
 
 export default function ShipCabinsPage() {
-  const { t, locale } = useI18n();
-  const params = useParams();
-  const supabase = createClient();
-  const { profile, loading: profileLoading } = useProfile();
-  const router = useRouter();
-
-  const [ship, setShip] = useState<Ship | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const shipPublicId = params.public_id as string;
-
-  useEffect(() => {
-    if (!profileLoading && shipPublicId) {
-      fetchShipDetails();
-    }
-  }, [profileLoading, shipPublicId]);
-
-  const fetchShipDetails = async () => {
-    if (!shipPublicId) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // 배 정보 조회
-      const { data: shipData, error: shipError } = await supabase
-        .from("ships")
-        .select("*")
-        .eq("public_id", shipPublicId)
-        .maybeSingle();
-
-      if (shipError) {
-        throw shipError;
-      }
-
-      if (!shipData) {
-        throw new Error(t("ships.shipNotFound"));
-      }
-
-      setShip(shipData);
-    } catch (err: any) {
-      console.error("Failed to fetch ship details:", err);
-      setError(err.message || t("ships.errorLoadingShip"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (profileLoading || isLoading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <ErrorMessage message={error} />;
-  }
-
-  if (!ship) {
-    return <ErrorMessage message={t("ships.shipNotFound")} />;
-  }
-
-  return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6">
-      <div className="mb-6">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => router.push(`/${locale}/ship/${shipPublicId}`)}
-        >
-          <b>{ship.name}</b>
-        </Button>
-      </div>
-
-      {/* 배 헤더 */}
-      {/* <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{ship.name}</h1>
-        {ship.description && (
-          <p className="text-muted-foreground">{ship.description}</p>
-        )}
-      </div> */}
-
-      {/* 선실 목록 */}
-      <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
-    </div>
-  );
+  return <ShipCabinsForm />;
 }

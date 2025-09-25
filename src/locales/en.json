@@ -25,7 +25,7 @@
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome!",
     "subtitle": "What is the Reservation System?",
-    "subdescription": "When you make a reservation, this becomes my territory.\nLogin is optional.",
+    "subdescription": "With the Reservation System,\nyou can reserve space and check who is using it.\nLogin is optional.",
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",

@@ -10,10 +10,8 @@ interface LocaleLayoutProps {
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }): Promise<Metadata> {
   const { locale } = await params;
 

@@ -60,7 +60,10 @@ export function ReservationItem({
     }
   };
 
-  const formatReservationTime = (startTime: string, endTime: string) => {
+  const formatReservationTime = (
+    startTime: string,
+    endTime: string
+  ): { dateLabel: string; timeLabel: string; durationLabel: string } => {
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);
     const now = new Date();
@@ -114,7 +117,11 @@ export function ReservationItem({
       durationStr = `${minutes}분`;
     }
 
-    return `${dateLabel} ${startTimeStr} - ${endTimeStr} (${durationStr})`;
+    return {
+      dateLabel,
+      timeLabel: `${startTimeStr} - ${endTimeStr}`,
+      durationLabel: durationStr,
+    };
   };
 
   const getReservationType = () => {
@@ -127,42 +134,88 @@ export function ReservationItem({
     return "";
   };
 
+  const getReservationStatus = (): "ongoing" | "upcoming" | "ended" => {
+    const now = new Date();
+    const start = new Date(reservation.start_time);
+    const end = new Date(reservation.end_time);
+    if (now >= start && now < end) return "ongoing";
+    if (start > now) return "upcoming";
+    return "ended";
+  };
+
+  const renderStatusBadge = () => {
+    const status = getReservationStatus();
+    const base =
+      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
+    if (status === "ongoing") {
+      return (
+        <span
+          className={`${base} bg-destructive/10 text-destructive border border-destructive`}
+        >
+          {t("ships.statusOngoing")}
+        </span>
+      );
+    }
+    if (status === "upcoming") {
+      return (
+        <span
+          className={`${base} bg-info/10 text-info-600 border border-info/600`}
+        >
+          {t("ships.statusUpcoming")}
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`${base} bg-muted-foreground/10 text-muted-foreground border border-border`}
+      >
+        {t("ships.statusEnded")}
+      </span>
+    );
+  };
+
   return (
     <div
       className={`rounded-lg p-6 border ${
-        isCurrent
-          ? "bg-destructive/10 border-destructive/20 shadow-md"
-          : "bg-muted border-border"
+        isCurrent ? "bg-muted border-destructive/60" : "bg-muted border-border"
       }`}
     >
+      {/* Top: left (data) / right (status badge) */}
       <div className="flex items-start justify-between">
-        <div className="flex-1">
+        <div className="space-y-2 text-sm text-foreground">
+          {(() => {
+            const { dateLabel, timeLabel, durationLabel } =
+              formatReservationTime(
+                reservation.start_time,
+                reservation.end_time
+              );
+            return (
+              <div className="font-semibold">
+                <span>{dateLabel} </span>
+                <span className="font-bold">{timeLabel}</span>
+                <span> ({durationLabel})</span>
+              </div>
+            );
+          })()}
+          <div>{reservation.purpose}</div>
+        </div>
+        <div className="ml-4 shrink-0">{renderStatusBadge()}</div>
+      </div>
+
+      {/* Bottom: badge on the left, button on the right */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
           {getReservationType() && (
-            <div className="mb-2">
-              <span
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  isOwner
-                    ? "role-captain"
-                    : "bg-muted-foreground/20 text-muted-foreground"
-                }`}
-              >
-                {getReservationType()}
-              </span>
-            </div>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                isOwner
+                  ? "bg-muted-foreground/30 text-foreground"
+                  : "bg-muted-foreground/20 text-muted-foreground"
+              }`}
+            >
+              {getReservationType()}
+            </span>
           )}
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            {reservation.purpose}
-          </h3>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium">
-                {formatReservationTime(
-                  reservation.start_time,
-                  reservation.end_time
-                )}
-              </span>
-            </div>
-          </div>
         </div>
 
         {canDelete && (

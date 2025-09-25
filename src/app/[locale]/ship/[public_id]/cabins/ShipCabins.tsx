@@ -100,9 +100,9 @@ export default function ShipCabinsForm() {
           <b>{ship.name}</b>
           {t("ships.shipCabinsList")}
         </h1>
-        {ship.description && (
-          <p className="text-muted-foreground text-sm">{ship.description}</p>
-        )}
+        {/* {ship.description && (
+          <p className="text-foreground text-sm">{ship.description}</p>
+        )} */}
       </div>
 
       {/* 선실 목록 */}

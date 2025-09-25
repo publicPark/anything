@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ReservationForm } from "@/components/ReservationForm";
 import { ReservationItem } from "@/components/ReservationItem";
+import { CabinReservationSummary } from "@/components/CabinReservationSummary";
+import { ShipTabs } from "@/components/ShipTabs";
 import { ShipCabin, Ship, CabinReservation } from "@/types/database";
 import { calculateCabinStatus } from "@/lib/cabin-status";
 import { renderTextWithLinks } from "@/lib/text-helpers";
@@ -31,6 +33,7 @@ export default function CabinDetail() {
   const [userRole, setUserRole] = useState<
     "captain" | "mechanic" | "crew" | null
   >(null);
+  const [showReservationForm, setShowReservationForm] = useState(false);
 
   const shipPublicId = params.public_id as string;
   const cabinPublicId = params.cabin_public_id as string;
@@ -40,6 +43,14 @@ export default function CabinDetail() {
       fetchCabinDetails();
     }
   }, [profileLoading, shipPublicId, cabinPublicId]);
+
+  // URL 쿼리 파라미터 처리
+  useEffect(() => {
+    const reserveParam = searchParams.get("reserve");
+    if (reserveParam === "true") {
+      setShowReservationForm(true);
+    }
+  }, [searchParams]);
 
   // Realtime 구독은 cabin이 로드된 후에 설정
   useEffect(() => {
@@ -109,15 +120,13 @@ export default function CabinDetail() {
 
       setCabin(cabinData);
 
-      // 예약 목록 조회 (현재 진행 중이거나 미래의 예약만)
-      const now = new Date().toISOString();
+      // 예약 목록 조회 (모든 confirmed 예약)
       const { data: reservationsData, error: reservationsError } =
         await supabase
           .from("cabin_reservations")
           .select("*")
           .eq("cabin_id", cabinData.id)
           .eq("status", "confirmed")
-          .gte("end_time", now) // 종료 시간이 현재 시간 이후인 예약만
           .order("start_time", { ascending: true });
 
       if (reservationsError) {
@@ -146,6 +155,7 @@ export default function CabinDetail() {
   };
 
   const handleReservationSuccess = () => {
+    setShowReservationForm(false);
     fetchCabinDetails(); // 예약 목록 새로고침
   };
 
@@ -157,6 +167,7 @@ export default function CabinDetail() {
 
     const todayReservations: CabinReservation[] = [];
     const upcomingReservations: CabinReservation[] = [];
+    const pastReservations: CabinReservation[] = [];
 
     reservations.forEach((reservation) => {
       if (reservation.status !== "confirmed") return;
@@ -171,21 +182,173 @@ export default function CabinDetail() {
 
       // 오늘의 예약 (현재 진행중인 것과 오늘 예정된 것 모두 포함)
       if (reservationDate.getTime() === today.getTime()) {
-        todayReservations.push(reservation);
+        // 이미 종료된 오늘 예약은 과거로
+        if (end <= now) {
+          pastReservations.push(reservation);
+        } else {
+          todayReservations.push(reservation);
+        }
       }
       // 오늘 이후의 예약
       else if (start > now) {
         upcomingReservations.push(reservation);
+      } else if (end <= now || reservationDate.getTime() < today.getTime()) {
+        // 과거 예약 (종료가 현재 이전이거나 날짜가 오늘보다 이전)
+        pastReservations.push(reservation);
       }
     });
 
     return {
       todayReservations,
       upcomingReservations,
+      pastReservations,
     };
   };
 
-  const { todayReservations, upcomingReservations } = categorizeReservations();
+  const { todayReservations, upcomingReservations, pastReservations } =
+    categorizeReservations();
+
+  // 탭 상태
+  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
+    "today"
+  );
+
+  const tabs = [
+    {
+      id: "today",
+      label: t("ships.todayReservations"),
+      content: (
+        <div>
+          {todayReservations.length > 0 ? (
+            <div className="space-y-4">
+              {todayReservations.map((reservation) => {
+                const now = new Date();
+                const start = new Date(reservation.start_time);
+                const end = new Date(reservation.end_time);
+                const isCurrent = now >= start && now < end;
+
+                return (
+                  <ReservationItem
+                    key={reservation.id}
+                    reservation={reservation}
+                    currentUserId={profile?.id}
+                    userRole={userRole || undefined}
+                    onUpdate={fetchCabinDetails}
+                    isCurrent={isCurrent}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-3xl mb-2">📅</div>
+              <p className="text-sm text-muted-foreground">
+                {t("ships.noTodayReservations")}
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "upcoming",
+      label: t("ships.upcomingReservations"),
+      content: (
+        <div>
+          {upcomingReservations.length > 0 ? (
+            <div className="space-y-4">
+              {upcomingReservations.map((reservation) => (
+                <ReservationItem
+                  key={reservation.id}
+                  reservation={reservation}
+                  currentUserId={profile?.id}
+                  userRole={userRole || undefined}
+                  onUpdate={fetchCabinDetails}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-3xl mb-2">🔮</div>
+              <p className="text-sm text-muted-foreground">
+                {t("ships.noUpcomingReservations")}
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "past",
+      label: t("ships.pastReservations"),
+      content: (
+        <div>
+          {pastReservations.length > 0 ? (
+            <div>
+              {(userRole === "captain" || userRole === "mechanic") && (
+                <div className="mb-3 flex justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      if (
+                        !confirm(t("ships.confirmDeleteAllPastReservations"))
+                      ) {
+                        return;
+                      }
+                      try {
+                        const supabase = createClient();
+                        const ids = pastReservations.map((r) => r.id);
+                        if (ids.length === 0) return;
+                        const { error: delError } = await supabase
+                          .from("cabin_reservations")
+                          .delete()
+                          .in("id", ids);
+                        if (delError) throw delError;
+                        await fetchCabinDetails();
+                        alert(t("ships.pastReservationsDeleted"));
+                      } catch (e: any) {
+                        console.error(e);
+                        alert(t("ships.errorDeletingReservations"));
+                      }
+                    }}
+                  >
+                    {t("ships.deleteAllPastReservations")}
+                  </Button>
+                </div>
+              )}
+              <div className="space-y-4">
+                {pastReservations
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      new Date(b.start_time).getTime() -
+                      new Date(a.start_time).getTime()
+                  )
+                  .map((reservation) => (
+                    <ReservationItem
+                      key={reservation.id}
+                      reservation={reservation}
+                      currentUserId={profile?.id}
+                      userRole={userRole || undefined}
+                      onUpdate={fetchCabinDetails}
+                    />
+                  ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-3xl mb-2">⏳</div>
+              <p className="text-sm text-muted-foreground">
+                {t("ships.noPastReservations")}
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   if (profileLoading || isLoading) {
     return (
@@ -232,7 +395,7 @@ export default function CabinDetail() {
           <div>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground">
                   {cabin.name}
                 </h1>
               </div>
@@ -252,94 +415,55 @@ export default function CabinDetail() {
             </div>
 
             {cabin.description && (
-              <p className="text-foreground mb-6 whitespace-pre-wrap">
+              <p className="text-foreground mb-6 whitespace-pre-wrap text-sm">
                 {renderTextWithLinks(cabin.description)}
               </p>
             )}
+
+            {/* 오늘의 예약 요약 */}
+            <CabinReservationSummary reservations={todayReservations} />
           </div>
 
-          {/* Divider */}
-          <hr className="border-border" />
-
           {/* 예약 폼 */}
+          {showReservationForm && <hr className="border-border" />}
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              {t("ships.createReservation")}
-            </h2>
-            <ReservationForm
-              cabinId={cabin.id}
-              onSuccess={handleReservationSuccess}
-              existingReservations={reservations}
-              isModal={false}
-            />
+            <div className="flex items-center justify-between mb-6">
+              {/* <h2 className="text-2xl font-bold text-foreground">
+                {t("ships.createReservation")}
+              </h2> */}
+              <Button
+                className="w-full"
+                type="button"
+                variant={showReservationForm ? "secondary" : "primary"}
+                size="md"
+                onClick={() => setShowReservationForm(!showReservationForm)}
+              >
+                {showReservationForm
+                  ? t("ships.cancelReservation")
+                  : t("ships.reserveCabin")}
+              </Button>
+            </div>
+
+            {showReservationForm && (
+              <ReservationForm
+                cabinId={cabin.id}
+                onSuccess={handleReservationSuccess}
+                existingReservations={reservations}
+                isModal={false}
+              />
+            )}
           </div>
         </div>
 
-        {/* 오른쪽 - 예약현황 + 예약 리스트 */}
-        <div className="space-y-8">
-          {/* 오늘의 예약 */}
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              {t("ships.todayReservations")}
-            </h3>
-
-            {todayReservations.length > 0 ? (
-              <div className="space-y-4">
-                {todayReservations.map((reservation) => {
-                  const now = new Date();
-                  const start = new Date(reservation.start_time);
-                  const end = new Date(reservation.end_time);
-                  const isCurrent = now >= start && now < end;
-
-                  return (
-                    <ReservationItem
-                      key={reservation.id}
-                      reservation={reservation}
-                      currentUserId={profile?.id}
-                      userRole={userRole || undefined}
-                      onUpdate={fetchCabinDetails}
-                      isCurrent={isCurrent}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <div className="text-3xl mb-2">📅</div>
-                <p className="text-sm text-muted-foreground">
-                  {t("ships.noTodayReservations")}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 다가오는 예약 */}
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              {t("ships.upcomingReservations")}
-            </h3>
-
-            {upcomingReservations.length > 0 ? (
-              <div className="space-y-4">
-                {upcomingReservations.map((reservation) => (
-                  <ReservationItem
-                    key={reservation.id}
-                    reservation={reservation}
-                    currentUserId={profile?.id}
-                    userRole={userRole || undefined}
-                    onUpdate={fetchCabinDetails}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <div className="text-3xl mb-2">🔮</div>
-                <p className="text-sm text-muted-foreground">
-                  {t("ships.noUpcomingReservations")}
-                </p>
-              </div>
-            )}
-          </div>
+        {/* 오른쪽 - 예약 탭 (ShipTabs 스타일 사용) */}
+        <div>
+          <ShipTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={(id) =>
+              setActiveTab(id as "today" | "upcoming" | "past")
+            }
+          />
         </div>
       </div>
     </div>

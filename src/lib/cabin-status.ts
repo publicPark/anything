@@ -14,6 +14,7 @@ export interface CabinWithStatus {
   currentStatus: CabinStatus;
   currentReservation?: CabinReservation;
   nextReservation?: CabinReservation;
+  todayReservations?: CabinReservation[];
 }
 
 /**
@@ -78,6 +79,7 @@ export function addStatusToCabins(
       currentStatus: status,
       currentReservation,
       nextReservation,
+      todayReservations: reservations,
     };
   });
 }

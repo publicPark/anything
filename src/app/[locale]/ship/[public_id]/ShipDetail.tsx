@@ -12,6 +12,7 @@ import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
 import { CabinManage } from "@/components/CabinManage";
 import { ShipTabs } from "@/components/ShipTabs";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import {
   Ship,
   ShipMember,
@@ -733,6 +734,18 @@ export default function ShipDetail() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+      <Breadcrumb
+        items={[
+          {
+            label: (
+              <>
+                <b>{ship.name}</b> {t("ship.title")}
+              </>
+            ),
+            isCurrentPage: true,
+          },
+        ]}
+      />
       <ShipHeader
         ship={ship}
         profile={profile}

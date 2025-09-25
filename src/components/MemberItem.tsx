@@ -38,7 +38,7 @@ export function MemberItem({
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-y-3 bg-muted rounded-lg">
       <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+        <div className="w-8 h-8 bg-success-600 rounded-full flex items-center justify-center text-success-foreground text-sm font-medium">
           {(member.profile?.display_name ||
             member.profile?.username ||
             "U")[0].toUpperCase()}

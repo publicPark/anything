@@ -7,6 +7,7 @@ import { ShipCabin, CabinReservation } from "@/types/database";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
+import { CabinReservationSummary } from "@/components/CabinReservationSummary";
 import { useRouter } from "next/navigation";
 import {
   CabinWithStatus,
@@ -184,57 +185,10 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
                 </p>
               )}
 
-              {/* 현재 예약 정보 */}
-              {cabin.currentReservation && (
-                <div className="mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-destructive">
-                      {t("cabins.currentReservation")}
-                    </span>
-                    <span className="text-xs text-destructive">
-                      {t("cabins.endsAt", {
-                        time: new Date(
-                          cabin.currentReservation.end_time
-                        ).toLocaleTimeString("ko-KR", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        }),
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground font-medium">
-                    {cabin.currentReservation.purpose ||
-                      t("cabins.reservationTitle")}
-                  </p>
-                </div>
-              )}
-
-              {/* 다음 예약 정보 */}
-              {cabin.nextReservation && (
-                <div className="mb-3 p-3 bg-muted/50 border border-border rounded-md">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {t("cabins.nextReservation")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {t("cabins.startsAt", {
-                        time: new Date(
-                          cabin.nextReservation.start_time
-                        ).toLocaleTimeString("ko-KR", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        }),
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground font-medium">
-                    {cabin.nextReservation.purpose ||
-                      t("cabins.reservationTitle")}
-                  </p>
-                </div>
-              )}
+              {/* 오늘의 예약 요약 (현재/다음 계산 및 빈 상태 포함) */}
+              <CabinReservationSummary
+                reservations={cabin.todayReservations || []}
+              />
 
               <div className="w-full">
                 <Link

@@ -193,7 +193,7 @@ export default function Navigation() {
                   {t("navigation.login")}
                 </Link>
               )}
-              <SettingsButton />
+              {/* <SettingsButton /> */}
             </div>
           </div>
         </div>

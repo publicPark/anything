@@ -26,7 +26,7 @@ export function ShipTabs({ tabs, activeTab, onTabChange }: ShipTabsProps) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                 activeTab === tab.id
                   ? "border-primary-500 text-primary-600"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-primary-300"

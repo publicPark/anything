@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "title": "Tacja",
-    "description": "Gather around the table and have meetings together.",
-    "keywords": "teams, gatherings, groups, members, meetings, meeting rooms, meeting room reservation",
-    "author": "Tacja Members",
-    "ogTitle": "Tacja - Gather around the table and have meetings together.",
-    "ogDescription": "Gather around the table and have meetings together. Teams, gatherings, groups, members",
+    "title": "Reservation System",
+    "description": "When you make a reservation, this becomes my territory.",
+    "keywords": "groups, gatherings, teams, members, meeting rooms, meeting room reservation",
+    "author": "Reservation System Members",
+    "ogTitle": "Reservation System - When you make a reservation, this becomes my territory.",
+    "ogDescription": "When you make a reservation, this becomes my territory.",
     "ogImage": "/og-image-en.png",
     "twitterCard": "summary_large_image",
-    "twitterTitle": "Tacja - Gather around the table and have meetings together.",
-    "twitterDescription": "Gather around the table and have meetings together."
+    "twitterTitle": "Reservation System - When you make a reservation, this becomes my territory.",
+    "twitterDescription": "When you make a reservation, this becomes my territory."
   },
   "navigation": {
     "brand": "",
@@ -21,11 +21,11 @@
   },
   "home": {
     "title": "Home",
-    "description": "Main page of the Tacja website",
+    "description": "Main page of the Reservation System website",
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome!",
-    "subtitle": "What is Tacja?",
-    "subdescription": "Gather around the table and have meetings together.\nLogin is optional.",
+    "subtitle": "What is the Reservation System?",
+    "subdescription": "When you make a reservation, this becomes my territory.\nLogin is optional.",
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
@@ -82,6 +82,9 @@
   },
   "ships": {
     "title": "Teams",
+    "pageTitle": "Team Home",
+    "cabinListTitle": "Cabin List",
+    "cabinDetailTitle": "Cabin Interior",
     "viewMembers": "Members",
     "memberRequests": "Member Requests",
     "cabinsManage": "Cabins Manage",
@@ -245,7 +248,6 @@
     "cabinNameRequired": "Please enter a cabin name",
     "insufficientPermissionsCabin": "Mechanic+ role required",
     "errorGeneric": "An error occurred while processing",
-    "currentReservations": "Currently Active",
     "todayReservations": "Today's Reservations",
     "upcomingReservations": "Upcoming Reservations",
     "noTodayReservations": "No meetings scheduled for today",

@@ -1,15 +1,15 @@
 {
   "metadata": {
-    "title": "탁자",
-    "description": "탁자에 모여서 회의를 해봅시다.",
+    "title": "예약시스템",
+    "description": "예약하면 여긴 이제 제 영역입니다.",
     "keywords": "그룹, 모임, 팀, 멤버, 회의실, 회의실 예약",
-    "author": "탁자의 멤버",
-    "ogTitle": "탁자 - 탁자에 모여서 회의를 해봅시다.",
-    "ogDescription": "탁자에 모여서 회의를 해봅시다.",
+    "author": "예약시스템의 멤버",
+    "ogTitle": "예약시스템 - 예약하면 여긴 이제 제 영역입니다.",
+    "ogDescription": "예약하면 여긴 이제 제 영역입니다.",
     "ogImage": "/og-image-ko.png",
     "twitterCard": "summary_large_image",
-    "twitterTitle": "탁자 - 탁자에 모여서 회의를 해봅시다.",
-    "twitterDescription": "탁자에 모여서 회의를 해봅시다."
+    "twitterTitle": "예약시스템 - 예약하면 여긴 이제 제 영역입니다.",
+    "twitterDescription": "예약하면 여긴 이제 제 영역입니다."
   },
   "navigation": {
     "brand": "",
@@ -21,11 +21,11 @@
   },
   "home": {
     "title": "홈",
-    "description": "탁자 웹사이트의 메인 페이지입니다",
+    "description": "예약시스템 웹사이트의 메인 페이지입니다",
     "welcome": "안녕하세요, {name}님!",
     "welcomeMessage": "환영합니다!",
-    "subtitle": "탁자는 뭔가요?",
-    "subdescription": "탁자에 모여서 회의를 해봅시다.\n로그인은 선택사항입니다.",
+    "subtitle": "예약시스템은 뭔가요?",
+    "subdescription": "예약하면 여긴 이제 제 영역입니다.\n로그인은 선택사항입니다.",
     "loading": "로딩 중...",
     "errorTitle": "오류가 발생했습니다",
     "retry": "다시 시도",
@@ -82,6 +82,9 @@
   },
   "ships": {
     "title": "팀",
+    "pageTitle": "팀 홈",
+    "cabinListTitle": "선실 목록",
+    "cabinDetailTitle": "선실 내부",
     "viewMembers": "멤버",
     "memberRequests": "멤버 가입 신청",
     "cabinsManage": "선실 관리",
@@ -245,7 +248,6 @@
     "cabinNameRequired": "선실 이름을 입력해주세요",
     "insufficientPermissionsCabin": "mechanic 이상의 권한이 필요합니다",
     "errorGeneric": "작업 중 오류가 발생했습니다",
-    "currentReservations": "현재 예약",
     "todayReservations": "오늘의 예약",
     "upcomingReservations": "다가오는 예약",
     "noTodayReservations": "오늘 예약된 회의가 없습니다",

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
+import { formatReservationSlackText } from "@/lib/notifications/slack";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { JoinRequestModal } from "@/components/JoinRequestModal";
 import { Ship, ShipMember, Profile } from "@/types/database";
@@ -29,6 +30,7 @@ interface ShipHeaderProps {
     description: string;
     member_only: boolean;
     member_approval_required: boolean;
+    slack_webhook_url?: string | null;
   }) => void;
   onEditCancel: () => void;
   onViewCabins: () => void;
@@ -40,12 +42,14 @@ interface ShipHeaderProps {
     description: string;
     member_only: boolean;
     member_approval_required: boolean;
+    slack_webhook_url?: string | null;
   };
   setEditFormData: (data: {
     name: string;
     description: string;
     member_only: boolean;
     member_approval_required: boolean;
+    slack_webhook_url?: string | null;
   }) => void;
 }
 
@@ -107,6 +111,26 @@ export function ShipHeader({
     onJoinShip(message);
     setShowJoinRequestModal(false);
   };
+
+  const previewText = (() => {
+    try {
+      const base = new Date();
+      base.setSeconds(0, 0);
+      const start = new Date(base);
+      start.setHours(14, 0, 0, 0);
+      const end = new Date(base);
+      end.setHours(14, 30, 0, 0);
+      return formatReservationSlackText(
+        t("ships.cabinName"),
+        start.toISOString(),
+        end.toISOString(),
+        t("ships.reservationPurposePlaceholder"),
+        (locale === "ko" ? "ko" : "en") as "ko" | "en"
+      );
+    } catch {
+      return "";
+    }
+  })();
 
   return (
     <div className="space-y-4">
@@ -237,6 +261,7 @@ export function ShipHeader({
                     </span>
                   </label>
                 </div>
+                {/* Slack settings moved to dedicated modal */}
               </div>
             ) : (
               <>
@@ -244,7 +269,9 @@ export function ShipHeader({
                   {ship.name}
                 </h1>
                 {ship.description && (
-                  <p className="text-muted-foreground whitespace-pre-wrap">{ship.description}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">
+                    {ship.description}
+                  </p>
                 )}
                 {/* <div className="text-sm text-muted-foreground mt-2">
                   <span>
@@ -382,10 +409,7 @@ export function ShipHeader({
                   )} */}
 
                   {(!ship.member_only || ship.isMember) && (
-                    <Button
-                      onClick={onViewCabins}
-                      variant="primary"
-                    >
+                    <Button onClick={onViewCabins} variant="primary">
                       {t("ships.viewCabins")}
                     </Button>
                   )}

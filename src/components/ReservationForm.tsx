@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
+import { createReservationAction } from "@/app/actions/reservations";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -72,22 +73,16 @@ export function ReservationForm({
       const startDate = new Date(editingReservation.start_time);
       const endDate = new Date(editingReservation.end_time);
 
-      const startTimeStr = startDate.toLocaleTimeString(
-        locale === "ko" ? "ko-KR" : "en-US",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: locale !== "ko",
-        }
-      );
-      const endTimeStr = endDate.toLocaleTimeString(
-        locale === "ko" ? "ko-KR" : "en-US",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: locale !== "ko",
-        }
-      );
+      const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
 
       setSelectedTimes(startTimeStr, endTimeStr);
     }
@@ -177,15 +172,16 @@ export function ReservationForm({
 
         if (error) throw error;
       } else {
-        // 예약 생성
-        const { error } = await supabase.rpc("create_cabin_reservation", {
-          cabin_uuid: cabinId,
-          reservation_start_time: startDateTime.toISOString(),
-          reservation_end_time: endDateTime.toISOString(),
-          reservation_purpose: formData.purpose.trim(),
+        // 예약 생성 (서버 액션 통해 Slack 전송)
+        const result = await createReservationAction({
+          cabinId,
+          startISO: startDateTime.toISOString(),
+          endISO: endDateTime.toISOString(),
+          purpose: formData.purpose.trim(),
+          locale: "ko",
         });
-
-        if (error) throw error;
+        if (!result.ok)
+          throw new Error(result.message || "Failed to create reservation");
       }
 
       clearSelection();

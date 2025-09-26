@@ -40,6 +40,7 @@ CREATE TABLE ships (
   public_id TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
+  slack_webhook_url TEXT,
   member_only BOOLEAN DEFAULT FALSE NOT NULL,
   member_approval_required BOOLEAN DEFAULT FALSE NOT NULL,
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,

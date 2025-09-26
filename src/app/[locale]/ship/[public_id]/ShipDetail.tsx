@@ -11,6 +11,7 @@ import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
 import { CabinManage } from "@/components/CabinManage";
+import { MessageSettings } from "@/components/MessageSettings";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { RoleBadge } from "@/components/ui/RoleBadge";
@@ -705,6 +706,29 @@ export default function ShipDetail() {
         content: (
           <div className="space-y-6">
             <CabinManage shipId={ship.id} userRole={ship.userRole} />
+          </div>
+        ),
+      });
+
+      // 메시지 설정 탭 (컴포넌트화)
+      tabs.push({
+        id: "messageSettings",
+        label: t("ships.messageSettings"),
+        content: (
+          <div className="space-y-6">
+            <div className="bg-background rounded-lg border border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                {t("ships.messageSettings")}
+              </h3>
+              <MessageSettings
+                shipId={ship.id}
+                shipName={ship.name}
+                shipPublicId={ship.public_id}
+                locale={locale}
+                slackWebhookUrl={ship.slack_webhook_url}
+                onSaved={fetchShipDetails}
+              />
+            </div>
           </div>
         ),
       });

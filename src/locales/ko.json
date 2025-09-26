@@ -91,8 +91,9 @@
     "cabinListTitle": "선실 목록",
     "cabinDetailTitle": "선실 내부",
     "viewMembers": "멤버",
-    "memberRequests": "멤버 가입 신청",
+    "memberRequests": "가입 신청",
     "cabinsManage": "선실 관리",
+    "messageSettings": "메시지 설정",
     "createShip": "팀 생성",
     "myShips": "내 팀",
     "shipName": "팀 이름",
@@ -203,6 +204,7 @@
     "deleteCabin": "선실 삭제",
     "manageCabins": "선실 관리",
     "viewCabins": "선실 목록",
+    "viewStatus": "현황 보기",
     "noCabins": "등록된 선실이 없습니다",
     "reserveCabin": "예약 신청서 열기",
     "reservations": "예약",
@@ -269,7 +271,9 @@
     "pastReservationsDeleted": "지난 예약이 삭제되었습니다",
     "errorDeletingReservations": "예약 삭제 중 오류가 발생했습니다",
     "shipInfo": "의 정보",
-    "shipCabinsList": "선실 목록"
+    "shipCabinsList": "선실 목록",
+    "slackWebhookUrl": "Slack Webhook URL",
+    "slackExampleTitle": "Slack 메시지 미리보기"
   },
   "common": {
     "loading": "로딩 중...",

@@ -37,6 +37,7 @@ export interface Ship {
   public_id: string;
   name: string;
   description: string | null;
+  slack_webhook_url?: string | null;
   member_only: boolean;
   member_approval_required: boolean;
   created_by: string;

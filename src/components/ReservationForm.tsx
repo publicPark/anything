@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
+import { createReservationAction } from "@/app/actions/reservations";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -28,8 +29,12 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const { t } = useI18n();
   const { profile } = useProfile();
-  const { selectedStartTime, selectedEndTime, clearSelection, setSelectedTimes } =
-    useReservationStore();
+  const {
+    selectedStartTime,
+    selectedEndTime,
+    clearSelection,
+    setSelectedTimes,
+  } = useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +72,7 @@ export function ReservationForm({
     if (editingReservation) {
       const startDate = new Date(editingReservation.start_time);
       const endDate = new Date(editingReservation.end_time);
-      
+
       const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -78,7 +83,7 @@ export function ReservationForm({
         minute: "2-digit",
         hour12: false,
       });
-      
+
       setSelectedTimes(startTimeStr, endTimeStr);
     }
   }, [editingReservation, setSelectedTimes]);
@@ -132,7 +137,6 @@ export function ReservationForm({
     const startDateTime = createDateTime(formData.date, selectedStartTime);
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
-
     // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 5분 단위로 내림한 시각보다 빠르면 막기
     const now = new Date();
     const todayLocal = getLocalYYYYMMDD(now);
@@ -156,7 +160,7 @@ export function ReservationForm({
 
     try {
       const supabase = createClient();
-      
+
       if (editingReservation) {
         // 예약 수정
         const { error } = await supabase.rpc("update_cabin_reservation", {
@@ -165,18 +169,19 @@ export function ReservationForm({
           new_end_time: endDateTime.toISOString(),
           new_purpose: formData.purpose.trim(),
         });
-        
+
         if (error) throw error;
       } else {
-        // 예약 생성
-        const { error } = await supabase.rpc("create_cabin_reservation", {
-          cabin_uuid: cabinId,
-          reservation_start_time: startDateTime.toISOString(),
-          reservation_end_time: endDateTime.toISOString(),
-          reservation_purpose: formData.purpose.trim(),
+        // 예약 생성 (서버 액션 통해 Slack 전송)
+        const result = await createReservationAction({
+          cabinId,
+          startISO: startDateTime.toISOString(),
+          endISO: endDateTime.toISOString(),
+          purpose: formData.purpose.trim(),
+          locale: "ko",
         });
-        
-        if (error) throw error;
+        if (!result.ok)
+          throw new Error(result.message || "Failed to create reservation");
       }
 
       clearSelection();
@@ -243,8 +248,10 @@ export function ReservationForm({
                 <LoadingSpinner />
                 <span>{t("common.processing")}</span>
               </div>
+            ) : editingReservation ? (
+              t("ships.updateReservation")
             ) : (
-              editingReservation ? t("ships.updateReservation") : t("ships.createReservation")
+              t("ships.createReservation")
             )}
           </Button>
         </div>

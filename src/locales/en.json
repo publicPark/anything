@@ -91,8 +91,9 @@
     "cabinListTitle": "Cabin List",
     "cabinDetailTitle": "Cabin Interior",
     "viewMembers": "Members",
-    "memberRequests": "Member Requests",
+    "memberRequests": "Requests",
     "cabinsManage": "Cabins Manage",
+    "messageSettings": "Message Settings",
     "createShip": "Create Team",
     "myShips": "My Teams",
     "shipName": "Team Name",
@@ -203,6 +204,7 @@
     "deleteCabin": "Delete Cabin",
     "manageCabins": "Manage Cabins",
     "viewCabins": "View Cabins",
+    "viewStatus": "View Status",
     "noCabins": "No cabins registered",
     "reserveCabin": "Open Reservation Form",
     "reservations": "Reservations",
@@ -269,7 +271,9 @@
     "pastReservationsDeleted": "Past reservations deleted",
     "errorDeletingReservations": "An error occurred while deleting reservations",
     "shipInfo": "'s Info",
-    "shipCabinsList": "ㄴCabin List"
+    "shipCabinsList": "Cabin List",
+    "slackWebhookUrl": "Slack Webhook URL",
+    "slackExampleTitle": "Slack Message Preview"
   },
   "common": {
     "loading": "Loading...",

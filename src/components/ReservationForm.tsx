@@ -26,10 +26,14 @@ export function ReservationForm({
   isModal = false,
   editingReservation,
 }: ReservationFormProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { profile } = useProfile();
-  const { selectedStartTime, selectedEndTime, clearSelection, setSelectedTimes } =
-    useReservationStore();
+  const {
+    selectedStartTime,
+    selectedEndTime,
+    clearSelection,
+    setSelectedTimes,
+  } = useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,18 +71,24 @@ export function ReservationForm({
     if (editingReservation) {
       const startDate = new Date(editingReservation.start_time);
       const endDate = new Date(editingReservation.end_time);
-      
-      const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      
+
+      const startTimeStr = startDate.toLocaleTimeString(
+        locale === "ko" ? "ko-KR" : "en-US",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: locale !== "ko",
+        }
+      );
+      const endTimeStr = endDate.toLocaleTimeString(
+        locale === "ko" ? "ko-KR" : "en-US",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: locale !== "ko",
+        }
+      );
+
       setSelectedTimes(startTimeStr, endTimeStr);
     }
   }, [editingReservation, setSelectedTimes]);
@@ -109,7 +119,7 @@ export function ReservationForm({
       !selectedEndTime ||
       !formData.purpose.trim()
     ) {
-      setError("모든 필드를 입력해주세요.");
+      setError(t("validation.allFieldsRequired"));
       return;
     }
 
@@ -132,7 +142,6 @@ export function ReservationForm({
     const startDateTime = createDateTime(formData.date, selectedStartTime);
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
-
     // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 5분 단위로 내림한 시각보다 빠르면 막기
     const now = new Date();
     const todayLocal = getLocalYYYYMMDD(now);
@@ -147,7 +156,7 @@ export function ReservationForm({
     }
 
     if (endDateTime <= startDateTime) {
-      setError("종료 시간은 시작 시간보다 늦어야 합니다.");
+      setError(t("validation.endTimeAfterStart"));
       return;
     }
 
@@ -156,7 +165,7 @@ export function ReservationForm({
 
     try {
       const supabase = createClient();
-      
+
       if (editingReservation) {
         // 예약 수정
         const { error } = await supabase.rpc("update_cabin_reservation", {
@@ -165,7 +174,7 @@ export function ReservationForm({
           new_end_time: endDateTime.toISOString(),
           new_purpose: formData.purpose.trim(),
         });
-        
+
         if (error) throw error;
       } else {
         // 예약 생성
@@ -175,7 +184,7 @@ export function ReservationForm({
           reservation_end_time: endDateTime.toISOString(),
           reservation_purpose: formData.purpose.trim(),
         });
-        
+
         if (error) throw error;
       }
 
@@ -243,8 +252,10 @@ export function ReservationForm({
                 <LoadingSpinner />
                 <span>{t("common.processing")}</span>
               </div>
+            ) : editingReservation ? (
+              t("ships.updateReservation")
             ) : (
-              editingReservation ? t("ships.updateReservation") : t("ships.createReservation")
+              t("ships.createReservation")
             )}
           </Button>
         </div>

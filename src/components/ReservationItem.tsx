@@ -32,7 +32,7 @@ export function ReservationItem({
   cabinId,
   existingReservations = [],
 }: ReservationItemProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -114,21 +114,30 @@ export function ReservationItem({
     } else if (startDateOnly.getTime() === tomorrow.getTime()) {
       dateLabel = t("common.tomorrow");
     } else {
-      const month = startDate.getMonth() + 1;
-      const day = startDate.getDate();
-      dateLabel = `${month}월 ${day}일`;
+      dateLabel = startDate.toLocaleDateString(
+        locale === "ko" ? "ko-KR" : "en-US",
+        locale === "ko"
+          ? { month: "numeric", day: "numeric" }
+          : { month: "short", day: "numeric" }
+      );
     }
 
-    const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    const startTimeStr = startDate.toLocaleTimeString(
+      locale === "ko" ? "ko-KR" : "en-US",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: locale !== "ko",
+      }
+    );
+    const endTimeStr = endDate.toLocaleTimeString(
+      locale === "ko" ? "ko-KR" : "en-US",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: locale !== "ko",
+      }
+    );
 
     // 시간 길이 계산 (분 단위)
     const durationMs = endDate.getTime() - startDate.getTime();
@@ -152,21 +161,19 @@ export function ReservationItem({
         (diff % (1000 * 60 * 60)) / (1000 * 60)
       );
 
-      if (remainingHours > 0) {
-        return `${remainingHours}시간 ${remainingMinutes}분`;
-      } else {
-        return `${remainingMinutes}분`;
-      }
+      const parts: string[] = [];
+      if (remainingHours > 0)
+        parts.push(t("timetable.hour", { count: remainingHours }));
+      if (remainingMinutes > 0)
+        parts.push(t("timetable.minute", { count: remainingMinutes }));
+      return parts.join(" ");
     };
 
-    let durationStr = "";
-    if (hours > 0 && minutes > 0) {
-      durationStr = `${hours}시간 ${minutes}분`;
-    } else if (hours > 0) {
-      durationStr = `${hours}시간`;
-    } else {
-      durationStr = `${minutes}분`;
-    }
+    const durationParts: string[] = [];
+    if (hours > 0) durationParts.push(t("timetable.hour", { count: hours }));
+    if (minutes > 0)
+      durationParts.push(t("timetable.minute", { count: minutes }));
+    const durationStr = durationParts.join(" ");
 
     return {
       dateLabel,
@@ -244,7 +251,9 @@ export function ReservationItem({
               <div>
                 <span className="font-semibold">{dateLabel} </span>
                 <span className="font-bold">{timeLabel}</span>
-                <span className="text-foreground"> ({durationLabel})</span>
+                {durationLabel ? (
+                  <span className="text-foreground"> ({durationLabel})</span>
+                ) : null}
               </div>
             );
           })()}

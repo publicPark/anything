@@ -15,7 +15,7 @@ export function CabinReservationSummary({
   reservations,
   className,
 }: CabinReservationSummaryProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 실시간 시간 업데이트
@@ -35,17 +35,16 @@ export function CabinReservationSummary({
     const end = new Date(endTime);
     const now = currentTime;
     const diff = end.getTime() - now.getTime();
-    
+
     if (diff <= 0) return null;
-    
+
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours}시간 ${minutes}분`;
-    } else {
-      return `${minutes}분`;
-    }
+
+    const parts: string[] = [];
+    if (hours > 0) parts.push(t("timetable.hour", { count: hours }));
+    if (minutes > 0) parts.push(t("timetable.minute", { count: minutes }));
+    return parts.join(" ");
   };
 
   const renderStatusBadge = (type: "ongoing" | "upcoming"): ReactNode => {
@@ -94,19 +93,22 @@ export function CabinReservationSummary({
           <div className="text-sm text-foreground">
             <b>
               {new Date(currentReservation.end_time).toLocaleTimeString(
-                "ko-KR",
+                locale === "ko" ? "ko-KR" : "en-US",
                 { hour: "numeric", minute: "2-digit", hour12: true }
               )}
             </b>{" "}
             {t("cabins.endsAtPlannedSuffix")},
             {(() => {
-              const remainingTime = getRemainingTime(currentReservation.end_time);
+              const remainingTime = getRemainingTime(
+                currentReservation.end_time
+              );
               if (remainingTime) {
                 return (
                   <>
                     {" "}
                     <span className="text-foreground font-semibold">
-                      약 {remainingTime} {t("ships.remaining")}
+                      {t("timetable.about")} {remainingTime}{" "}
+                      {t("ships.remaining")}
                     </span>
                   </>
                 );
@@ -128,7 +130,7 @@ export function CabinReservationSummary({
           <div className="text-sm text-foreground">
             <b>
               {new Date(nextReservation.start_time).toLocaleTimeString(
-                "ko-KR",
+                locale === "ko" ? "ko-KR" : "en-US",
                 { hour: "numeric", minute: "2-digit", hour12: true }
               )}
             </b>{" "}

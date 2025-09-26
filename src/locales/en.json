@@ -292,7 +292,9 @@
     "validation": {
       "validEmail": "Please enter a valid email address.",
       "required": "This field is required.",
-      "userNotFound": "User not found."
+      "userNotFound": "User not found.",
+      "allFieldsRequired": "Please fill in all fields.",
+      "endTimeAfterStart": "End time must be later than start time."
     }
   },
   "ui": {
@@ -318,6 +320,9 @@
     "reservedTimeNotification": "This time is reserved: {time}",
     "pastTimeNotification": "Past time cannot be selected.",
     "reservationInRangeNotification": "Selected range includes reserved time",
+    "hour": "{count}h",
+    "minute": "{count}m",
+    "about": "about",
     "manualTimeInput": "Manual Time Input",
     "apply": "Apply"
   },

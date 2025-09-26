@@ -110,7 +110,8 @@ export default function Home() {
                 <Button
                   variant="primary"
                   onClick={() => {
-                    window.location.href = `/${locale}/ship/SHIP000003`;
+                    const publicId = "SPtest" + locale;
+                    window.location.href = `/${locale}/ship/${publicId}`;
                   }}
                   className="flex-1"
                 >

@@ -373,22 +373,37 @@ CREATE POLICY "Users can delete own reservations or guest reservations" ON cabin
 -- 4. UTILITY FUNCTIONS
 -- ==============================================
 
--- Cabin Public ID 생성 함수
 CREATE OR REPLACE FUNCTION generate_cabin_public_id()
 RETURNS TEXT AS $$
 DECLARE
   new_id TEXT;
-  counter INTEGER := 1;
 BEGIN
   LOOP
-    new_id := 'CABIN' || LPAD(counter::TEXT, 6, '0');
-    
+    -- 'CB' + 랜덤 10자리 16진수 (대문자)
+    new_id := 'CB' || UPPER(SUBSTRING(ENCODE(gen_random_bytes(8), 'hex') FROM 1 FOR 10));
+
     -- 중복 확인
     IF NOT EXISTS (SELECT 1 FROM ship_cabins WHERE public_id = new_id) THEN
       RETURN new_id;
     END IF;
-    
-    counter := counter + 1;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Ship Public ID 생성 함수 ('SP' + 랜덤)
+CREATE OR REPLACE FUNCTION generate_ship_public_id()
+RETURNS TEXT AS $$
+DECLARE
+  new_id TEXT;
+BEGIN
+  LOOP
+    -- 'SP' + 랜덤 10자리 16진수 (대문자)
+    new_id := 'SP' || UPPER(SUBSTRING(ENCODE(gen_random_bytes(8), 'hex') FROM 1 FOR 10));
+
+    -- 중복 확인
+    IF NOT EXISTS (SELECT 1 FROM ships WHERE public_id = new_id) THEN
+      RETURN new_id;
+    END IF;
   END LOOP;
 END;
 $$ LANGUAGE plpgsql;
@@ -515,9 +530,9 @@ BEGIN
     RAISE EXCEPTION 'Insufficient permissions: Gaia+ role required';
   END IF;
   
-  -- 배 생성
-  INSERT INTO ships (name, description, member_only, member_approval_required, created_by)
-  VALUES (ship_name, ship_description, is_member_only, requires_approval, user_id)
+  -- 배 생성 (public_id 무작위 'SP' + 랜덤)
+  INSERT INTO ships (public_id, name, description, member_only, member_approval_required, created_by)
+  VALUES (generate_ship_public_id(), ship_name, ship_description, is_member_only, requires_approval, user_id)
   RETURNING * INTO new_ship;
   
   -- 배 생성자를 선장으로 자동 가입

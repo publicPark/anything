@@ -34,7 +34,7 @@ export function generateRandomString(length: number): string {
 /**
  * Debounce function to limit the rate of function calls
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number = UI_CONSTANTS.DEBOUNCE_DELAY
 ): (...args: Parameters<T>) => void {

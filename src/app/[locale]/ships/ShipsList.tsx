@@ -30,7 +30,7 @@ export default function ShipsList() {
     }
   }, [profile, fetchAllShips]);
 
-  const handleShipClick = (ship: any) => {
+  const handleShipClick = (ship: { public_id: string }) => {
     router.push(`/${locale}/ship/${ship.public_id}`);
   };
 

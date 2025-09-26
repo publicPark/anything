@@ -60,16 +60,26 @@ export default function ReservationsPage() {
       const { error: deleteError } = await supabase
         .from("cabin_reservations")
         .delete()
-        .in("id", pastReservations.map(r => r.id));
+        .in(
+          "id",
+          pastReservations.map((r) => r.id)
+        );
 
       if (deleteError) {
         throw deleteError;
       }
 
-      setSuccess(t("reservations.allPastReservationsDeleted").replace("{count}", pastReservations.length.toString()));
-    } catch (err: any) {
+      setSuccess(
+        t("reservations.allPastReservationsDeleted").replace(
+          "{count}",
+          pastReservations.length.toString()
+        )
+      );
+    } catch (err: unknown) {
       console.error("Failed to delete past reservations:", err);
-      setError(err.message || t("reservations.errorDeletingPast"));
+      setError(
+        err instanceof Error ? err.message : t("reservations.errorDeletingPast")
+      );
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +120,6 @@ export default function ReservationsPage() {
       {/* 관리 기능 */}
       <div className="space-y-6">
         <div className="bg-muted rounded-lg p-6">
-          
           <Button
             variant="secondary"
             size="md"
@@ -128,19 +137,19 @@ export default function ReservationsPage() {
             )}
           </Button>
 
-{/* 에러 메시지 */}
-{error && (
-  <div className="mt-6">
-    <ErrorMessage message={error} />
-  </div>
-)}
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="mt-6">
+              <ErrorMessage message={error} />
+            </div>
+          )}
 
-{/* 성공 메시지 */}
-{success && (
-  <div className="mt-6">
-    <ErrorMessage message={success} variant="success" />
-  </div>
-)}
+          {/* 성공 메시지 */}
+          {success && (
+            <div className="mt-6">
+              <ErrorMessage message={success} variant="success" />
+            </div>
+          )}
         </div>
       </div>
     </div>

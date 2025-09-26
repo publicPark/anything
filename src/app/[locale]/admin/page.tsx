@@ -4,14 +4,12 @@ import { useProfile } from "@/hooks/useProfile";
 import { useI18n } from "@/hooks/useI18n";
 import { useNavigation } from "@/hooks/useNavigation";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 export default function AdminPage() {
   const { profile, loading, error } = useProfile();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { getLocalizedPath } = useNavigation();
 
   if (loading) {
@@ -44,13 +42,9 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold text-foreground mb-4">
             {t("reservations.accessDenied")}
           </h1>
-          <p className="text-muted-foreground mb-6">
-            {t("admin.description")}
-          </p>
+          <p className="text-muted-foreground mb-6">{t("admin.description")}</p>
           <Link href={getLocalizedPath("/")}>
-            <Button variant="secondary">
-              {t("navigation.home")}
-            </Button>
+            <Button variant="secondary">{t("navigation.home")}</Button>
           </Link>
         </div>
       </div>

@@ -106,8 +106,10 @@ function getPathTranslations(locale: Locale, path: string) {
   if (!pathTranslations || typeof pathTranslations !== "object") return null;
 
   return {
-    title: (pathTranslations as any).title || (pathTranslations as any).name,
-    description: (pathTranslations as any).description,
+    title:
+      (pathTranslations as { title?: string; name?: string }).title ||
+      (pathTranslations as { title?: string; name?: string }).name,
+    description: (pathTranslations as { description?: string }).description,
   };
 }
 

@@ -48,7 +48,12 @@ export function MemberList({
       message = err.message;
     } else if (err && typeof err === "object") {
       // Supabase 에러 객체 처리
-      const errorObj = err as any;
+      const errorObj = err as {
+        message?: string;
+        error?: { message?: string };
+        details?: string;
+        hint?: string;
+      };
       if (errorObj.message) {
         message = errorObj.message;
       } else if (errorObj.error?.message) {
@@ -253,7 +258,9 @@ export function MemberList({
                 onPromoteToMechanic={(memberId) =>
                   handleChangeRole(memberId, "mechanic")
                 }
-                onDemoteToCrew={(memberId) => handleChangeRole(memberId, "crew")}
+                onDemoteToCrew={(memberId) =>
+                  handleChangeRole(memberId, "crew")
+                }
                 onTransferCaptaincy={handleTransferCaptaincy}
                 onRemoveMember={handleRemoveMember}
               />

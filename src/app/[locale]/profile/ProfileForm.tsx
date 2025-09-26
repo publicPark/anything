@@ -7,9 +7,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { formatDate } from "@/lib/utils";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
-import { UI_CONSTANTS } from "@/lib/constants";
 
 export default function ProfileForm() {
   const { profile, loading, error, updateProfile } = useProfile();

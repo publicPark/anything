@@ -68,10 +68,13 @@ export function PastReservations({
       setPastPage((p) => p + 1);
       // Ensure loading is stopped
       setLoadingPast(false);
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Gracefully handle 416 Range Not Satisfiable
-      const message: string = typeof e?.message === "string" ? e.message : "";
-      const status: number | undefined = typeof e?.status === "number" ? e.status : undefined;
+      const message: string = e instanceof Error ? e.message : "";
+      const status: number | undefined = 
+        e && typeof e === "object" && "status" in e && typeof e.status === "number" 
+          ? e.status 
+          : undefined;
       if (status === 416 || message.includes("Range Not Satisfiable")) {
         setPastHasMore(false);
         setLoadingPast(false);
@@ -94,7 +97,7 @@ export function PastReservations({
         .eq("cabin_id", cabinId)
         .eq("status", "confirmed")
         .lt("end_time", nowIso);
-      const ids = (data ?? []).map((r: any) => r.id);
+      const ids = (data ?? []).map((r: { id: string }) => r.id);
       if (ids.length === 0) return;
       const { error: delError } = await supabase
         .from("cabin_reservations")
@@ -106,7 +109,7 @@ export function PastReservations({
       setPastPage(0);
       setPastHasMore(true);
       alert(t("ships.pastReservationsDeleted"));
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       alert(t("ships.errorDeletingReservations"));
     }

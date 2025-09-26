@@ -291,7 +291,8 @@
     },
     "validation": {
       "validEmail": "Please enter a valid email address.",
-      "required": "This field is required."
+      "required": "This field is required.",
+      "userNotFound": "User not found."
     }
   },
   "ui": {

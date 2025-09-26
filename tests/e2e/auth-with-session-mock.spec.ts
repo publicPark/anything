@@ -158,7 +158,9 @@ test.describe("실제 세션을 사용한 로그인 플로우", () => {
       } else {
         // 수동으로 로그아웃 API 호출 (JavaScript)
         await page.evaluate(() => {
-          const supabase = (window as any).supabase;
+          const supabase = (
+            window as { supabase?: { auth: { signOut: () => void } } }
+          ).supabase;
           if (supabase) {
             supabase.auth.signOut();
           }

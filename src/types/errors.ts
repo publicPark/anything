@@ -69,7 +69,7 @@ export function isAuthError(error: unknown): error is AuthError {
       "AUTH_SERVER_ERROR",
       "AUTH_EXCHANGE_ERROR",
       "AUTH_MISSING_CODE",
-    ].includes((error as any).code)
+    ].includes((error as { code?: string }).code || "")
   );
 }
 
@@ -82,7 +82,7 @@ export function isProfileError(error: unknown): error is ProfileError {
       "PROFILE_NOT_FOUND",
       "PROFILE_CREATION_FAILED",
       "PROFILE_UPDATE_FAILED",
-    ].includes((error as any).code)
+    ].includes((error as { code?: string }).code || "")
   );
 }
 
@@ -92,7 +92,7 @@ export function isValidationError(error: unknown): error is ValidationError {
     error !== null &&
     "code" in error &&
     ["VALIDATION_ERROR", "INVALID_EMAIL", "USER_NOT_FOUND"].includes(
-      (error as any).code
+      (error as { code?: string }).code || ""
     )
   );
 }

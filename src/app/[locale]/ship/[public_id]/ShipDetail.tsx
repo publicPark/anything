@@ -56,7 +56,6 @@ export default function ShipDetail() {
     member_approval_required: false,
   });
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
-  const [hasRejectedRequest, setHasRejectedRequest] = useState(false);
   const lastRejectedRequestId = useRef<string | null>(null);
   const lastApprovedRequestId = useRef<string | null>(null);
 
@@ -72,7 +71,12 @@ export default function ShipDetail() {
       message = err.message;
     } else if (err && typeof err === "object") {
       // Supabase 에러 객체 처리
-      const errorObj = err as any;
+      const errorObj = err as {
+        message?: string;
+        error?: { message?: string };
+        details?: string;
+        hint?: string;
+      };
       if (errorObj.message) {
         message = errorObj.message;
       } else if (errorObj.error?.message) {
@@ -231,7 +235,7 @@ export default function ShipDetail() {
         await fetchMemberRequests(shipData.id);
         await fetchRejectedRequests(shipData.id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err, t("ships.errorLoadingShip"));
     } finally {
       setIsLoading(false);
@@ -375,12 +379,14 @@ export default function ShipDetail() {
 
       // 성공 시 페이지 새로고침
       await fetchShipDetails();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to join ship:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || t("ships.errorJoiningShip"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorJoiningShip")
+      );
     } finally {
       setIsJoining(false);
     }
@@ -417,12 +423,14 @@ export default function ShipDetail() {
 
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to approve member request:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || "Failed to approve request");
+      setError(
+        err instanceof Error ? err.message : "Failed to approve request"
+      );
       setIsProcessingRequest(false);
     }
   };
@@ -458,12 +466,12 @@ export default function ShipDetail() {
 
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to reject member request:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || "Failed to reject request");
+      setError(err instanceof Error ? err.message : "Failed to reject request");
       setIsProcessingRequest(false);
     }
   };
@@ -499,12 +507,14 @@ export default function ShipDetail() {
 
       // 데이터 새로고침 완료 후 로딩 상태 해제
       setIsProcessingRequest(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to reset rejected request:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || "Failed to reset rejected request");
+      setError(
+        err instanceof Error ? err.message : "Failed to reset rejected request"
+      );
       setIsProcessingRequest(false);
     }
   };
@@ -528,12 +538,14 @@ export default function ShipDetail() {
 
       // 거부된 요청 목록 새로고침
       await fetchRejectedRequests(ship.id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to delete rejected request:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || "Failed to delete rejected request");
+      setError(
+        err instanceof Error ? err.message : "Failed to delete rejected request"
+      );
     } finally {
       setIsProcessingRequest(false);
     }
@@ -555,12 +567,14 @@ export default function ShipDetail() {
 
       // 성공 시 홈으로 이동
       router.push(`/${locale}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to delete ship:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || t("ships.errorDeletingShip"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorDeletingShip")
+      );
     }
   };
 
@@ -621,12 +635,14 @@ export default function ShipDetail() {
       await fetchShipDetails(); // 배 정보 새로고침
 
       // 성공 메시지 (선택사항)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(
         "Failed to update ship:",
         err instanceof Error ? err.message : String(err)
       );
-      setError(err.message || t("ships.errorUpdatingShip"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorUpdatingShip")
+      );
     } finally {
       setIsSaving(false);
     }
@@ -744,7 +760,9 @@ export default function ShipDetail() {
                   <b>{ship.name}</b>
                 </span>{" "}
                 <span>{t("ship.title")}</span>
-                {ship.userRole ? <RoleBadge role={ship.userRole} size="sm" className="ml-2" /> : null}
+                {ship.userRole ? (
+                  <RoleBadge role={ship.userRole} size="sm" className="ml-2" />
+                ) : null}
               </>
             ),
             isCurrentPage: true,

@@ -66,7 +66,16 @@ export function calculateCabinStatus(reservations: CabinReservation[]): {
  * @returns 상태 정보가 추가된 회의실 목록
  */
 export function addStatusToCabins(
-  cabins: any[],
+  cabins: Array<{
+    id: string;
+    public_id: string;
+    ship_id: string;
+    name: string;
+    description: string | null;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+  }>,
   reservationsByCabinId: Record<string, CabinReservation[]>
 ): CabinWithStatus[] {
   return cabins.map((cabin) => {

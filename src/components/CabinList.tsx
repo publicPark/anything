@@ -114,9 +114,9 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
       );
 
       setCabins(cabinsWithStatus);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch cabins:", err);
-      setError(err.message || t("ships.errorLoadingCabins"));
+      setError(err instanceof Error ? err.message : t("ships.errorLoadingCabins"));
     } finally {
       setLoading(false);
     }

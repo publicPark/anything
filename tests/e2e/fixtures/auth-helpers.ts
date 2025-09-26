@@ -131,12 +131,27 @@ export async function createValidTestSession() {
 /**
  * 페이지에 유효한 Supabase 세션 설정
  */
-export async function setValidSession(page: any) {
+export async function setValidSession(page: {
+  addInitScript: (script: (data: unknown) => void) => Promise<void>;
+  context: () => {
+    addCookies: (
+      cookies: Array<{
+        name: string;
+        value: string;
+        domain: string;
+        path: string;
+        httpOnly?: boolean;
+        secure?: boolean;
+        sameSite?: string;
+      }>
+    ) => Promise<void>;
+  };
+}) {
   try {
     const session = await createValidTestSession();
 
     // localStorage에 실제 세션 저장 (Supabase 클라이언트가 사용)
-    await page.addInitScript((sessionData: any) => {
+    await page.addInitScript((sessionData: unknown) => {
       const storageKey = `sb-${window.location.hostname}-auth-token`;
       localStorage.setItem(storageKey, JSON.stringify(sessionData));
 
@@ -147,7 +162,7 @@ export async function setValidSession(page: any) {
       );
 
       console.log("✅ 유효한 세션이 localStorage에 설정됨");
-    }, session);
+    });
 
     // 쿠키에도 실제 토큰 설정
     await page.context().addCookies([

@@ -3,6 +3,13 @@ export type ShipMemberRole = "captain" | "mechanic" | "crew";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type ReservationStatus = "confirmed" | "cancelled";
 
+// 에러 타입 정의
+export interface ApiError {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
 // 확장된 타입들
 export interface ShipWithDetails extends Ship {
   members?: (ShipMember & { profile: Profile })[];
@@ -141,7 +148,11 @@ export interface Database {
           ship_uuid: string;
           request_message?: string;
         };
-        Returns: any; // JSON response with type and data
+        Returns: {
+          type: 'success' | 'error';
+          data?: ShipMember;
+          message?: string;
+        };
       };
       approve_member_request: {
         Args: {

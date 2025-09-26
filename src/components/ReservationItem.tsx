@@ -82,9 +82,9 @@ export function ReservationItem({
       }
 
       onUpdate();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to delete reservation:", err);
-      setError(err.message || t("ships.errorGeneric"));
+      setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
     } finally {
       setIsLoading(false);
     }

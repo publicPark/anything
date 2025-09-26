@@ -52,7 +52,12 @@ export function CabinManage({
       message = err.message;
     } else if (err && typeof err === "object") {
       // Supabase 에러 객체 처리
-      const errorObj = err as any;
+      const errorObj = err as {
+        message?: string;
+        error?: { message?: string };
+        details?: string;
+        hint?: string;
+      };
       if (errorObj.message) {
         message = errorObj.message;
       } else if (errorObj.error?.message) {
@@ -92,7 +97,7 @@ export function CabinManage({
       }
 
       setCabins(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err, t("ships.errorLoadingCabins"));
     } finally {
       setLoading(false);
@@ -126,7 +131,7 @@ export function CabinManage({
       setFormData({ name: "", description: "" });
       setShowCreateForm(false);
       onCabinCreated?.(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err, t("ships.errorCreatingCabin"));
     } finally {
       setSubmitting(false);
@@ -162,7 +167,7 @@ export function CabinManage({
       setEditingCabin(null);
       setFormData({ name: "", description: "" });
       onCabinUpdated?.(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err, t("ships.errorUpdatingCabin"));
     } finally {
       setSubmitting(false);
@@ -188,7 +193,7 @@ export function CabinManage({
 
       setCabins((prev) => prev.filter((cabin) => cabin.id !== cabinId));
       onCabinDeleted?.(cabinId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err, t("ships.errorDeletingCabin"));
     }
   };

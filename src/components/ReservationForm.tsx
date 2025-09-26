@@ -181,8 +181,8 @@ export function ReservationForm({
 
       clearSelection();
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || t("ships.errorGeneric"));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
     } finally {
       setIsLoading(false);
     }

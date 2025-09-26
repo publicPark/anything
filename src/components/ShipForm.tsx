@@ -78,8 +78,8 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
         router.push(`/${locale}/ship/${ship.public_id}`);
         onSuccess?.();
       }
-    } catch (err: any) {
-      const errorMessage = err.message || t("ships.errorCreatingShip");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : t("ships.errorCreatingShip");
       console.error("Failed to create ship:", errorMessage);
       setError(errorMessage);
     } finally {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useI18n } from "@/hooks/useI18n";
 import { useNavigation } from "@/hooks/useNavigation";
@@ -13,8 +13,12 @@ import Link from "next/link";
 import { Profile } from "@/types/database";
 
 export default function UserManagementPage() {
-  const { profile, loading: profileLoading, error: profileError } = useProfile();
-  const { t, locale } = useI18n();
+  const {
+    profile,
+    loading: profileLoading,
+    error: profileError,
+  } = useProfile();
+  const { t } = useI18n();
   const { getLocalizedPath } = useNavigation();
   const supabase = createClient();
 
@@ -23,13 +27,7 @@ export default function UserManagementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (profile && profile.role === "chaos") {
-      fetchUsers();
-    }
-  }, [profile]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -44,14 +42,23 @@ export default function UserManagementPage() {
       }
 
       setUsers(data || []);
-    } catch (err: any) {
-      const errorMessage = err.message || "유저 목록을 불러오는 중 오류가 발생했습니다.";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "유저 목록을 불러오는 중 오류가 발생했습니다.";
       console.error("Failed to fetch users:", errorMessage);
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (profile && profile.role === "chaos") {
+      fetchUsers();
+    }
+  }, [profile, fetchUsers]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -66,7 +73,9 @@ export default function UserManagementPage() {
       const { data, error: searchError } = await supabase
         .from("profiles")
         .select("*")
-        .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+        .or(
+          `username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`
+        )
         .order("created_at", { ascending: false });
 
       if (searchError) {
@@ -74,8 +83,11 @@ export default function UserManagementPage() {
       }
 
       setUsers(data || []);
-    } catch (err: any) {
-      const errorMessage = err.message || "유저 검색 중 오류가 발생했습니다.";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "유저 검색 중 오류가 발생했습니다.";
       console.error("Failed to search users:", errorMessage);
       setError(errorMessage);
     } finally {
@@ -85,7 +97,7 @@ export default function UserManagementPage() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { data, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({ role: newRole })
         .eq("id", userId)
@@ -101,8 +113,11 @@ export default function UserManagementPage() {
       } else {
         fetchUsers();
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "권한 변경 중 오류가 발생했습니다.";
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "권한 변경 중 오류가 발생했습니다.";
       console.error("Failed to update user role:", errorMessage, err);
       setError(errorMessage);
     }
@@ -138,13 +153,9 @@ export default function UserManagementPage() {
           <h1 className="text-2xl font-bold text-foreground mb-4">
             {t("reservations.accessDenied")}
           </h1>
-          <p className="text-muted-foreground mb-6">
-            {t("admin.description")}
-          </p>
+          <p className="text-muted-foreground mb-6">{t("admin.description")}</p>
           <Link href={getLocalizedPath("/")}>
-            <Button variant="secondary">
-              {t("navigation.home")}
-            </Button>
+            <Button variant="secondary">{t("navigation.home")}</Button>
           </Link>
         </div>
       </div>
@@ -194,7 +205,7 @@ export default function UserManagementPage() {
               },
             ]}
           />
-          
+
           {/* <div className="mt-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               {t("admin.users")}
@@ -248,7 +259,9 @@ export default function UserManagementPage() {
               </svg>
             </div>
             <p className="text-muted-foreground">
-              {searchQuery.trim() ? t("admin.noUsersFound") : "등록된 유저가 없습니다."}
+              {searchQuery.trim()
+                ? t("admin.noUsersFound")
+                : "등록된 유저가 없습니다."}
             </p>
           </div>
         ) : (
@@ -281,7 +294,11 @@ export default function UserManagementPage() {
                         {user.display_name || user.username}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(
+                            user.role
+                          )}`}
+                        >
                           {getRoleDisplayName(user.role)}
                         </span>
                       </td>
@@ -291,7 +308,9 @@ export default function UserManagementPage() {
                             <Button
                               key={role}
                               size="sm"
-                              variant={user.role === role ? "primary" : "secondary"}
+                              variant={
+                                user.role === role ? "primary" : "secondary"
+                              }
                               onClick={() => handleRoleChange(user.id, role)}
                               disabled={user.role === role}
                               className="text-xs"

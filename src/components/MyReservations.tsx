@@ -35,8 +35,12 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
   const [pastHasMore, setPastHasMore] = useState<boolean>(true);
   const [pastTotalCount, setPastTotalCount] = useState<number | null>(null);
   // Simple in-memory caches to avoid duplicate cabin/ship fetches across tabs
-  const [cabinCache, setCabinCache] = useState<Map<string, Pick<ShipCabin, "id" | "name" | "public_id" | "ship_id">>>(new Map());
-  const [shipCache, setShipCache] = useState<Map<string, Pick<Ship, "id" | "name" | "public_id">>>(new Map());
+  const [cabinCache, setCabinCache] = useState<
+    Map<string, Pick<ShipCabin, "id" | "name" | "public_id" | "ship_id">>
+  >(new Map());
+  const [shipCache, setShipCache] = useState<
+    Map<string, Pick<Ship, "id" | "name" | "public_id">>
+  >(new Map());
 
   const currentUserId = profile?.id;
 
@@ -65,9 +69,9 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       const reservations = (data ?? []) as CabinReservation[];
       const enriched = await enrichWithCabinAndShip(reservations);
       setUpcoming(enriched);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch upcoming reservations:", err);
-      setError(err.message || t("ships.errorGeneric"));
+      setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,7 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
 
   const fetchPast = async (resetPagination = false) => {
     if (!currentUserId || loadingPast) return;
-    
+
     // Reset pagination state if requested
     if (resetPagination) {
       setPastPage(0);
@@ -84,7 +88,7 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       setPast([]);
       clearCaches();
     }
-    
+
     setLoadingPast(true);
     setError(null);
     try {
@@ -107,8 +111,10 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       }
       const reservations = (data ?? []) as CabinReservation[];
       const enriched = await enrichWithCabinAndShip(reservations);
-      setPast((prev) => (resetPagination || currentPage === 0 ? enriched : [...prev, ...enriched]));
-      
+      setPast((prev) =>
+        resetPagination || currentPage === 0 ? enriched : [...prev, ...enriched]
+      );
+
       // Determine if there are more
       if (typeof count === "number") {
         setPastTotalCount(count);
@@ -117,16 +123,24 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       } else {
         // If no count available, check if we got fewer items than requested
         // If we got 0 items, there are definitely no more
-        setPastHasMore(enriched.length > 0 && enriched.length === PAST_PAGE_SIZE);
+        setPastHasMore(
+          enriched.length > 0 && enriched.length === PAST_PAGE_SIZE
+        );
       }
-      setPastPage((p) => resetPagination ? 1 : p + 1);
-      
+      setPastPage((p) => (resetPagination ? 1 : p + 1));
+
       // Ensure loading is stopped
       setLoadingPast(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Gracefully handle 416 Range Not Satisfiable and empty results
-      const message: string = typeof err?.message === "string" ? err.message : "";
-      const status: number | undefined = typeof err?.status === "number" ? err.status : undefined;
+      const message: string = err instanceof Error ? err.message : "";
+      const status: number | undefined =
+        err &&
+        typeof err === "object" &&
+        "status" in err &&
+        typeof err.status === "number"
+          ? err.status
+          : undefined;
       if (status === 416 || message.includes("Range Not Satisfiable")) {
         setPastHasMore(false);
         setLoadingPast(false);
@@ -144,10 +158,19 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
     if (reservations.length === 0) return [];
 
     const supabase = createClient();
-    const requestedCabinIds = Array.from(new Set(reservations.map((r) => r.cabin_id)));
-    const missingCabinIds = requestedCabinIds.filter((id) => !cabinCache.has(id));
+    const requestedCabinIds = Array.from(
+      new Set(reservations.map((r) => r.cabin_id))
+    );
+    const missingCabinIds = requestedCabinIds.filter(
+      (id) => !cabinCache.has(id)
+    );
 
-    let cabinsData: any[] = [];
+    let cabinsData: Array<{
+      id: string;
+      name: string;
+      public_id: string;
+      ship_id: string;
+    }> = [];
     if (missingCabinIds.length > 0) {
       const { data, error } = await supabase
         .from("ship_cabins")
@@ -161,7 +184,7 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       // populate cache
       setCabinCache((prev) => {
         const next = new Map(prev);
-        cabinsData.forEach((c: any) => {
+        cabinsData.forEach((c) => {
           next.set(c.id, {
             id: c.id,
             name: c.name,
@@ -173,14 +196,23 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       });
     }
 
-    const allCabins: Array<Pick<ShipCabin, "id" | "name" | "public_id" | "ship_id">> = requestedCabinIds
-      .map((id) => cabinCache.get(id) || cabinsData.find((c: any) => c.id === id))
-      .filter(Boolean) as any[];
+    const allCabins: Array<
+      Pick<ShipCabin, "id" | "name" | "public_id" | "ship_id">
+    > = requestedCabinIds
+      .map((id) => cabinCache.get(id) || cabinsData.find((c) => c.id === id))
+      .filter(Boolean) as Array<{
+      id: string;
+      name: string;
+      public_id: string;
+      ship_id: string;
+    }>;
 
-    const requestedShipIds = Array.from(new Set(allCabins.map((c) => c.ship_id)));
+    const requestedShipIds = Array.from(
+      new Set(allCabins.map((c) => c.ship_id))
+    );
     const missingShipIds = requestedShipIds.filter((id) => !shipCache.has(id));
 
-    let shipsData: any[] = [];
+    let shipsData: Array<{ id: string; name: string; public_id: string }> = [];
     if (missingShipIds.length > 0) {
       const { data, error } = await supabase
         .from("ships")
@@ -194,7 +226,7 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
       // populate cache
       setShipCache((prev) => {
         const next = new Map(prev);
-        shipsData.forEach((s: any) => {
+        shipsData.forEach((s) => {
           next.set(s.id, { id: s.id, name: s.name, public_id: s.public_id });
         });
         return next;
@@ -202,11 +234,13 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
     }
 
     return reservations.map((r) => {
-      const cabin = (cabinCache.get(r.cabin_id) || allCabins.find((c) => c.id === r.cabin_id)) as
+      const cabin = (cabinCache.get(r.cabin_id) ||
+        allCabins.find((c) => c.id === r.cabin_id)) as
         | Pick<ShipCabin, "id" | "name" | "public_id" | "ship_id">
         | undefined;
       const ship = cabin
-        ? ((shipCache.get(cabin.ship_id) || shipsData.find((s) => s.id === cabin.ship_id)) as
+        ? ((shipCache.get(cabin.ship_id) ||
+            shipsData.find((s) => s.id === cabin.ship_id)) as
             | Pick<Ship, "id" | "name" | "public_id">
             | undefined)
         : undefined;
@@ -272,7 +306,9 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
                   isCurrent={isCurrent}
                   hideTypeBadge
                   cabinId={cabin?.id}
-                  existingReservations={upcoming.map(item => item.reservation)}
+                  existingReservations={upcoming.map(
+                    (item) => item.reservation
+                  )}
                   leftExtra={
                     ship && cabin ? (
                       <Link
@@ -289,7 +325,9 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
           ) : !loading ? (
             <div className="text-center py-6">
               <div className="text-3xl mb-2">🗓️</div>
-              <p className="text-sm text-muted-foreground">{t("ships.noUpcomingReservations")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("ships.noUpcomingReservations")}
+              </p>
             </div>
           ) : null}
 
@@ -322,7 +360,7 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
                 }}
                 hideTypeBadge
                 cabinId={cabin?.id}
-                existingReservations={past.map(item => item.reservation)}
+                existingReservations={past.map((item) => item.reservation)}
                 leftExtra={
                   ship && cabin ? (
                     <Link
@@ -338,7 +376,9 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
           ) : !loadingPast ? (
             <div className="text-center py-6">
               <div className="text-3xl mb-2">🗓️</div>
-              <p className="text-sm text-muted-foreground">{t("ships.noPastReservations")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t("ships.noPastReservations")}
+              </p>
             </div>
           ) : null}
 
@@ -368,8 +408,11 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
   return (
     <section aria-labelledby="my-reservations-heading" className="text-left">
       <div className="mb-4">
-        <h2 id="my-reservations-heading" className="text-2xl font-semibold text-foreground mb-3 text-center">
-            {t("home.myReservations")}
+        <h2
+          id="my-reservations-heading"
+          className="text-2xl font-semibold text-foreground mb-3 text-center"
+        >
+          {t("home.myReservations")}
         </h2>
       </div>
 
@@ -385,5 +428,3 @@ export function MyReservations({ limit = 10 }: MyReservationsProps) {
     </section>
   );
 }
-
-

@@ -89,9 +89,9 @@ export function MyShips() {
 
         setShips(shipsWithDetails);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err.message || "배 목록을 불러오는 중 오류가 발생했습니다.";
+        err instanceof Error ? err.message : "배 목록을 불러오는 중 오류가 발생했습니다.";
       console.error("Failed to fetch user ships:", errorMessage);
       setError(errorMessage);
     } finally {

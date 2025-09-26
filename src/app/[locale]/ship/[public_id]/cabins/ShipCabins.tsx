@@ -65,11 +65,11 @@ export default function ShipCabinsForm() {
           .eq("ship_id", shipData.id)
           .eq("user_id", profile.id)
           .maybeSingle();
-        setUserRole((memberData?.role as any) || null);
+        setUserRole(memberData?.role || null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch ship details:", err);
-      setError(err.message || t("ships.errorLoadingShip"));
+      setError(err instanceof Error ? err.message : t("ships.errorLoadingShip"));
     } finally {
       setIsLoading(false);
     }

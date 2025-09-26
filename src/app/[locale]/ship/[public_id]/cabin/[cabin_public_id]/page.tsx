@@ -38,7 +38,8 @@ export async function generateMetadata({
       };
     }
 
-    const shipName = (cabin.ships as any).name;
+    const shipName =
+      (cabin.ships as { name: string }[])[0]?.name || "Unknown Ship";
 
     const title = `${cabin.name} - ${shipName} - ${t.metadata.title}`;
     const description = t.cabin.cabinDetailDescription

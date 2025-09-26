@@ -153,9 +153,9 @@ export default function CabinDetail() {
 
         setUserRole(memberData?.role || null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch cabin details:", err);
-      setError(err.message || t("ships.errorLoadingCabin"));
+      setError(err instanceof Error ? err.message : t("ships.errorLoadingCabin"));
     } finally {
       setIsLoading(false);
     }

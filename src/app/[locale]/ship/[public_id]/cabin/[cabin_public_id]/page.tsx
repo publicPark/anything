@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations, Locale } from "@/lib/i18n";
 import CabinDetail from "./CabinDetail";
@@ -70,5 +71,9 @@ export async function generateMetadata({
 }
 
 export default function CabinDetailPage() {
-  return <CabinDetail />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CabinDetail />
+    </Suspense>
+  );
 }

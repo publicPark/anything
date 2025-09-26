@@ -141,15 +141,17 @@ export function ReservationItem({
     // 현재 진행 중인 예약의 남은 시간 계산
     const getRemainingTime = () => {
       if (!isCurrent) return null;
-      
+
       const end = new Date(reservation.end_time);
       const diff = end.getTime() - currentTime.getTime();
-      
+
       if (diff <= 0) return null;
-      
+
       const remainingHours = Math.floor(diff / (1000 * 60 * 60));
-      const remainingMinutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      
+      const remainingMinutes = Math.floor(
+        (diff % (1000 * 60 * 60)) / (1000 * 60)
+      );
+
       if (remainingHours > 0) {
         return `${remainingHours}시간 ${remainingMinutes}분`;
       } else {
@@ -307,7 +309,9 @@ export function ReservationItem({
           <div className="bg-muted rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{t("ships.editReservation")}</h3>
+                <h3 className="text-lg font-semibold">
+                  {t("ships.editReservation")}
+                </h3>
                 <button
                   onClick={() => setShowEditModal(false)}
                   className="text-muted-foreground hover:text-foreground"
@@ -319,7 +323,9 @@ export function ReservationItem({
             <ReservationForm
               cabinId={cabinId}
               onSuccess={handleEditSuccess}
-              existingReservations={existingReservations.filter(r => r.id !== reservation.id)}
+              existingReservations={existingReservations.filter(
+                (r) => r.id !== reservation.id
+              )}
               isModal={true}
               editingReservation={reservation}
             />

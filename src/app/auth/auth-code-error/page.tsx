@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import AuthCodeErrorForm from "./AuthCodeErrorForm";
 
 interface AuthCodeErrorPageProps {
@@ -32,5 +33,9 @@ export async function generateMetadata({
 }
 
 export default function AuthCodeErrorPage() {
-  return <AuthCodeErrorForm />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthCodeErrorForm />
+    </Suspense>
+  );
 }

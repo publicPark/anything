@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { generateMetadata as generateI18nMetadata } from "@/lib/metadata-helpers";
 import { Locale } from "@/lib/i18n";
 import LoginForm from "./LoginForm";
@@ -15,5 +16,9 @@ export async function generateMetadata({
 }
 
 export default function LoginPage() {
-  return <LoginForm />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
 }

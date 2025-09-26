@@ -56,7 +56,7 @@ export function formatReservationSlackText(
 
   const start = fmtTime(startISO);
   const end = fmtTime(endISO);
-  return `[${roomName} / ${dateStr} / ${start}~${end}]\n${purpose}`;
+  return `[${roomName} / ${dateStr} / ${start}~${end}]\n>${purpose}`;
 }
 
 export type ComposeReservationMessageParams = {
@@ -90,7 +90,7 @@ export function composeReservationSlackText(
   );
 
   if (shipPublicId && linkLabel) {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
     if (baseUrl) {
       const localePrefix = `/${locale}`;
       const cabinsUrl = `${baseUrl}${localePrefix}/ship/${shipPublicId}/cabins`;

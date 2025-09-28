@@ -255,6 +255,7 @@
     "upcomingReservations": "미래의 예약",
     "pastReservations": "지난 예약",
     "noTodayReservations": "오늘 예약은 더이상 없습니다",
+    "currentlyAvailable": "현재 사용가능합니다",
     "noUpcomingReservations": "예정된 예약이 없습니다",
     "noPastReservations": "과거 예약이 없습니다",
     "pastReservationsInfo": "지난 예약은 정비공이 쉽게 삭제할 수 있습니다.",

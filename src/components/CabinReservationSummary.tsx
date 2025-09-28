@@ -66,23 +66,10 @@ export function CabinReservationSummary({
     );
   };
 
-  if (!currentReservation && !nextReservation) {
-    return (
-      <div
-        className={`mb-3 p-3 bg-muted/10 border border-border rounded-md ${
-          className ?? ""
-        }`.trim()}
-      >
-        <p className="text-sm text-muted-foreground">
-          {t("ships.noTodayReservations")}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className={`${className ?? ""}`.trim()}>
-      {currentReservation && (
+      {/* 현재 예약 상태 */}
+      {currentReservation ? (
         <div className="mb-3 p-3 bg-muted border border-destructive/60 rounded-md">
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm text-foreground font-medium mr-3 truncate">
@@ -117,9 +104,16 @@ export function CabinReservationSummary({
             })()}
           </div>
         </div>
+      ) : (
+        <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-sm text-green-700 font-medium">
+            {t("ships.currentlyAvailable")}
+          </p>
+        </div>
       )}
 
-      {nextReservation && (
+      {/* 예정된 예약 */}
+      {nextReservation ? (
         <div className="mb-3 p-3 bg-muted/10 border border-border rounded-md">
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm text-foreground font-medium mr-3 truncate">
@@ -136,6 +130,12 @@ export function CabinReservationSummary({
             </b>{" "}
             {t("cabins.startsAtPlannedSuffix")}
           </div>
+        </div>
+      ) : (
+        <div className="mb-3 p-3 bg-muted/10 border border-border rounded-md">
+          <p className="text-sm text-muted-foreground">
+            {t("ships.noTodayReservations")}
+          </p>
         </div>
       )}
     </div>

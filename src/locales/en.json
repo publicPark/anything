@@ -263,6 +263,7 @@
     "upcomingReservations": "Future Reservations",
     "pastReservations": "Past Reservations",
     "noTodayReservations": "No meetings scheduled for today",
+    "currentlyAvailable": "Currently available",
     "noUpcomingReservations": "No upcoming reservations",
     "noPastReservations": "No past reservations",
     "pastReservationsInfo": "Past reservations can be easily deleted by mechanics.",

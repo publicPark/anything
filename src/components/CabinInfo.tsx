@@ -77,7 +77,7 @@ export function CabinInfo({
             className="w-full"
             type="button"
             variant={showReservationForm ? "secondary" : "primary"}
-            size="md"
+            size="lg"
             onClick={onToggleReservationForm}
           >
             {showReservationForm

@@ -42,7 +42,13 @@ export function TimeTable({
   const [hasScrolled, setHasScrolled] = useState(false);
 
   // Add state for selected interval
-  const [selectedInterval, setSelectedInterval] = useState<number>(DEFAULT_INTERVAL);
+  const [selectedInterval, setSelectedInterval] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('timetable-interval');
+      return saved ? parseInt(saved, 10) : DEFAULT_INTERVAL;
+    }
+    return DEFAULT_INTERVAL;
+  });
 
   // 유틸리티 함수들
   const getSelectedDateObj = useCallback(() => new Date(selectedDate), [selectedDate]);
@@ -384,7 +390,11 @@ export function TimeTable({
               <span className="text-sm text-muted-foreground">{t("timetable.interval")}</span>
               <select
                 value={selectedInterval}
-                onChange={(e) => setSelectedInterval(Number(e.target.value))}
+                onChange={(e) => {
+                  const newInterval = Number(e.target.value);
+                  setSelectedInterval(newInterval);
+                  localStorage.setItem('timetable-interval', newInterval.toString());
+                }}
                 className="px-3 py-2 text-sm rounded border border-border transition-all duration-200 whitespace-nowrap bg-muted hover:bg-muted/80 appearance-none cursor-pointer pr-8"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,

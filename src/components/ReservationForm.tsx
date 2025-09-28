@@ -137,13 +137,28 @@ export function ReservationForm({
     const startDateTime = createDateTime(formData.date, selectedStartTime);
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
-    // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 5분 단위로 내림한 시각보다 빠르면 막기
+    // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 선택된 간격 단위로 내림한 시각보다 빠르면 막기
     const now = new Date();
     const todayLocal = getLocalYYYYMMDD(now);
     if (formData.date === todayLocal) {
       const flooredNow = new Date(now);
       flooredNow.setSeconds(0, 0);
-      flooredNow.setMinutes(Math.floor(flooredNow.getMinutes() / 5) * 5);
+      
+      // 선택된 간격 단위에 따라 내림 처리
+      const currentMinute = flooredNow.getMinutes();
+      
+      // 선택된 시간 범위에서 간격 단위 추정
+      const timeDiff = endDateTime.getTime() - startDateTime.getTime();
+      const intervalMinutes = Math.round(timeDiff / (1000 * 60)); // 분 단위로 변환
+      
+      if (intervalMinutes >= 60) {
+        // 1시간 이상인 경우 시간 단위로 내림
+        flooredNow.setMinutes(0, 0);
+      } else {
+        // 분 단위로 내림
+        flooredNow.setMinutes(Math.floor(currentMinute / intervalMinutes) * intervalMinutes);
+      }
+      
       if (startDateTime < flooredNow) {
         setError(t("timetable.pastTimeNotification"));
         return;
@@ -243,7 +258,7 @@ export function ReservationForm({
         <div>
           <Button
             type="button"
-            size="md"
+            size="lg"
             variant="primary"
             disabled={isLoading}
             onClick={handleCreateReservation}

@@ -21,27 +21,27 @@ export async function generateMetadata({
   const t = getTranslations(locale as Locale);
 
   try {
-    const { data: cabin, error: cabinError } = await supabase
-      .from("ship_cabins")
-      .select(
-        `
-        name,
-        ships!inner(name)
-      `
-      )
-      .eq("public_id", cabin_public_id)
-      .eq("ships.public_id", public_id)
+    // 배 정보를 별도로 조회하여 타입 안전성 확보
+    const { data: shipData, error: shipError } = await supabase
+      .from("ships")
+      .select("name")
+      .eq("public_id", public_id)
       .single();
 
-    if (cabinError || !cabin) {
+    const { data: cabin, error: cabinError } = await supabase
+      .from("ship_cabins")
+      .select("name")
+      .eq("public_id", cabin_public_id)
+      .single();
+
+    if (cabinError || !cabin || shipError || !shipData) {
       return {
         title: `${t.cabin.notFoundTitle} - ${t.metadata.title}`,
         description: t.cabin.notFoundDescription,
       };
     }
 
-    const shipName =
-      (cabin.ships as { name: string }[])[0]?.name || "Unknown Ship";
+    const shipName = shipData.name || "Unknown Ship";
 
     const title = `${cabin.name} - ${shipName} - ${t.metadata.title}`;
     const description = t.cabin.cabinDetailDescription

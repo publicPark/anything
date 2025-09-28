@@ -43,7 +43,7 @@ export function CabinReservationSummary({
 
     const parts: string[] = [];
     if (hours > 0) parts.push(t("timetable.hour", { count: hours }));
-    if (minutes > 0) parts.push(t("timetable.minute", { count: minutes }));
+    if (minutes >= 0) parts.push(t("timetable.minute", { count: minutes }));
     return parts.join(" ");
   };
 
@@ -84,7 +84,7 @@ export function CabinReservationSummary({
                 { hour: "numeric", minute: "2-digit", hour12: true }
               )}
             </b>{" "}
-            {t("cabins.endsAtPlannedSuffix")},
+            {t("cabins.endsAtPlannedSuffix")}
             {(() => {
               const remainingTime = getRemainingTime(
                 currentReservation.end_time
@@ -92,7 +92,7 @@ export function CabinReservationSummary({
               if (remainingTime) {
                 return (
                   <>
-                    {" "}
+                    {", "}
                     <span className="text-foreground font-semibold">
                       {t("timetable.about")} {remainingTime}{" "}
                       {t("ships.remaining")}

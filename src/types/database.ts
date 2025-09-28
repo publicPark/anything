@@ -37,7 +37,6 @@ export interface Ship {
   public_id: string;
   name: string;
   description: string | null;
-  slack_webhook_url?: string | null;
   member_only: boolean;
   member_approval_required: boolean;
   created_by: string;
@@ -51,6 +50,16 @@ export interface ShipMember {
   user_id: string;
   role: ShipMemberRole;
   joined_at: string;
+}
+
+export interface ShipNotification {
+  id: string;
+  ship_id: string;
+  channel: string;
+  enabled: boolean;
+  webhook_url: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ShipMemberRequest {

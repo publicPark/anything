@@ -40,7 +40,6 @@ CREATE TABLE ships (
   public_id TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
-  slack_webhook_url TEXT,
   member_only BOOLEAN DEFAULT FALSE NOT NULL,
   member_approval_required BOOLEAN DEFAULT FALSE NOT NULL,
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -100,6 +99,18 @@ CREATE TABLE cabin_reservations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 배 알림 설정 테이블
+CREATE TABLE ship_notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
+  channel TEXT NOT NULL, -- 'slack', 'discord' 등
+  enabled BOOLEAN DEFAULT TRUE NOT NULL,
+  webhook_url TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(ship_id, channel)
+);
+
 -- ==============================================
 -- 3. ROW LEVEL SECURITY (RLS)
 -- ==============================================
@@ -111,6 +122,7 @@ ALTER TABLE ship_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_member_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ship_cabins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cabin_reservations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ship_notifications ENABLE ROW LEVEL SECURITY;
 
 -- 프로필 조회 정책
 -- 1. 자신의 프로필 조회 가능
@@ -365,6 +377,44 @@ CREATE POLICY "Users can delete own reservations or guest reservations" ON cabin
       JOIN ship_cabins sc ON s.id = sc.ship_id
       JOIN ship_members sm ON s.id = sm.ship_id
       WHERE sc.id = cabin_reservations.cabin_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 배 알림 설정 관련 정책들
+-- 1. 모든 사용자는 알림 설정을 조회할 수 있음
+CREATE POLICY "Anyone can view ship notifications" ON ship_notifications
+  FOR SELECT USING (true);
+
+-- 2. mechanic 이상의 사용자만 알림 설정을 생성할 수 있음
+CREATE POLICY "Mechanics+ can create ship notifications" ON ship_notifications
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_notifications.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 3. mechanic 이상의 사용자만 알림 설정을 수정할 수 있음
+CREATE POLICY "Mechanics+ can update ship notifications" ON ship_notifications
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_notifications.ship_id
+      AND sm.user_id = auth.uid()
+      AND sm.role IN ('captain', 'mechanic')
+    )
+  );
+
+-- 4. mechanic 이상의 사용자만 알림 설정을 삭제할 수 있음
+CREATE POLICY "Mechanics+ can delete ship notifications" ON ship_notifications
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM ship_members sm
+      WHERE sm.ship_id = ship_notifications.ship_id
       AND sm.user_id = auth.uid()
       AND sm.role IN ('captain', 'mechanic')
     )
@@ -1357,6 +1407,11 @@ CREATE TRIGGER update_ship_cabins_updated_at
 
 CREATE TRIGGER update_cabin_reservations_updated_at
   BEFORE UPDATE ON cabin_reservations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_ship_notifications_updated_at
+  BEFORE UPDATE ON ship_notifications
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 

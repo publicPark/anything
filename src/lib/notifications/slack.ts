@@ -38,11 +38,20 @@ export function formatReservationSlackText(
   const date = new Date(startISO);
   const intl = locale === "ko" ? "ko-KR" : "en-US";
 
-  const y = date.toLocaleDateString(intl, { year: "2-digit" }).padStart(2, "0");
+  const y = date.toLocaleDateString(intl, { 
+    year: "2-digit",
+    timeZone: "Asia/Seoul"
+  }).padStart(2, "0");
   const m = date
-    .toLocaleDateString(intl, { month: "2-digit" })
+    .toLocaleDateString(intl, { 
+      month: "2-digit",
+      timeZone: "Asia/Seoul"
+    })
     .padStart(2, "0");
-  const d = date.toLocaleDateString(intl, { day: "2-digit" }).padStart(2, "0");
+  const d = date.toLocaleDateString(intl, { 
+    day: "2-digit",
+    timeZone: "Asia/Seoul"
+  }).padStart(2, "0");
   const dateStr = `${y}-${m}-${d}`;
 
   const fmtTime = (iso: string) =>
@@ -51,6 +60,7 @@ export function formatReservationSlackText(
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
+        timeZone: "Asia/Seoul"
       })
       .replace(/\s/g, "");
 

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations, Locale } from "@/lib/i18n";
+import { checkShipMemberAccess } from "@/lib/auth/ship-auth";
 import CabinDetail from "./CabinDetail";
 
 interface CabinDetailPageProps {
@@ -70,7 +71,12 @@ export async function generateMetadata({
   }
 }
 
-export default function CabinDetailPage() {
+export default async function CabinDetailPage({ params }: CabinDetailPageProps) {
+  const { locale, public_id, cabin_public_id } = await params;
+
+  // 멤버 전용 배 권한 체크 (공통 함수 사용)
+  await checkShipMemberAccess(public_id, locale);
+  
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <CabinDetail />

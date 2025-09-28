@@ -25,7 +25,7 @@ const SIZE_CLASS: Record<NonNullable<RoleBadgeProps["size"]>, string> = {
 const EMOJI_BY_ROLE: Record<ShipMemberRole, string> = {
   captain: "👑",
   mechanic: "🛠️",
-  crew: "👤",
+  crew: "",
 };
 
 const EMOJI_SIZE_CLASS: Record<NonNullable<RoleBadgeProps["size"]>, string> = {

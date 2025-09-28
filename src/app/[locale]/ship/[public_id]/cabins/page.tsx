@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations, Locale } from "@/lib/i18n";
+import { checkShipMemberAccess } from "@/lib/auth/ship-auth";
 import ShipCabins from "./ShipCabins";
 
 interface ShipCabinsPageProps {
@@ -57,6 +58,11 @@ export async function generateMetadata({
   }
 }
 
-export default function ShipCabinsPage() {
+export default async function ShipCabinsPage({ params }: ShipCabinsPageProps) {
+  const { locale, public_id } = await params;
+
+  // 멤버 전용 배 권한 체크
+  await checkShipMemberAccess(public_id, locale);
+  
   return <ShipCabins />;
 }

@@ -284,14 +284,14 @@
       "exchangeError": "인증 완료에 실패했습니다. 다시 시도해주세요.",
       "missingCode": "잘못된 인증 요청입니다. 다시 로그인해주세요.",
       "defaultError": "인증 오류가 발생했습니다. 다시 시도해주세요."
-    },
-    "validation": {
-      "validEmail": "유효한 이메일 주소를 입력해주세요.",
-      "required": "필수 입력 항목입니다.",
-      "userNotFound": "사용자를 찾을 수 없습니다.",
-      "allFieldsRequired": "모든 필드를 입력해주세요.",
-      "endTimeAfterStart": "종료 시간은 시작 시간보다 늦어야 합니다."
     }
+  },
+  "validation": {
+    "validEmail": "유효한 이메일 주소를 입력해주세요.",
+    "required": "필수 입력 항목입니다.",
+    "userNotFound": "사용자를 찾을 수 없습니다.",
+    "allFieldsRequired": "모든 필드를 입력해주세요.",
+    "endTimeAfterStart": "종료 시간은 시작 시간보다 늦어야 합니다."
   },
   "ui": {
     "settings": "설정",
@@ -306,30 +306,24 @@
     "startTime": "시작 시간",
     "endTime": "종료 시간",
     "availableTime": "예약 가능한 시간",
-    "selectedTime": "선택된 시간",
+    "selectedTime": "선택된 시간: {time}",
     "timeRange": "{startTime} - {endTime}",
     "selectTime": "시간을 선택해주세요",
     "completeSelection": "시간 선택을 완료해주세요",
-    "reservationTime": "예약 시간",
-    "totalTimeHours": "총 {hours}시간",
-    "totalTimeMinutes": "총 {minutes}분",
-    "totalTimeWithMinutes": "총 {hours}시간 {minutes}분",
     "today": "오늘",
     "tomorrow": "내일",
-    "reservedTime": "예약됨",
-    "reservationStart": "예약 시작",
-    "currentTime": "현재 시간",
-    "pastTime": "과거 시간",
+    "reservedTime": "예약된 시간 - {time} (선택 불가)",
+    "reservationStart": "예약 시작 시간 - {time} (선택 가능)",
+    "currentTime": "현재 시간 - {time}",
+    "pastTime": "과거 시간 - {time} (선택 불가)",
     "reservedTimeNotification": "예약된 시간입니다: {time}",
     "pastTimeNotification": "과거 시간은 선택할 수 없습니다.",
     "reservationInRangeNotification": "선택 범위에 예약이 포함되어 있습니다",
-    "unitView": "단위로 보기",
     "hour": "{count}시간",
     "minute": "{count}분",
     "about": "약",
-    "interval": "간격 선택",
-    "minuteUnit": "분",
-    "hourUnit": "시간"
+    "manualTimeInput": "직접 시간 입력",
+    "apply": "적용"
   },
   "cabins": {
     "currentReservation": "현재 예약",
@@ -383,15 +377,5 @@
     "notFoundTitle": "선실을 찾을 수 없습니다",
     "notFoundDescription": "요청하신 선실을 찾을 수 없습니다",
     "cabinDetailDescription": "{shipName} 팀의 {cabinName} 선실 정보를 확인하세요"
-  },
-  "validation": {
-    "validEmail": "유효한 이메일 주소를 입력해주세요.",
-    "required": "필수 입력 항목입니다.",
-    "userNotFound": "사용자를 찾을 수 없습니다.",
-    "allFieldsRequired": "모든 필드를 입력해주세요.",
-    "endTimeAfterStart": "종료 시간은 시작 시간보다 늦어야 합니다.",
-    "invalidTimeFormat": "올바른 시간 형식을 입력해주세요 (HH:MM)",
-    "startTimeAfterEnd": "시작 시간은 종료 시간보다 이전이어야 합니다.",
-    "endTimeBeforeStart": "종료 시간은 시작 시간보다 늦어야 합니다."
   }
 }

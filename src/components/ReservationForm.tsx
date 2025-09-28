@@ -195,7 +195,7 @@ export function ReservationForm({
 
   return (
     <div className={isModal ? "p-6" : ""}>
-      <div className="space-y-2">
+      <div className="space-y-4">
         {/* 날짜 선택 */}
         <div>
           <input
@@ -231,7 +231,13 @@ export function ReservationForm({
           />
         </div>
 
-        {error && <ErrorMessage message={error} />}
+        {error && (
+          <ErrorMessage 
+            message={error} 
+            variant="destructive" 
+            onClose={() => setError(null)} 
+          />
+        )}
 
         {/* 버튼 */}
         <div>

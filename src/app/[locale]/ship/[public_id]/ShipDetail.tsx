@@ -725,7 +725,6 @@ export default function ShipDetail() {
                 shipName={ship.name}
                 shipPublicId={ship.public_id}
                 locale={locale}
-                slackWebhookUrl={ship.slack_webhook_url}
                 onSaved={fetchShipDetails}
               />
             </div>

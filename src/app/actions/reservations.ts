@@ -2,10 +2,7 @@
 
 import { cookies } from "next/headers";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import {
-  postToSlack,
-  composeReservationSlackText,
-} from "@/lib/notifications/slack";
+import { sendReservationNotification } from "@/lib/notifications";
 import { t } from "@/lib/i18n";
 
 type CreateReservationInput = {
@@ -43,27 +40,47 @@ export async function createReservationAction(input: CreateReservationInput) {
 
       const { data: ship } = await supabase
         .from("ships")
-        .select("name, public_id, slack_webhook_url")
+        .select("name, public_id")
         .eq("id", cabin.ship_id)
         .single();
 
-      const webhook = ship?.slack_webhook_url || undefined;
-      if (!webhook) return;
+      if (!ship) return;
 
-      const roomName = cabin.name || ship?.name || "Room";
-      const text = composeReservationSlackText({
-        roomName,
-        startISO: input.startISO,
-        endISO: input.endISO,
-        purpose: input.purpose,
-        locale: input.locale,
-        shipPublicId: ship?.public_id,
-        linkLabel: t("ships.viewStatus", input.locale),
-      });
+      // ship_notifications 테이블에서 활성화된 알림 설정 조회
+      const { data: notifications } = await supabase
+        .from("ship_notifications")
+        .select("channel, webhook_url")
+        .eq("ship_id", cabin.ship_id)
+        .eq("enabled", true);
 
-      await postToSlack(webhook, { text });
+      if (!notifications || notifications.length === 0) return;
+
+      const roomName = cabin.name || ship.name || "Room";
+      
+      // 통합 알림 시스템 사용
+      const notificationConfig = {
+        slack: notifications.find(n => n.channel === 'slack')?.webhook_url 
+          ? { webhookUrl: notifications.find(n => n.channel === 'slack')!.webhook_url }
+          : undefined,
+        discord: notifications.find(n => n.channel === 'discord')?.webhook_url 
+          ? { webhookUrl: notifications.find(n => n.channel === 'discord')!.webhook_url }
+          : undefined,
+      };
+
+      // Slack 또는 Discord 웹훅이 하나라도 있으면 알림 전송
+      if (notificationConfig.slack || notificationConfig.discord) {
+        await sendReservationNotification(notificationConfig, {
+          roomName,
+          startISO: input.startISO,
+          endISO: input.endISO,
+          purpose: input.purpose,
+          locale: input.locale,
+          shipPublicId: ship.public_id,
+          linkLabel: t("ships.viewStatus", input.locale),
+        });
+      }
     } catch (e) {
-      console.error("Slack notify failed", e);
+      console.error("Notification failed", e);
     }
   })();
 

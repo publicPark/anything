@@ -350,13 +350,9 @@ export const useShipStore = create<ShipDetailState>()(
 
           return data;
         } catch (err: unknown) {
-          const errorMessage =
-            err instanceof Error
-              ? err.message
-              : "배 생성 중 오류가 발생했습니다.";
-          console.error("Failed to create ship:", errorMessage);
-          setError(errorMessage);
-          return null;
+          console.error("Failed to create ship:", err);
+          // 에러를 그대로 다시 던져서 ShipForm에서 catch할 수 있도록 함
+          throw err;
         }
       },
 

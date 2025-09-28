@@ -167,7 +167,7 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
           </div>
         </div>
 
-        {error && <ErrorMessage message={error} />}
+        {error && <ErrorMessage message={error} variant="destructive" onClose={() => setError(null)} />}
 
         <div className="flex space-x-3 pt-4">
           <Button

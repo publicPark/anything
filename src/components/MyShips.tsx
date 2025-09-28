@@ -141,8 +141,8 @@ export function MyShips() {
       )}
 
       {showCreateForm && (
-        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-muted rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-muted rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto border border-border">
             <ShipForm
               onSuccess={handleCreateSuccess}
               onCancel={() => setShowCreateForm(false)}

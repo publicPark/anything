@@ -35,9 +35,19 @@ npm install
 `.env.local` 파일을 생성하고 다음 내용을 추가합니다:
 
 ```env
+# Supabase 설정 (필수)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# 사이트 URL (슬랙 메시지 링크용)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
+#### 환경변수 설명
+
+- **`NEXT_PUBLIC_SUPABASE_URL`**: Supabase 프로젝트 URL (필수)
+- **`NEXT_PUBLIC_SUPABASE_ANON_KEY`**: Supabase 익명 키 (필수)
+- **`NEXT_PUBLIC_SITE_URL`**: 사이트 URL (슬랙 메시지 링크 생성용)
 
 ### 4. 데이터베이스 스키마 설정
 
@@ -169,8 +179,18 @@ src/
 
 ### 환경변수 설정 (배포 시)
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+Vercel 대시보드의 Environment Variables에서 다음 변수들을 설정합니다:
+
+- **`NEXT_PUBLIC_SUPABASE_URL`**: Supabase 프로젝트 URL
+- **`NEXT_PUBLIC_SUPABASE_ANON_KEY`**: Supabase 익명 키  
+- **`NEXT_PUBLIC_SITE_URL`**: 배포된 사이트 URL (예: `https://your-domain.vercel.app`)
+
+#### 슬랙 통합 (선택사항)
+
+슬랙 메시지 '예약현황' 버튼을 사용하려면:
+
+1. **배별 슬랙 설정**: 각 배의 설정 페이지에서 Slack Webhook URL 입력
+2. **`NEXT_PUBLIC_SITE_URL`**: 슬랙 메시지 링크 생성용 (위에서 설정)
 
 ## 문제 해결
 

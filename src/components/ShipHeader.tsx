@@ -283,7 +283,7 @@ export function ShipHeader({
             )}
           </div>
 
-          {/* {!isEditing && (
+          {!isEditing && (
             <div className="flex items-center space-x-2">
               {ship.member_only && (
                 <span className={SHIP_STATUS_STYLES.memberOnly}>
@@ -296,7 +296,7 @@ export function ShipHeader({
                 </span>
               )}
             </div>
-          )} */}
+          )}
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between md:flex-row-reverse gap-4">

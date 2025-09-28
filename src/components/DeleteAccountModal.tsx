@@ -47,6 +47,29 @@ export default function DeleteAccountModal({
         throw new Error(LOCALIZED_MESSAGES.validation.userNotFound(locale));
       }
 
+      // 배 생성자 체크 - created_by에 있는 배가 있으면 탈퇴 불가
+      const { data: ownedShips, error: shipsError } = await supabase
+        .from("ships")
+        .select("id, name")
+        .eq("created_by", user.id);
+
+      if (shipsError) {
+        throw new Error(
+          locale === "en"
+            ? "Failed to check owned ships"
+            : "소유한 배를 확인할 수 없습니다"
+        );
+      }
+
+      if (ownedShips && ownedShips.length > 0) {
+        const shipNames = ownedShips.map(ship => ship.name).join(", ");
+        throw new Error(
+          locale === "en"
+            ? `Cannot delete account. You are the creator of the following ships: ${shipNames}. Please transfer captaincy to another member first.`
+            : `계정을 삭제할 수 없습니다. 다음 배의 생성자입니다: ${shipNames}. 먼저 다른 멤버에게 선장을 양도해주세요.`
+        );
+      }
+
       // 1. Delete user profile first
       const { error: profileError } = await supabase
         .from("profiles")

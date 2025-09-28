@@ -29,7 +29,7 @@ CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   display_name TEXT,
-  role user_role DEFAULT 'titan' NOT NULL,
+  role user_role DEFAULT 'gaia' NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -446,7 +446,7 @@ BEGIN
   -- 프로필 생성 시도
   BEGIN
     INSERT INTO profiles (id, username, display_name, role)
-    VALUES (NEW.id, new_username, '', 'titan');
+    VALUES (NEW.id, new_username, '', 'gaia');
   EXCEPTION
     WHEN OTHERS THEN
       -- 오류가 발생해도 사용자 생성은 계속 진행
@@ -482,7 +482,7 @@ BEGIN
   
   -- 프로필 생성 시도
   INSERT INTO profiles (id, username, display_name, role)
-  VALUES (user_id, username, display_name, 'titan')
+  VALUES (user_id, username, display_name, 'gaia')
   RETURNING * INTO new_profile;
   
   RETURN new_profile;
@@ -492,7 +492,7 @@ EXCEPTION
     -- 사용자명 충돌 시 타임스탬프 추가
     username := 'user_' || substr(user_id::text, 1, 8) || '_' || extract(epoch from now())::bigint;
     INSERT INTO profiles (id, username, display_name, role)
-    VALUES (user_id, username, display_name, 'titan')
+    VALUES (user_id, username, display_name, 'gaia')
     RETURNING * INTO new_profile;
     RETURN new_profile;
   WHEN OTHERS THEN
@@ -521,7 +521,7 @@ BEGIN
   user_id := auth.uid();
   
   -- 사용자가 로그인되어 있는지 확인
-  IF current_user_id IS NULL THEN
+  IF user_id IS NULL THEN
     RAISE EXCEPTION 'User not authenticated';
   END IF;
   
@@ -539,6 +539,11 @@ BEGIN
   -- 배 생성자를 선장으로 자동 가입
   INSERT INTO ship_members (ship_id, user_id, role)
   VALUES (new_ship.id, user_id, 'captain');
+  
+  -- gaia 사용자는 배 생성 후 titan으로 등급 하락
+  IF user_role = 'gaia' THEN
+    UPDATE profiles SET role = 'titan' WHERE id = user_id;
+  END IF;
   
   RETURN new_ship;
 END;
@@ -1316,6 +1321,11 @@ BEGIN
     UPDATE ship_members
     SET role = 'mechanic'
     WHERE id = current_captain_record.id;
+    
+    -- 배의 created_by도 새 선장으로 변경 (배 보존을 위해)
+    UPDATE ships
+    SET created_by = new_captain_record.user_id
+    WHERE id = new_captain_record.ship_id;
     
     RETURN updated_member;
   EXCEPTION

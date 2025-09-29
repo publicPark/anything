@@ -41,7 +41,6 @@ CREATE TABLE ships (
   name TEXT NOT NULL,
   description TEXT,
   member_only BOOLEAN DEFAULT FALSE NOT NULL,
-  member_approval_required BOOLEAN DEFAULT FALSE NOT NULL,
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -555,8 +554,7 @@ $$;
 CREATE OR REPLACE FUNCTION create_ship(
   ship_name TEXT,
   ship_description TEXT DEFAULT NULL,
-  is_member_only BOOLEAN DEFAULT FALSE,
-  requires_approval BOOLEAN DEFAULT FALSE
+  is_member_only BOOLEAN DEFAULT FALSE
 )
 RETURNS ships
 LANGUAGE plpgsql
@@ -582,8 +580,8 @@ BEGIN
   END IF;
   
   -- 배 생성 (public_id 무작위 'SP' + 랜덤)
-  INSERT INTO ships (public_id, name, description, member_only, member_approval_required, created_by)
-  VALUES (generate_ship_public_id(), ship_name, ship_description, is_member_only, requires_approval, user_id)
+  INSERT INTO ships (public_id, name, description, member_only, created_by)
+  VALUES (generate_ship_public_id(), ship_name, ship_description, is_member_only, user_id)
   RETURNING * INTO new_ship;
   
   -- 배 생성자를 선장으로 자동 가입
@@ -636,8 +634,8 @@ BEGIN
     RAISE EXCEPTION 'Already requested to join this ship';
   END IF;
   
-  -- 승인이 필요한 경우
-  IF ship_record.member_approval_required THEN
+  -- 멤버 전용 배인 경우 승인 요청 생성
+  IF ship_record.member_only THEN
     -- 승인 요청 생성
     INSERT INTO ship_member_requests (ship_id, user_id, message)
     VALUES (ship_uuid, current_user_id, request_message)

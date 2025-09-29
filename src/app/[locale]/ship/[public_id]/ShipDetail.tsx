@@ -54,7 +54,6 @@ export default function ShipDetail() {
     name: "",
     description: "",
     member_only: false,
-    member_approval_required: false,
   });
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
   const lastRejectedRequestId = useRef<string | null>(null);
@@ -585,7 +584,6 @@ export default function ShipDetail() {
       name: ship.name,
       description: ship.description || "",
       member_only: ship.member_only,
-      member_approval_required: ship.member_approval_required,
     });
     setIsEditing(true);
   };
@@ -596,7 +594,6 @@ export default function ShipDetail() {
       name: "",
       description: "",
       member_only: false,
-      member_approval_required: false,
     });
   };
 
@@ -604,7 +601,6 @@ export default function ShipDetail() {
     name: string;
     description: string;
     member_only: boolean;
-    member_approval_required: boolean;
   }) => {
     if (!ship) return;
 
@@ -624,7 +620,6 @@ export default function ShipDetail() {
           name: data.name.trim(),
           description: data.description.trim(),
           member_only: data.member_only,
-          member_approval_required: data.member_approval_required,
         })
         .eq("id", ship.id);
 

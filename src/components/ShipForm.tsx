@@ -17,7 +17,6 @@ interface ShipFormData {
   name: string;
   description: string;
   memberOnly: boolean;
-  memberApprovalRequired: boolean;
 }
 
 export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
@@ -29,7 +28,6 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
     name: "",
     description: "",
     memberOnly: false,
-    memberApprovalRequired: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +68,6 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
         member_only: formData.memberOnly,
-        member_approval_required: formData.memberApprovalRequired,
       });
 
       if (ship) {
@@ -79,7 +76,8 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
         onSuccess?.();
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : t("ships.errorCreatingShip");
+      const errorMessage =
+        err instanceof Error ? err.message : t("ships.errorCreatingShip");
       console.error("Failed to create ship:", errorMessage);
       setError(errorMessage);
     } finally {
@@ -148,26 +146,15 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
               {t("ships.memberOnlyQuestion")}
             </label>
           </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="memberApprovalRequired"
-              name="memberApprovalRequired"
-              checked={formData.memberApprovalRequired}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-primary focus:ring-ring border-border rounded"
-            />
-            <label
-              htmlFor="memberApprovalRequired"
-              className="ml-2 block text-sm text-foreground"
-            >
-              {t("ships.memberApprovalRequiredQuestion")}
-            </label>
-          </div>
         </div>
 
-        {error && <ErrorMessage message={error} variant="destructive" onClose={() => setError(null)} />}
+        {error && (
+          <ErrorMessage
+            message={error}
+            variant="destructive"
+            onClose={() => setError(null)}
+          />
+        )}
 
         <div className="flex space-x-3 pt-4">
           <Button

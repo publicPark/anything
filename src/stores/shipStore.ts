@@ -39,7 +39,6 @@ export interface ShipDetailState {
     name: string;
     description: string;
     member_only: boolean;
-    member_approval_required: boolean;
   };
 
   // 모달 상태
@@ -75,7 +74,6 @@ export interface ShipDetailState {
     name: string;
     description?: string;
     member_only?: boolean;
-    member_approval_required?: boolean;
   }) => Promise<Ship | null>;
 
   updateShip: (shipId: string, updates: Partial<Ship>) => Promise<Ship | null>;
@@ -124,7 +122,6 @@ export const useShipStore = create<ShipDetailState>()(
         name: "",
         description: "",
         member_only: false,
-        member_approval_required: false,
       },
       showMemberManagement: false,
       showMemberView: false,
@@ -341,7 +338,6 @@ export const useShipStore = create<ShipDetailState>()(
             ship_name: shipData.name,
             ship_description: shipData.description || null,
             is_member_only: shipData.member_only || false,
-            requires_approval: shipData.member_approval_required || false,
           });
 
           if (error) {
@@ -630,7 +626,6 @@ export const useShipStore = create<ShipDetailState>()(
             name: "",
             description: "",
             member_only: false,
-            member_approval_required: false,
           },
           showMemberManagement: false,
           showMemberView: false,
@@ -655,7 +650,6 @@ export const useShipStore = create<ShipDetailState>()(
             name: "",
             description: "",
             member_only: false,
-            member_approval_required: false,
           },
           showMemberManagement: false,
           showMemberView: false,

@@ -29,7 +29,6 @@ interface ShipHeaderProps {
     name: string;
     description: string;
     member_only: boolean;
-    member_approval_required: boolean;
     slack_webhook_url?: string | null;
   }) => void;
   onEditCancel: () => void;
@@ -41,14 +40,12 @@ interface ShipHeaderProps {
     name: string;
     description: string;
     member_only: boolean;
-    member_approval_required: boolean;
     slack_webhook_url?: string | null;
   };
   setEditFormData: (data: {
     name: string;
     description: string;
     member_only: boolean;
-    member_approval_required: boolean;
     slack_webhook_url?: string | null;
   }) => void;
 }
@@ -56,8 +53,6 @@ interface ShipHeaderProps {
 // 스타일 상수 - 글로벌 컬러 시스템 사용
 const SHIP_STATUS_STYLES = {
   memberOnly: "px-3 py-1 text-sm bg-warning-100 text-warning-800 rounded-full",
-  approvalRequired:
-    "px-3 py-1 text-sm bg-warning-100 text-warning-800 rounded-full",
 } as const;
 
 const ROLE_STYLES = {
@@ -100,7 +95,7 @@ export function ShipHeader({
   };
 
   const handleJoinClick = () => {
-    if (ship.member_approval_required) {
+    if (ship.member_only) {
       setShowJoinRequestModal(true);
     } else {
       onJoinShip();
@@ -244,22 +239,6 @@ export function ShipHeader({
                       {t("ships.memberOnly")}
                     </span>
                   </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={editFormData.member_approval_required}
-                      onChange={(e) =>
-                        setEditFormData({
-                          ...editFormData,
-                          member_approval_required: e.target.checked,
-                        })
-                      }
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-foreground">
-                      {t("ships.memberApprovalRequired")}
-                    </span>
-                  </label>
                 </div>
                 {/* Slack settings moved to dedicated modal */}
               </div>
@@ -288,11 +267,6 @@ export function ShipHeader({
               {ship.member_only && (
                 <span className={SHIP_STATUS_STYLES.memberOnly}>
                   {t("ships.memberOnly")}
-                </span>
-              )}
-              {ship.member_approval_required && (
-                <span className={SHIP_STATUS_STYLES.approvalRequired}>
-                  {t("ships.memberApprovalRequired")}
                 </span>
               )}
             </div>
@@ -385,7 +359,7 @@ export function ShipHeader({
                     ) : ship.hasRejectedRequest ? (
                       t("ships.cannotReapplyAfterRejection")
                     ) : profile ? (
-                      ship.member_approval_required ? (
+                      ship.member_only ? (
                         t("ships.requestToJoin")
                       ) : (
                         t("ships.join")

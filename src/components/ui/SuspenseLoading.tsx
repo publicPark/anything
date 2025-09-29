@@ -1,3 +1,5 @@
+"use client";
+
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useI18n } from "@/hooks/useI18n";
 

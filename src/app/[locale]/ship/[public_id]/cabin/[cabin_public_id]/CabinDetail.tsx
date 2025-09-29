@@ -29,7 +29,7 @@ export default function CabinDetail() {
   const [userRole, setUserRole] = useState<
     "captain" | "mechanic" | "crew" | null
   >(null);
-  const [showReservationForm, setShowReservationForm] = useState(false);
+  const [showReservationForm, setShowReservationForm] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
   const shipPublicId = params.public_id as string;
@@ -155,7 +155,9 @@ export default function CabinDetail() {
       }
     } catch (err: unknown) {
       console.error("Failed to fetch cabin details:", err);
-      setError(err instanceof Error ? err.message : t("ships.errorLoadingCabin"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorLoadingCabin")
+      );
     } finally {
       setIsLoading(false);
     }
@@ -215,8 +217,6 @@ export default function CabinDetail() {
   const { todayReservations, upcomingReservations, pastReservations } =
     categorizeReservations();
 
-
-
   if (profileLoading || isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -268,7 +268,9 @@ export default function CabinDetail() {
             reservations={reservations}
             todayReservations={todayReservations}
             showReservationForm={showReservationForm}
-            onToggleReservationForm={() => setShowReservationForm(!showReservationForm)}
+            onToggleReservationForm={() =>
+              setShowReservationForm(!showReservationForm)
+            }
             onReservationSuccess={handleReservationSuccess}
             lastUpdateTime={lastUpdateTime}
           />

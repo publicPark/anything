@@ -49,7 +49,7 @@ export function CabinReservationSummary({
 
   const renderStatusBadge = (type: "ongoing" | "upcoming"): ReactNode => {
     const base =
-      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border";
+      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border shrink-0";
     if (type === "ongoing") {
       return (
         <span

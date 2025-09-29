@@ -13,13 +13,19 @@ export function Footer() {
           <div className="text-sm text-muted-foreground">
             © 2025 Reservation System
           </div>
-          
+
           <div className="flex items-center space-x-6">
             <Link
               href={`/${locale}/settings`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {t("settings.title")}
+            </Link>
+            <Link
+              href={`/${locale}/faq`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("faq.title")}
             </Link>
           </div>
         </div>

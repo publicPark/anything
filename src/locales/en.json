@@ -311,6 +311,11 @@
     "delete": "Delete",
     "deleteAccount": "Delete Account"
   },
+  "faq": {
+    "title": "FAQ",
+    "q1": "How can I create a team?",
+    "a1": "You can create a team once from the home screen."
+  },
   "timetable": {
     "startTime": "Start Time",
     "endTime": "End Time",

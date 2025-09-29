@@ -220,16 +220,20 @@ export function MemberList({
         <h2 className="text-lg md:text-xl font-semibold text-foreground">
           {showMemberManagement ? t("ships.manageMembers") : t("ships.members")}
         </h2>
-        {/* Leave 버튼 - 모든 사용자에게 표시 */}
-        <Button
-          onClick={handleLeaveShip}
-          disabled={isProcessing}
-          variant={userRole === "crew" ? "destructive" : "secondary"}
-          size="sm"
-          className={userRole !== "crew" ? "opacity-50 cursor-not-allowed" : ""}
-        >
-          {isProcessing ? t("common.processing") : t("ships.leave")}
-        </Button>
+        {/* Leave 버튼 - 로그인한 사용자에게만 표시 */}
+        {currentUserId && userRole && (
+          <Button
+            onClick={handleLeaveShip}
+            disabled={isProcessing}
+            variant={userRole === "crew" ? "destructive" : "secondary"}
+            size="sm"
+            className={
+              userRole !== "crew" ? "opacity-50 cursor-not-allowed" : ""
+            }
+          >
+            {isProcessing ? t("common.processing") : t("ships.leave")}
+          </Button>
+        )}
       </div>
 
       {/* 에러 메시지 표시 */}

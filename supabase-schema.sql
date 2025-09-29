@@ -1432,7 +1432,8 @@ CREATE TRIGGER on_auth_user_created
 
 -- 함수 실행 권한 설정
 GRANT EXECUTE ON FUNCTION create_user_profile(UUID, TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION create_ship(TEXT, TEXT, BOOLEAN, BOOLEAN) TO authenticated;
+-- Expose the actual 3-arg signature
+GRANT EXECUTE ON FUNCTION create_ship(TEXT, TEXT, BOOLEAN) TO authenticated;
 GRANT EXECUTE ON FUNCTION join_ship(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION change_member_role(UUID, ship_member_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION transfer_captaincy(UUID) TO authenticated;

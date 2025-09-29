@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
 import { sendReservationNotification } from "@/lib/notifications";
 import { t } from "@/lib/i18n";
@@ -28,7 +29,7 @@ export async function createReservationAction(input: CreateReservationInput) {
     return { ok: false as const, message: error.message };
   }
 
-  (async () => {
+  after(async () => {
     try {
       const { data: cabin } = await supabase
         .from("ship_cabins")
@@ -56,14 +57,20 @@ export async function createReservationAction(input: CreateReservationInput) {
       if (!notifications || notifications.length === 0) return;
 
       const roomName = cabin.name || ship.name || "Room";
-      
+
       // 통합 알림 시스템 사용
       const notificationConfig = {
-        slack: notifications.find(n => n.channel === 'slack')?.webhook_url 
-          ? { webhookUrl: notifications.find(n => n.channel === 'slack')!.webhook_url }
+        slack: notifications.find((n) => n.channel === "slack")?.webhook_url
+          ? {
+              webhookUrl: notifications.find((n) => n.channel === "slack")!
+                .webhook_url,
+            }
           : undefined,
-        discord: notifications.find(n => n.channel === 'discord')?.webhook_url 
-          ? { webhookUrl: notifications.find(n => n.channel === 'discord')!.webhook_url }
+        discord: notifications.find((n) => n.channel === "discord")?.webhook_url
+          ? {
+              webhookUrl: notifications.find((n) => n.channel === "discord")!
+                .webhook_url,
+            }
           : undefined,
       };
 
@@ -82,7 +89,7 @@ export async function createReservationAction(input: CreateReservationInput) {
     } catch (e) {
       console.error("Notification failed", e);
     }
-  })();
+  });
 
   return { ok: true as const };
 }

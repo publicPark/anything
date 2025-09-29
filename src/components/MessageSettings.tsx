@@ -37,7 +37,7 @@ export function MessageSettings({
   const { t } = useI18n();
   const [settings, setSettings] = useState<NotificationSettings>({
     slack: { webhookUrl: "", enabled: false },
-    discord: { webhookUrl: "", enabled: false }
+    discord: { webhookUrl: "", enabled: false },
   });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -53,18 +53,20 @@ export function MessageSettings({
           .eq("ship_id", shipId);
 
         if (notifications) {
-          const slackNotif = notifications.find(n => n.channel === 'slack');
-          const discordNotif = notifications.find(n => n.channel === 'discord');
-          
+          const slackNotif = notifications.find((n) => n.channel === "slack");
+          const discordNotif = notifications.find(
+            (n) => n.channel === "discord"
+          );
+
           setSettings({
             slack: {
               webhookUrl: slackNotif?.webhook_url || "",
-              enabled: slackNotif?.enabled || false
+              enabled: slackNotif?.enabled || false,
             },
             discord: {
               webhookUrl: discordNotif?.webhook_url || "",
-              enabled: discordNotif?.enabled || false
-            }
+              enabled: discordNotif?.enabled || false,
+            },
           });
         }
       } catch (error) {
@@ -87,7 +89,7 @@ export function MessageSettings({
       end.setHours(14, 30, 0, 0);
 
       return composeReservationSlackText({
-        roomName: shipName,
+        roomName: `${shipName} ${t("ships.cabinName")}`,
         startISO: start.toISOString(),
         endISO: end.toISOString(),
         purpose: t("ships.reservationPurposePlaceholder"),
@@ -128,17 +130,20 @@ export function MessageSettings({
     setSaving(true);
     try {
       const supabase = createClient();
-      
+
       // Slack 설정 저장/업데이트
       if (settings.slack.webhookUrl.trim()) {
         const { error: slackError } = await supabase
           .from("ship_notifications")
-          .upsert({
-            ship_id: shipId,
-            channel: 'slack',
-            webhook_url: settings.slack.webhookUrl.trim(),
-            enabled: settings.slack.enabled
-          }, { onConflict: 'ship_id,channel' });
+          .upsert(
+            {
+              ship_id: shipId,
+              channel: "slack",
+              webhook_url: settings.slack.webhookUrl.trim(),
+              enabled: settings.slack.enabled,
+            },
+            { onConflict: "ship_id,channel" }
+          );
 
         if (slackError) {
           console.error("Slack 설정 저장 실패:", slackError);
@@ -158,12 +163,15 @@ export function MessageSettings({
       if (settings.discord.webhookUrl.trim()) {
         const { error: discordError } = await supabase
           .from("ship_notifications")
-          .upsert({
-            ship_id: shipId,
-            channel: 'discord',
-            webhook_url: settings.discord.webhookUrl.trim(),
-            enabled: settings.discord.enabled
-          }, { onConflict: 'ship_id,channel' });
+          .upsert(
+            {
+              ship_id: shipId,
+              channel: "discord",
+              webhook_url: settings.discord.webhookUrl.trim(),
+              enabled: settings.discord.enabled,
+            },
+            { onConflict: "ship_id,channel" }
+          );
 
         if (discordError) {
           console.error("Discord 설정 저장 실패:", discordError);
@@ -191,7 +199,9 @@ export function MessageSettings({
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
-        <div className="text-sm text-muted-foreground">설정을 불러오는 중...</div>
+        <div className="text-sm text-muted-foreground">
+          설정을 불러오는 중...
+        </div>
       </div>
     );
   }
@@ -206,16 +216,18 @@ export function MessageSettings({
             <input
               type="checkbox"
               checked={settings.slack.enabled}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                slack: { ...prev.slack, enabled: e.target.checked }
-              }))}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  slack: { ...prev.slack, enabled: e.target.checked },
+                }))
+              }
               className="rounded border-border"
             />
             <span className="text-sm text-foreground">활성화</span>
           </label>
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
             Slack 웹훅 URL
@@ -223,15 +235,17 @@ export function MessageSettings({
           <input
             type="url"
             value={settings.slack.webhookUrl}
-            onChange={(e) => setSettings(prev => ({
-              ...prev,
-              slack: { ...prev.slack, webhookUrl: e.target.value }
-            }))}
+            onChange={(e) =>
+              setSettings((prev) => ({
+                ...prev,
+                slack: { ...prev.slack, webhookUrl: e.target.value },
+              }))
+            }
             className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="https://hooks.slack.com/services/..."
           />
         </div>
-        
+
         <div>
           <div className="text-sm font-medium text-foreground mb-2">
             Slack 메시지 미리보기
@@ -245,7 +259,7 @@ export function MessageSettings({
       </div>
 
       {/* Discord 설정 */}
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-lg font-semibold text-foreground">Discord 알림</h4>
           <label className="flex items-center space-x-2">
@@ -288,7 +302,7 @@ export function MessageSettings({
             </pre>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="flex justify-end">
         <button

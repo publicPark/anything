@@ -27,7 +27,9 @@ export function ReservationTabs({
   onUpdate,
 }: ReservationTabsProps) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
+    "today"
+  );
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 실시간 시간 업데이트
@@ -38,6 +40,19 @@ export function ReservationTabs({
 
     return () => clearInterval(interval);
   }, []);
+
+  // 오늘 예약이 없고 미래 예약이 있으면 자동으로 'upcoming' 탭으로 전환
+  useEffect(() => {
+    if (
+      activeTab === "today" &&
+      todayReservations.length === 0 &&
+      upcomingReservations.length > 0
+    ) {
+      setActiveTab("upcoming");
+    }
+    // 의도: 사용자가 수동으로 탭을 변경한 경우에는 존중하고, 기본값이 'today'일 때만 전환
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayReservations.length, upcomingReservations.length]);
 
   const handleReservationUpdate = () => {
     onUpdate();

@@ -39,9 +39,7 @@ export function CabinInfo({
       <div>
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {cabin.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground">{cabin.name}</h1>
           </div>
           <div className="flex flex-col items-end space-y-2">
             <div className="flex items-center gap-2">
@@ -51,7 +49,9 @@ export function CabinInfo({
                     ? t("ships.available")
                     : t("ships.inUse")
                 }
-                tone={cabinStatus.status === "available" ? "success" : "destructive"}
+                tone={
+                  cabinStatus.status === "available" ? "success" : "destructive"
+                }
                 blinking={cabinStatus.status !== "available"}
                 className="px-3 py-1 text-sm"
               />

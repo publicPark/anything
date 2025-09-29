@@ -105,8 +105,8 @@ export function CabinReservationSummary({
           </div>
         </div>
       ) : (
-        <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-sm text-green-700 font-medium">
+        <div className="mb-3 p-3 bg-muted/10 border border-success-600 rounded-md">
+          <p className="text-sm text-success-800 font-medium">
             {t("ships.currentlyAvailable")}
           </p>
         </div>

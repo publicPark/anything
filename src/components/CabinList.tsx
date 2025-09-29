@@ -14,6 +14,7 @@ import {
   CabinWithStatus,
   addStatusToCabins,
   groupReservationsByCabinId,
+  calculateCabinStatus,
 } from "@/lib/cabin-status";
 import { renderTextWithLinks } from "@/lib/text-helpers";
 import Link from "next/link";
@@ -55,6 +56,35 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
       supabase.removeChannel(channel);
     };
   }, [shipId]);
+
+  // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCabins((prevCabins) =>
+        prevCabins.map((cabin) => {
+          const { status, currentReservation, nextReservation } =
+            calculateCabinStatus(cabin.todayReservations || []);
+
+          if (
+            status === cabin.currentStatus &&
+            currentReservation === cabin.currentReservation &&
+            nextReservation === cabin.nextReservation
+          ) {
+            return cabin;
+          }
+
+          return {
+            ...cabin,
+            currentStatus: status,
+            currentReservation,
+            nextReservation,
+          };
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const fetchCabins = async () => {
     try {
@@ -116,7 +146,9 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
       setCabins(cabinsWithStatus);
     } catch (err: unknown) {
       console.error("Failed to fetch cabins:", err);
-      setError(err instanceof Error ? err.message : t("ships.errorLoadingCabins"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorLoadingCabins")
+      );
     } finally {
       setLoading(false);
     }
@@ -173,7 +205,11 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
                       ? t("ships.available")
                       : t("ships.inUse")
                   }
-                  tone={cabin.currentStatus === "available" ? "success" : "destructive"}
+                  tone={
+                    cabin.currentStatus === "available"
+                      ? "success"
+                      : "destructive"
+                  }
                   blinking={cabin.currentStatus !== "available"}
                   className="px-2 py-1 text-xs"
                 />

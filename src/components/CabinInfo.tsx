@@ -76,7 +76,7 @@ export function CabinInfo({
       {/* 예약 폼 */}
       {showReservationForm && <hr className="border-border" />}
       <div>
-        <div className="flex items-center justify-between mb-6">
+        {/* <div className="flex items-center justify-between mb-6">
           <Button
             className="w-full"
             type="button"
@@ -88,7 +88,7 @@ export function CabinInfo({
               ? t("ships.cancelReservation")
               : t("ships.reserveCabin")}
           </Button>
-        </div>
+        </div> */}
 
         {showReservationForm && (
           <ReservationForm

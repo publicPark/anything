@@ -80,77 +80,99 @@ export function Calendar({
       />
       <style jsx global>{`
         .react-calendar {
-          background: transparent;
+          background: transparent !important;
           font-family: inherit;
+          width: 100% !important;
         }
 
         .react-calendar__navigation {
-          background: transparent;
+          background: transparent !important;
           margin-bottom: 0.5rem;
         }
 
         .react-calendar__navigation button {
-          background: transparent;
-          color: inherit;
-          border: none;
+          background: transparent !important;
+          color: inherit !important;
+          border: none !important;
           padding: 0.5rem;
           border-radius: 0.375rem;
           transition: background-color 0.2s;
         }
 
         .react-calendar__navigation button:hover {
-          background: hsl(var(--muted));
+          background: hsl(var(--muted)) !important;
         }
 
         .react-calendar__navigation button:enabled:hover,
         .react-calendar__navigation button:enabled:focus {
-          background: hsl(var(--muted));
+          background: hsl(var(--muted)) !important;
         }
 
         .react-calendar__month-view__weekdays {
           text-transform: uppercase;
           font-size: 0.75rem;
           font-weight: 500;
-          color: hsl(var(--muted-foreground));
+          color: hsl(var(--muted-foreground)) !important;
         }
 
         .react-calendar__tile {
-          background: transparent;
-          color: inherit;
-          border: none;
+          background: transparent !important;
+          color: inherit !important;
+          border: none !important;
           padding: 0.5rem;
-          border-radius: 0.375rem;
-          transition: background-color 0.2s;
+          border-radius: 0.375rem !important;
+          transition: all 0.2s;
           position: relative;
+          font-weight: normal !important;
         }
 
         .react-calendar__tile:enabled:hover,
         .react-calendar__tile:enabled:focus {
-          background: hsl(var(--muted));
+          background: hsl(var(--muted)) !important;
         }
 
+        /* === 간단한 상태별 스타일 === */
+
+        /* 오늘 날짜 스타일 */
         .react-calendar__tile--now {
-          background: hsl(var(--accent));
+          background: var(--warning-100) !important;
+          color: #000000 !important;
         }
 
+        /* 선택된 날짜 스타일 */
         .react-calendar__tile--active {
-          background: hsl(var(--primary));
-          color: hsl(var(--primary-foreground));
+          font-weight: 600 !important;
+          border: 2px solid var(--primary) !important;
+        }
+
+        /* === 호버/포커스 상태 === */
+        .react-calendar__tile--now:enabled:hover,
+        .react-calendar__tile--now:enabled:focus {
+          background: var(--warning-100) !important;
         }
 
         .react-calendar__tile--active:enabled:hover,
         .react-calendar__tile--active:enabled:focus {
-          background: hsl(var(--primary));
+          border-color: var(--primary) !important;
         }
 
         .react-calendar__tile:disabled {
-          background: hsl(var(--muted));
-          color: hsl(var(--muted-foreground));
-          cursor: not-allowed;
+          background: hsl(var(--muted)) !important;
+          color: hsl(var(--muted-foreground)) !important;
+          cursor: not-allowed !important;
+          opacity: 0.5 !important;
         }
 
         .react-calendar__month-view__days__day--neighboringMonth {
-          color: hsl(var(--muted-foreground));
+          color: hsl(var(--muted-foreground)) !important;
+        }
+
+        /* 예약 표시 점 위치 조정 */
+        .react-calendar__tile > div {
+          position: absolute;
+          bottom: 2px;
+          left: 50%;
+          transform: translateX(-50%);
         }
       `}</style>
     </div>

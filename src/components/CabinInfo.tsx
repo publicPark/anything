@@ -92,6 +92,7 @@ export function CabinInfo({
 
         {showReservationForm && (
           <ReservationForm
+            key="reservation-form"
             cabinId={cabin.id}
             onSuccess={onReservationSuccess}
             existingReservations={reservations}

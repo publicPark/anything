@@ -469,7 +469,9 @@ export function TimeTable({
   );
 
   return (
-    <div className={`${className} border rounded-lg`}>
+    <div
+      className={`${className} border border-border rounded-lg overflow-hidden bg-muted`}
+    >
       {/* 타임테이블 슬롯 섹션 */}
       <div className="overflow-hidden">
         <div className="max-h-80 overflow-y-auto p-4">
@@ -649,7 +651,7 @@ export function TimeTable({
       </div>
 
       {/* 시간 선택 상태 표시 */}
-      <div className="p-4 bg-muted/30 border-t">
+      <div className="p-4 bg-muted/30 border-t border-border">
         {selectedStartTime && selectedEndTime ? (
           <div className="text-sm text-foreground">
             {/* <span className="font-medium">{t("timetable.reservationTime")}: </span> */}

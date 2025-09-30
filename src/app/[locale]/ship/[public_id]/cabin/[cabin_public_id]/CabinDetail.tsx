@@ -92,6 +92,30 @@ export default function CabinDetail() {
     };
   }, [cabin]);
 
+  // 예약 목록만 업데이트하는 함수 (등록/수정/삭제 시 사용)
+  const fetchReservationsOnly = async () => {
+    if (!cabin) return;
+
+    try {
+      const { data: reservationsData, error: reservationsError } =
+        await supabase
+          .from("cabin_reservations")
+          .select("*")
+          .eq("cabin_id", cabin.id)
+          .eq("status", "confirmed")
+          .order("start_time", { ascending: true });
+
+      if (reservationsError) {
+        console.error("Failed to fetch reservations:", reservationsError);
+        return;
+      }
+
+      setReservations(reservationsData || []);
+    } catch (err) {
+      console.error("Failed to update reservations:", err);
+    }
+  };
+
   const fetchCabinDetails = async () => {
     if (!shipPublicId || !cabinPublicId) return;
 
@@ -171,8 +195,8 @@ export default function CabinDetail() {
   };
 
   const handleReservationSuccess = () => {
-    setShowReservationForm(false);
-    fetchCabinDetails(); // 예약 목록 새로고침
+    // setShowReservationForm(false);
+    fetchReservationsOnly(); // 예약 목록만 새로고침 (더 가벼움)
   };
 
   // 예약을 카테고리별로 분류
@@ -294,7 +318,7 @@ export default function CabinDetail() {
             currentUserId={profile?.id}
             userRole={userRole || undefined}
             existingReservations={reservations}
-            onUpdate={fetchCabinDetails}
+            onUpdate={fetchReservationsOnly}
             selectedDate={selectedDate}
           />
         </div>

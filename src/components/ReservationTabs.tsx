@@ -64,16 +64,6 @@ export function ReservationTabs({
     });
   };
 
-  // 선택된 날짜 예약이 없으면 자동으로 'past' 탭으로 전환
-  useEffect(() => {
-    const selectedDateReservations = getSelectedDateReservations();
-    if (activeTab === "selected" && selectedDateReservations.length === 0) {
-      setActiveTab("past");
-    }
-    // 의도: 사용자가 수동으로 탭을 변경한 경우에는 존중하고, 기본값이 'selected'일 때만 전환
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, existingReservations.length]);
-
   const handleReservationUpdate = () => {
     onUpdate();
   };
@@ -99,7 +89,7 @@ export function ReservationTabs({
       content: (
         <div>
           {selectedDateReservations.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-4 mb-4">
               {selectedDateReservations.map((reservation) => {
                 const start = new Date(reservation.start_time);
                 const end = new Date(reservation.end_time);
@@ -123,7 +113,7 @@ export function ReservationTabs({
             <div className="text-center py-6">
               <div className="text-3xl mb-2">📅</div>
               <p className="text-sm text-muted-foreground">
-                {t("ships.noTodayReservations")}
+                {t("ships.noReservations")}
               </p>
             </div>
           )}

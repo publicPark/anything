@@ -74,13 +74,14 @@ export function Calendar({
         }}
         tileContent={tileContent}
         tileDisabled={tileDisabled}
+        className="rounded-lg"
         minDate={today}
-        className="w-full border border-border rounded-lg bg-background text-foreground"
         locale="ko-KR"
       />
       <style jsx global>{`
         .react-calendar {
-          background: transparent !important;
+          background: var(--muted) !important;
+          border: 1px solid var(--border) !important;
           font-family: inherit;
           width: 100% !important;
         }
@@ -120,6 +121,7 @@ export function Calendar({
           color: inherit !important;
           border: none !important;
           padding: 0.5rem;
+          padding-bottom: 0.75rem;
           border-radius: 0.375rem !important;
           transition: all 0.2s;
           position: relative;
@@ -170,7 +172,7 @@ export function Calendar({
         /* 예약 표시 점 위치 조정 */
         .react-calendar__tile > div {
           position: absolute;
-          bottom: 2px;
+          bottom: 6px;
           left: 50%;
           transform: translateX(-50%);
         }

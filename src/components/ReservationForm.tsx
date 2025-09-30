@@ -65,7 +65,7 @@ export function ReservationForm({
     }
     return {
       date: today,
-      purpose: profile?.display_name ? `${profile.display_name}의 예약` : "",
+      purpose: profile?.display_name ? `${profile.display_name}` : "",
     };
   };
 
@@ -233,6 +233,11 @@ export function ReservationForm({
       }
 
       clearSelection();
+      // 예약 목적 초기화 (빈칸으로)
+      setFormData((prev) => ({
+        ...prev,
+        purpose: "",
+      }));
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
@@ -243,7 +248,7 @@ export function ReservationForm({
 
   return (
     <div className={isModal ? "p-6" : ""}>
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* 날짜 선택 */}
         <div>
           <Calendar

@@ -17,6 +17,8 @@ interface CabinInfoProps {
   onToggleReservationForm: () => void;
   onReservationSuccess: () => void;
   lastUpdateTime?: Date;
+  selectedDate?: string;
+  onDateChange?: (date: string) => void;
 }
 
 export function CabinInfo({
@@ -27,6 +29,8 @@ export function CabinInfo({
   onToggleReservationForm,
   onReservationSuccess,
   lastUpdateTime,
+  selectedDate,
+  onDateChange,
 }: CabinInfoProps) {
   const { t } = useI18n();
 
@@ -92,6 +96,8 @@ export function CabinInfo({
             onSuccess={onReservationSuccess}
             existingReservations={reservations}
             isModal={false}
+            selectedDate={selectedDate}
+            onDateChange={onDateChange}
           />
         )}
       </div>

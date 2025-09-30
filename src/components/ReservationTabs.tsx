@@ -15,6 +15,7 @@ interface ReservationTabsProps {
   userRole?: "captain" | "mechanic" | "crew";
   existingReservations: CabinReservation[];
   onUpdate: () => void;
+  selectedDate?: string;
 }
 
 export function ReservationTabs({
@@ -25,11 +26,10 @@ export function ReservationTabs({
   userRole,
   existingReservations,
   onUpdate,
+  selectedDate,
 }: ReservationTabsProps) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<"today" | "upcoming" | "past">(
-    "today"
-  );
+  const [activeTab, setActiveTab] = useState<"selected" | "past">("selected");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // 실시간 시간 업데이트
@@ -41,32 +41,66 @@ export function ReservationTabs({
     return () => clearInterval(interval);
   }, []);
 
-  // 오늘 예약이 없고 미래 예약이 있으면 자동으로 'upcoming' 탭으로 전환
+  // 선택된 날짜의 예약 필터링
+  const getSelectedDateReservations = () => {
+    if (!selectedDate) return todayReservations; // 기본값으로 오늘 예약
+
+    const selectedDateObj = new Date(selectedDate);
+    const selectedDateOnly = new Date(
+      selectedDateObj.getFullYear(),
+      selectedDateObj.getMonth(),
+      selectedDateObj.getDate()
+    );
+
+    return existingReservations.filter((reservation) => {
+      if (reservation.status !== "confirmed") return false;
+      const reservationDate = new Date(reservation.start_time);
+      const reservationDateOnly = new Date(
+        reservationDate.getFullYear(),
+        reservationDate.getMonth(),
+        reservationDate.getDate()
+      );
+      return reservationDateOnly.getTime() === selectedDateOnly.getTime();
+    });
+  };
+
+  // 선택된 날짜 예약이 없으면 자동으로 'past' 탭으로 전환
   useEffect(() => {
-    if (
-      activeTab === "today" &&
-      todayReservations.length === 0 &&
-      upcomingReservations.length > 0
-    ) {
-      setActiveTab("upcoming");
+    const selectedDateReservations = getSelectedDateReservations();
+    if (activeTab === "selected" && selectedDateReservations.length === 0) {
+      setActiveTab("past");
     }
-    // 의도: 사용자가 수동으로 탭을 변경한 경우에는 존중하고, 기본값이 'today'일 때만 전환
+    // 의도: 사용자가 수동으로 탭을 변경한 경우에는 존중하고, 기본값이 'selected'일 때만 전환
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayReservations.length, upcomingReservations.length]);
+  }, [selectedDate, existingReservations.length]);
 
   const handleReservationUpdate = () => {
     onUpdate();
   };
 
+  const selectedDateReservations = getSelectedDateReservations();
+  const selectedDateObj = selectedDate ? new Date(selectedDate) : new Date();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const isToday = selectedDate === todayStr;
+
   const tabs = [
     {
-      id: "today",
-      label: t("ships.todayReservations"),
+      id: "selected",
+      label: t("ships.selectedDateReservations", {
+        date:
+          selectedDateObj.toLocaleDateString("ko-KR", {
+            month: "short",
+            day: "numeric",
+          }) + (isToday ? " (오늘)" : ""),
+      }),
       content: (
         <div>
-          {todayReservations.length > 0 ? (
+          {selectedDateReservations.length > 0 ? (
             <div className="space-y-4">
-              {todayReservations.map((reservation) => {
+              {selectedDateReservations.map((reservation) => {
                 const start = new Date(reservation.start_time);
                 const end = new Date(reservation.end_time);
                 const isCurrent = currentTime >= start && currentTime < end;
@@ -97,36 +131,6 @@ export function ReservationTabs({
       ),
     },
     {
-      id: "upcoming",
-      label: t("ships.upcomingReservations"),
-      content: (
-        <div>
-          {upcomingReservations.length > 0 ? (
-            <div className="space-y-4">
-              {upcomingReservations.map((reservation) => (
-                <ReservationItem
-                  key={reservation.id}
-                  reservation={reservation}
-                  currentUserId={currentUserId}
-                  userRole={userRole}
-                  onUpdate={handleReservationUpdate}
-                  cabinId={cabinId}
-                  existingReservations={existingReservations}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <div className="text-3xl mb-2">🔮</div>
-              <p className="text-sm text-muted-foreground">
-                {t("ships.noUpcomingReservations")}
-              </p>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
       id: "past",
       label: t("ships.pastReservations"),
       content: (
@@ -145,7 +149,7 @@ export function ReservationTabs({
     <ShipTabs
       tabs={tabs}
       activeTab={activeTab}
-      onTabChange={(id) => setActiveTab(id as "today" | "upcoming" | "past")}
+      onTabChange={(id) => setActiveTab(id as "selected" | "past")}
     />
   );
 }

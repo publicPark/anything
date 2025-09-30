@@ -31,6 +31,13 @@ export default function CabinDetail() {
   >(null);
   const [showReservationForm, setShowReservationForm] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = `${today.getMonth() + 1}`.padStart(2, "0");
+    const day = `${today.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  });
 
   const shipPublicId = params.public_id as string;
   const cabinPublicId = params.cabin_public_id as string;
@@ -273,6 +280,8 @@ export default function CabinDetail() {
             }
             onReservationSuccess={handleReservationSuccess}
             lastUpdateTime={lastUpdateTime}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
           />
         </div>
 
@@ -286,6 +295,7 @@ export default function CabinDetail() {
             userRole={userRole || undefined}
             existingReservations={reservations}
             onUpdate={fetchCabinDetails}
+            selectedDate={selectedDate}
           />
         </div>
       </div>

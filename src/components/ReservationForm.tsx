@@ -8,6 +8,7 @@ import { createReservationAction } from "@/app/actions/reservations";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Calendar } from "@/components/ui/Calendar";
 import { TimeTable } from "@/components/TimeTable";
 import { CabinReservation } from "@/types/database";
 import { useReservationStore } from "@/stores/reservationStore";
@@ -18,6 +19,8 @@ interface ReservationFormProps {
   existingReservations?: CabinReservation[];
   isModal?: boolean;
   editingReservation?: CabinReservation;
+  selectedDate?: string;
+  onDateChange?: (date: string) => void;
 }
 
 export function ReservationForm({
@@ -26,6 +29,8 @@ export function ReservationForm({
   existingReservations = [],
   isModal = false,
   editingReservation,
+  selectedDate: externalSelectedDate,
+  onDateChange: externalOnDateChange,
 }: ReservationFormProps) {
   const { t, locale } = useI18n();
   const { profile } = useProfile();
@@ -64,8 +69,14 @@ export function ReservationForm({
     };
   };
 
-  // 폼 데이터
-  const [formData, setFormData] = useState(getInitialFormData());
+  // 폼 데이터 - 외부에서 selectedDate가 제공되면 그걸 사용
+  const [formData, setFormData] = useState(() => {
+    const initial = getInitialFormData();
+    return {
+      ...initial,
+      date: externalSelectedDate || initial.date,
+    };
+  });
 
   // 기존 예약 데이터가 있을 때 시간 선택 초기화
   useEffect(() => {
@@ -88,6 +99,14 @@ export function ReservationForm({
     }
   }, [editingReservation, setSelectedTimes]);
 
+  // 외부에서 selectedDate가 변경되면 내부 상태도 업데이트
+  useEffect(() => {
+    if (externalSelectedDate && externalSelectedDate !== formData.date) {
+      setFormData((prev) => ({ ...prev, date: externalSelectedDate }));
+      clearSelection(); // 날짜가 바뀌면 시간 선택 초기화
+    }
+  }, [externalSelectedDate, formData.date, clearSelection]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -96,12 +115,24 @@ export function ReservationForm({
     // 날짜가 변경되면 선택된 시간 초기화
     if (name === "date" && formData.date !== value) {
       clearSelection();
+      externalOnDateChange?.(value); // 외부 콜백 호출
     }
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleDateChange = (date: string) => {
+    if (formData.date !== date) {
+      clearSelection();
+      externalOnDateChange?.(date); // 외부 콜백 호출
+      setFormData((prev) => ({
+        ...prev,
+        date,
+      }));
+    }
   };
 
   const handleCreateReservation = async () => {
@@ -143,22 +174,24 @@ export function ReservationForm({
     if (formData.date === todayLocal) {
       const flooredNow = new Date(now);
       flooredNow.setSeconds(0, 0);
-      
+
       // 선택된 간격 단위에 따라 내림 처리
       const currentMinute = flooredNow.getMinutes();
-      
+
       // 선택된 시간 범위에서 간격 단위 추정
       const timeDiff = endDateTime.getTime() - startDateTime.getTime();
       const intervalMinutes = Math.round(timeDiff / (1000 * 60)); // 분 단위로 변환
-      
+
       if (intervalMinutes >= 60) {
         // 1시간 이상인 경우 시간 단위로 내림
         flooredNow.setMinutes(0, 0);
       } else {
         // 분 단위로 내림
-        flooredNow.setMinutes(Math.floor(currentMinute / intervalMinutes) * intervalMinutes);
+        flooredNow.setMinutes(
+          Math.floor(currentMinute / intervalMinutes) * intervalMinutes
+        );
       }
-      
+
       if (startDateTime < flooredNow) {
         setError(t("timetable.pastTimeNotification"));
         return;
@@ -213,14 +246,10 @@ export function ReservationForm({
       <div className="space-y-4">
         {/* 날짜 선택 */}
         <div>
-          <input
-            type="date"
-            id="date"
-            name="date"
-            value={formData.date}
-            onChange={handleInputChange}
-            min={today} // 오늘 이후만 선택 가능 (로컬 기준)
-            className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          <Calendar
+            selectedDate={formData.date}
+            onDateChange={handleDateChange}
+            reservations={existingReservations}
           />
         </div>
 
@@ -247,10 +276,10 @@ export function ReservationForm({
         </div>
 
         {error && (
-          <ErrorMessage 
-            message={error} 
-            variant="destructive" 
-            onClose={() => setError(null)} 
+          <ErrorMessage
+            message={error}
+            variant="destructive"
+            onClose={() => setError(null)}
           />
         )}
 

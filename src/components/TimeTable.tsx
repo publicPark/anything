@@ -215,54 +215,12 @@ export function TimeTable({
     [getSlotsInRange, timeSlots]
   );
 
-  // 범위 내 클릭 처리
-  const handleRangeClick = useCallback(
-    (slotTime: string) => {
-      const slotMinutes = timeToMinutes(slotTime);
-      const startMinutes = timeToMinutes(selectedStartTime!);
-      const endMinutes = timeToMinutes(selectedEndTime!);
-
-      if (slotMinutes === startMinutes) {
-        // 시작 슬롯 클릭
-        if (endMinutes - startMinutes === selectedInterval) {
-          // 단일 슬롯 선택 → 전체 취소
-          setSelectedTimes(null, null);
-        } else {
-          // 범위 선택 → 시작만 해제
-          const newStartTime = minutesToTime(startMinutes + selectedInterval);
-          setSelectedTimes(newStartTime, selectedEndTime!);
-        }
-      } else if (slotMinutes === endMinutes - selectedInterval) {
-        // 종료 슬롯 클릭 → 종료만 해제
-        const newEndTime = minutesToTime(endMinutes - selectedInterval);
-        setSelectedTimes(selectedStartTime!, newEndTime);
-      } else {
-        // 중간 슬롯 클릭 → 전체 초기화
-        setSelectedTimes(null, null);
-      }
-    },
-    [
-      selectedStartTime,
-      selectedEndTime,
-      timeToMinutes,
-      minutesToTime,
-      selectedInterval,
-      setSelectedTimes,
-    ]
-  );
-
   // 범위 확장 처리
   const handleRangeExtension = useCallback(
     (slotTime: string) => {
       const startMinutes = timeToMinutes(selectedStartTime!);
       const slotMinutes = timeToMinutes(slotTime);
       const slotEndTime = minutesToTime(slotMinutes + selectedInterval);
-
-      // 같은 시간을 선택하면 선택 취소
-      if (slotMinutes === startMinutes) {
-        setSelectedTimes(null, null);
-        return;
-      }
 
       if (slotMinutes > startMinutes) {
         // 이후 시간 선택 → 범위 확장
@@ -277,23 +235,15 @@ export function TimeTable({
           // 예약이 없으면 범위 확장
           setSelectedTimes(selectedStartTime!, slotEndTime);
         }
-      } else {
+      } else if (selectedEndTime) {
         // 이전 시간 선택 → 시작 시간 변경
-        if (selectedEndTime) {
-          const hasReservation = hasReservationInRange(
-            slotTime,
-            selectedEndTime
-          );
-          if (hasReservation) {
-            // 예약이 있으면 새로운 시작
-            setSelectedTimes(slotTime, slotEndTime);
-          } else {
-            // 예약이 없으면 시작 시간 변경
-            setSelectedTimes(slotTime, selectedEndTime);
-          }
-        } else {
-          // 종료 시간이 없으면 새로운 시작
+        const hasReservation = hasReservationInRange(slotTime, selectedEndTime);
+        if (hasReservation) {
+          // 예약이 있으면 새로운 시작
           setSelectedTimes(slotTime, slotEndTime);
+        } else {
+          // 예약이 없으면 시작 시간 변경
+          setSelectedTimes(slotTime, selectedEndTime);
         }
       }
     },
@@ -308,49 +258,6 @@ export function TimeTable({
     ]
   );
 
-  // 슬롯 클릭 처리
-  const handleSlotClick = useCallback(
-    (slotTime: string) => {
-      const slot = timeSlots.find((s) => s.time === slotTime);
-      if (!slot || slot.isReserved || slot.isDisabled) return;
-
-      // 범위 내 클릭 처리
-      if (selectedStartTime && selectedEndTime) {
-        const slotMinutes = timeToMinutes(slotTime);
-        const startMinutes = timeToMinutes(selectedStartTime);
-        const endMinutes = timeToMinutes(selectedEndTime);
-
-        if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
-          handleRangeClick(slotTime);
-          return;
-        }
-      }
-
-      // 범위 확장 처리 (이미 선택된 상태에서 다른 슬롯 클릭)
-      if (selectedStartTime) {
-        handleRangeExtension(slotTime);
-        return;
-      }
-
-      // 첫 번째 선택
-      const slotEndTime = minutesToTime(
-        timeToMinutes(slotTime) + selectedInterval
-      );
-      setSelectedTimes(slotTime, slotEndTime);
-    },
-    [
-      timeSlots,
-      selectedStartTime,
-      selectedEndTime,
-      timeToMinutes,
-      minutesToTime,
-      selectedInterval,
-      handleRangeClick,
-      handleRangeExtension,
-      setSelectedTimes,
-    ]
-  );
-
   // 슬롯 호버 처리
   const handleSlotHover = useCallback((slotTime: string) => {
     setHoveredSlot(slotTime);
@@ -360,44 +267,67 @@ export function TimeTable({
     setHoveredSlot(null);
   }, []);
 
-  // 현재 호버 중인 범위 계산
+  // 현재 호버 중인 범위 계산 (클릭 로직과 동일한 동작 미리보기)
   const hoverRange = useMemo((): string[] => {
     if (!hoveredSlot || !selectedStartTime) return [];
 
-    const startMinutes = timeToMinutes(selectedStartTime);
-    const hoverMinutes = timeToMinutes(hoveredSlot);
+    const slotMinutes = timeToMinutes(hoveredSlot);
+    const startMinutes = timeToMinutes(selectedStartTime!);
+    const endMinutes = timeToMinutes(selectedEndTime!);
 
-    // 이전/이후 시간 모두 범위 표시
-    const rangeStart = Math.min(startMinutes, hoverMinutes);
-    const rangeEnd = Math.max(startMinutes, hoverMinutes);
+    let hoverSlots: string[] = [];
 
-    const hoverRange = getSlotsInRange(
-      minutesToTime(rangeStart),
-      minutesToTime(rangeEnd)
-    );
-
-    // 범위에 예약된 시간이 포함되면 hover 표시 안 함
-    if (
-      hasReservationInRange(minutesToTime(rangeStart), minutesToTime(rangeEnd))
-    ) {
-      return [];
+    if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
+      // 범위 안 hover: 새로운 시작점 표시
+      const newStartTime = hoveredSlot;
+      const newEndTime = minutesToTime(
+        timeToMinutes(newStartTime) + selectedInterval
+      );
+      hoverSlots = getSlotsInRange(newStartTime, newEndTime);
+    } else {
+      // 범위 밖 hover: 선택 상태에 따라 다름
+      if (endMinutes - startMinutes === selectedInterval) {
+        // 단일 슬롯 선택 상태: 범위 확장 표시
+        const slotEndTime = minutesToTime(slotMinutes + selectedInterval);
+        if (slotMinutes > startMinutes) {
+          // 이후 시간 hover: 시작 유지, 종료 확장
+          hoverSlots = getSlotsInRange(selectedStartTime!, slotEndTime);
+        } else {
+          // 이전 시간 hover: 시작 변경, 종료 유지
+          hoverSlots = getSlotsInRange(hoveredSlot, selectedEndTime!);
+        }
+      } else {
+        // 다중 슬롯 선택 상태: 새로운 시작점 표시
+        const newStartTime = hoveredSlot;
+        const newEndTime = minutesToTime(
+          timeToMinutes(newStartTime) + selectedInterval
+        );
+        hoverSlots = getSlotsInRange(newStartTime, newEndTime);
+      }
     }
 
-    return hoverRange;
+    // 범위에 예약된 시간이 포함되면 hover 표시 안 함
+    if (hoverSlots.length > 0) {
+      const startTime = hoverSlots[0];
+      const endTime = minutesToTime(
+        timeToMinutes(hoverSlots[hoverSlots.length - 1]) + selectedInterval
+      );
+      if (hasReservationInRange(startTime, endTime)) {
+        return [];
+      }
+    }
+
+    return hoverSlots;
   }, [
     hoveredSlot,
     selectedStartTime,
+    selectedEndTime,
+    selectedInterval,
     timeToMinutes,
     minutesToTime,
     getSlotsInRange,
     hasReservationInRange,
   ]);
-
-  const hasReservationInHoverRange = useMemo(() => {
-    return selectedStartTime
-      ? hasReservationInRange(selectedStartTime, hoveredSlot || "")
-      : false;
-  }, [selectedStartTime, hoveredSlot, hasReservationInRange]);
 
   // 시간 슬롯 업데이트
   useEffect(() => {
@@ -415,15 +345,127 @@ export function TimeTable({
     selectedInterval,
   ]);
 
-  // 색상 정의
+  // 색상 정의 (범례와 슬롯 스타일링에 모두 사용)
   const slotStyles = useMemo(
     () => ({
-      available: "bg-muted",
-      selected: "bg-primary",
-      reserved: "bg-destructive/20",
-      past: "bg-muted-foreground/30",
+      // 기본 상태 스타일
+      base: {
+        available: "bg-muted hover:bg-muted/80",
+        selected: "bg-primary text-primary-foreground",
+        reserved: "bg-destructive/20 text-destructive cursor-not-allowed",
+        past: "bg-muted-foreground/30 text-muted-foreground cursor-not-allowed",
+      },
+      // 변형 상태 스타일
+      variants: {
+        selectedRange: "bg-primary/80 text-primary-foreground",
+        hover: "bg-primary/20 text-primary-foreground",
+        hoverRange: "bg-primary/40 text-primary-foreground",
+        hoverRangeReserved: "bg-destructive/10 text-destructive",
+        current: "ring-2 ring-yellow-500 ring-opacity-50 animate-pulse",
+      },
     }),
     []
+  );
+
+  // 슬롯 상태에 따른 클래스명 생성 헬퍼 함수
+  const getSlotClassName = useCallback(
+    (
+      slot: TimeSlot,
+      states: {
+        isSelected: boolean;
+        isInSelectedRange: boolean;
+        isHovered: boolean;
+        isInHoverRange: boolean;
+        isCurrent: boolean;
+      }
+    ) => {
+      const {
+        isSelected,
+        isInSelectedRange,
+        isHovered,
+        isInHoverRange,
+        isCurrent,
+      } = states;
+
+      // 우선순위에 따른 조건부 스타일링
+      if (slot.isReserved) return slotStyles.base.reserved;
+      if (slot.isDisabled) return slotStyles.base.past;
+      if (isSelected) return slotStyles.base.selected;
+      if (isInSelectedRange) return slotStyles.variants.selectedRange;
+      if (isInHoverRange) return slotStyles.variants.hoverRange; // 이미 예약 필터링됨
+      if (isHovered) return slotStyles.variants.hover;
+
+      // 기본 상태 + 현재 시간 효과
+      let className = slotStyles.base.available;
+      if (isCurrent) className += ` ${slotStyles.variants.current}`;
+
+      return className;
+    },
+    [slotStyles]
+  );
+
+  // 슬롯 클릭 처리
+  const handleSlotClick = useCallback(
+    (slotTime: string) => {
+      const targetSlot = timeSlots.find(
+        (slotItem) => slotItem.time === slotTime
+      );
+      if (!targetSlot || targetSlot.isReserved || targetSlot.isDisabled) return;
+
+      // 1. 아직 아무것도 선택되지 않은 상태: 첫 번째 선택
+      if (!selectedStartTime) {
+        const slotEndTime = minutesToTime(
+          timeToMinutes(slotTime) + selectedInterval
+        );
+        setSelectedTimes(slotTime, slotEndTime);
+        return;
+      }
+
+      // 2. 이미 선택된 상태: 범위 안/밖 판별 후 처리
+      const slotMinutes = timeToMinutes(slotTime);
+      const startMinutes = timeToMinutes(selectedStartTime!);
+      const endMinutes = timeToMinutes(selectedEndTime!);
+
+      if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
+        // 범위 안 클릭: 단일 슬롯 선택 상태에서 같은 슬롯을 클릭하면 취소
+        if (
+          endMinutes - startMinutes === selectedInterval &&
+          slotTime === selectedStartTime
+        ) {
+          setSelectedTimes(null, null);
+          return;
+        }
+
+        // 그 외 범위 안 클릭: 새로운 시작점으로 설정
+        const slotEndTime = minutesToTime(
+          timeToMinutes(slotTime) + selectedInterval
+        );
+        setSelectedTimes(slotTime, slotEndTime);
+        return;
+      }
+
+      // 범위 밖 클릭: 선택 상태에 따라 다른 동작
+      if (endMinutes - startMinutes === selectedInterval) {
+        // 단일 슬롯 선택 상태: 범위 확장
+        handleRangeExtension(slotTime);
+      } else {
+        // 다중 슬롯 선택 상태: 새로운 시작점 설정
+        const slotEndTime = minutesToTime(
+          timeToMinutes(slotTime) + selectedInterval
+        );
+        setSelectedTimes(slotTime, slotEndTime);
+      }
+    },
+    [
+      timeSlots,
+      selectedStartTime,
+      selectedEndTime,
+      timeToMinutes,
+      minutesToTime,
+      selectedInterval,
+      handleRangeExtension,
+      setSelectedTimes,
+    ]
   );
 
   return (
@@ -435,23 +477,25 @@ export function TimeTable({
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-4">
             <div className="flex items-center gap-1">
               <div
-                className={`w-3 h-3 ${slotStyles.available} rounded border border-border`}
+                className={`w-3 h-3 ${slotStyles.base.available} rounded border border-border`}
               ></div>
               <span>{t("timetable.availableTime")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div
-                className={`w-3 h-3 ${slotStyles.selected} rounded border border-border`}
+                className={`w-3 h-3 ${slotStyles.base.selected} rounded border border-border`}
               ></div>
               <span>{t("timetable.selectedTime")}</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-muted rounded border border-border ring-2 ring-yellow-500 ring-opacity-50 animate-pulse"></div>
+              <div
+                className={`w-3 h-3 ${slotStyles.base.available} ${slotStyles.variants.current} rounded border border-border`}
+              ></div>
               <span>{t("timetable.currentTime")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div
-                className={`w-3 h-3 ${slotStyles.reserved} rounded border border-border`}
+                className={`w-3 h-3 ${slotStyles.base.reserved} rounded border border-border`}
               ></div>
               <span>{t("timetable.reservedTime")}</span>
             </div>
@@ -460,7 +504,7 @@ export function TimeTable({
             ) && (
               <div className="flex items-center gap-1">
                 <div
-                  className={`w-3 h-3 ${slotStyles.past} rounded border border-border`}
+                  className={`w-3 h-3 ${slotStyles.base.past} rounded border border-border`}
                 ></div>
                 <span>{t("timetable.pastTime")}</span>
               </div>
@@ -521,11 +565,12 @@ export function TimeTable({
               const isSelected =
                 inputStartMinutes >= slotStartMinutes &&
                 inputStartMinutes < slotEndMinutes;
-              const isInSelectedRange =
+              const isInSelectedRange = Boolean(
                 selectedStartTime &&
-                selectedEndTime &&
-                slotStartMinutes >= inputStartMinutes &&
-                slotStartMinutes < inputEndMinutes;
+                  selectedEndTime &&
+                  slotStartMinutes >= inputStartMinutes &&
+                  slotStartMinutes < inputEndMinutes
+              );
               const isInHoverRange = hoverRange.includes(slot.time);
               const isHovered = hoveredSlot === slot.time;
               const isCurrent = isCurrentTime(slot.time);
@@ -545,13 +590,33 @@ export function TimeTable({
                 if (slot.isReserved) return t("timetable.reservedTime");
                 if (slot.isDisabled) return t("timetable.pastTime");
                 if (isCurrent) return t("timetable.currentTime");
-                if (selectedStartTime && !selectedEndTime && hoveredSlot) {
-                  const hoverMinutes = timeToMinutes(hoveredSlot);
-                  const startMinutes = timeToMinutes(selectedStartTime);
-                  if (hoverMinutes > startMinutes) {
-                    return `${selectedStartTime} ~ ${hoveredSlot}`;
+
+                // Hover 범위가 있을 때 최종 결과 범위 표시
+                if (isInHoverRange && hoverRange.length > 0) {
+                  const startTime = hoverRange[0];
+                  const endTime = minutesToTime(
+                    timeToMinutes(hoverRange[hoverRange.length - 1]) +
+                      selectedInterval
+                  );
+                  const totalMinutes =
+                    timeToMinutes(endTime) - timeToMinutes(startTime);
+                  const hours = Math.floor(totalMinutes / 60);
+                  const minutes = totalMinutes % 60;
+
+                  let durationText = "";
+                  if (hours > 0 && minutes > 0) {
+                    durationText = `${hours}${t(
+                      "timetable.hourUnit"
+                    )} ${minutes}${t("timetable.minuteUnit")}`;
+                  } else if (hours > 0) {
+                    durationText = `${hours}${t("timetable.hourUnit")}`;
+                  } else {
+                    durationText = `${minutes}${t("timetable.minuteUnit")}`;
                   }
+
+                  return `${startTime} - ${endTime} (${durationText})`;
                 }
+
                 return slotTimeRange;
               };
 
@@ -564,31 +629,16 @@ export function TimeTable({
                   onMouseLeave={handleSlotLeave}
                   disabled={slot.isReserved || slot.isDisabled}
                   title={getTooltipMessage()}
-                  className={`
-                    px-3 py-2 text-sm rounded border border-border transition-all duration-200 whitespace-nowrap
-                    ${
-                      isCurrent
-                        ? "ring-2 ring-yellow-500 ring-opacity-50 animate-pulse"
-                        : ""
+                  className={`px-3 py-2 text-sm rounded border border-border transition-all duration-200 whitespace-nowrap ${getSlotClassName(
+                    slot,
+                    {
+                      isSelected,
+                      isInSelectedRange,
+                      isHovered,
+                      isInHoverRange,
+                      isCurrent,
                     }
-                    ${
-                      slot.isReserved
-                        ? "bg-destructive/20 text-destructive cursor-not-allowed"
-                        : slot.isDisabled
-                        ? "bg-muted-foreground/30 text-muted-foreground cursor-not-allowed"
-                        : isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : isInSelectedRange
-                        ? "bg-primary/80 text-primary-foreground"
-                        : isInHoverRange
-                        ? hasReservationInHoverRange
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-primary/40 text-primary-foreground"
-                        : isHovered
-                        ? "bg-primary/20 text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80"
-                    }
-                  `}
+                  )}`}
                 >
                   {slotTimeRange}
                 </button>

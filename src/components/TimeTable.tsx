@@ -449,11 +449,26 @@ export function TimeTable({
         // 단일 슬롯 선택 상태: 범위 확장
         handleRangeExtension(slotTime);
       } else {
-        // 다중 슬롯 선택 상태: 새로운 시작점 설정
-        const slotEndTime = minutesToTime(
-          timeToMinutes(slotTime) + selectedInterval
-        );
-        setSelectedTimes(slotTime, slotEndTime);
+        // 다중 슬롯 선택 상태: 바로 인접한 슬롯인지 확인
+        const selectedStartMinutes = timeToMinutes(selectedStartTime!);
+        const selectedEndMinutes = timeToMinutes(selectedEndTime!);
+        const slotStartMinutes = timeToMinutes(slotTime);
+        const slotEndMinutes = slotStartMinutes + selectedInterval;
+
+        // 선택된 범위의 바로 이전 또는 바로 다음 슬롯인지 확인
+        const isAdjacentBefore = slotEndMinutes === selectedStartMinutes;
+        const isAdjacentAfter = slotStartMinutes === selectedEndMinutes;
+
+        if (isAdjacentBefore || isAdjacentAfter) {
+          // 바로 인접한 슬롯: 범위 확장
+          handleRangeExtension(slotTime);
+        } else {
+          // 떨어져 있는 슬롯: 새로운 시작점 설정
+          const slotEndTime = minutesToTime(
+            timeToMinutes(slotTime) + selectedInterval
+          );
+          setSelectedTimes(slotTime, slotEndTime);
+        }
       }
     },
     [

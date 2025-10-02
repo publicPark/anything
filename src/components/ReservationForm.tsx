@@ -259,11 +259,9 @@ export function ReservationForm({
       }));
 
       // 성공 메시지 표시
-      alert(
-        editingReservation
-          ? t("ships.reservationUpdated")
-          : t("ships.reservationCreated")
-      );
+      if (!editingReservation) {
+        alert(t("ships.reservationCreated"));
+      }
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("ships.errorGeneric"));

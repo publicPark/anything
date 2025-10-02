@@ -207,7 +207,7 @@ export async function updateReservationSlackMessage(
       },
     };
 
-    const roomName = `${ship.name} ${cabin.name}`;
+    const roomName = cabin.name || ship.name || "Room";
 
     // Slack 메시지 업데이트
     await updateReservationNotification(notificationConfig, {

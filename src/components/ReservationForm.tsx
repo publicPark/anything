@@ -49,7 +49,6 @@ export function ReservationForm({
   } = useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 로컬 타임존 기준 YYYY-MM-DD 생성
   const getLocalYYYYMMDD = (d: Date) => {
@@ -177,9 +176,10 @@ export function ReservationForm({
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
     // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 선택된 간격 단위로 내림한 시각보다 빠르면 막기
+    // 단, 예약 수정 시에는 과거 시간 선택 허용
     const now = new Date();
     const todayLocal = getLocalYYYYMMDD(now);
-    if (formData.date === todayLocal) {
+    if (formData.date === todayLocal && !editingReservation) {
       const flooredNow = new Date(now);
       flooredNow.setSeconds(0, 0);
 
@@ -241,9 +241,6 @@ export function ReservationForm({
           console.error("Slack message update failed:", slackError);
           // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
         }
-
-        // 성공 메시지 표시
-        setSuccessMessage(t("ships.reservationUpdated"));
       } else {
         // 예약 생성 (서버 액션 통해 Slack 전송)
         const result = await createReservationAction({
@@ -265,7 +262,7 @@ export function ReservationForm({
       }));
 
       // 성공 메시지 표시
-      setSuccessMessage(
+      alert(
         editingReservation
           ? t("ships.reservationUpdated")
           : t("ships.reservationCreated")
@@ -317,14 +314,6 @@ export function ReservationForm({
             message={error}
             variant="destructive"
             onClose={() => setError(null)}
-          />
-        )}
-
-        {successMessage && (
-          <ErrorMessage
-            message={successMessage}
-            variant="success"
-            onClose={() => setSuccessMessage(null)}
           />
         )}
 

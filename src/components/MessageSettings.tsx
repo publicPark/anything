@@ -239,7 +239,7 @@ export function MessageSettings({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Slack 웹훅 URL (선택사항 - API 우선 사용)
+              Slack Webhook URL (선택사항 - API 우선 사용)
             </label>
             <input
               type="url"
@@ -254,7 +254,7 @@ export function MessageSettings({
               placeholder="https://hooks.slack.com/services/..."
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Bot API가 실패할 때만 사용됩니다. 메시지 수정/삭제에는 필요하지 않습니다.
+              메시지 등록 전용입니다. Bot API가 실패할 때만 사용됩니다.
             </p>
           </div>
 

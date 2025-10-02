@@ -20,12 +20,17 @@ export async function checkShipMemberAccess(
 
   // 멤버 전용 배 권한 체크
   if (shipData.member_only) {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
     if (userError) {
-      throw new Error(`Auth error: ${userError.message}`);
+      // console.error(`Auth error: ${userError.message}`);
+      // throw new Error(`Auth error: ${userError.message}`);
+      redirect(`/${locale}/ship/${shipPublicId}`);
     }
-    
+
     if (!user) {
       // 로그인되지 않은 경우 ship 페이지로 리다이렉트
       redirect(`/${locale}/ship/${shipPublicId}`);

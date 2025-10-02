@@ -10,7 +10,6 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
-import { CabinManage } from "@/components/CabinManage";
 import { MessageSettings } from "@/components/MessageSettings";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -112,10 +111,7 @@ export default function ShipDetail() {
 
   // crew 사용자가 관리 탭에 접근하려고 하면 viewMembers로 리다이렉트
   useEffect(() => {
-    if (
-      ship?.userRole === "crew" &&
-      (activeTab === "memberRequests" || activeTab === "cabinsManage")
-    ) {
+    if (ship?.userRole === "crew" && activeTab === "memberRequests") {
       setActiveTab("viewMembers");
     }
   }, [ship?.userRole]);
@@ -690,17 +686,6 @@ export default function ShipDetail() {
               isProcessing={isProcessingRequest}
               showRejectedRequests={true}
             />
-          </div>
-        ),
-      });
-
-      // 선실 관리 탭
-      tabs.push({
-        id: "cabinsManage",
-        label: t("ships.cabinsManage"),
-        content: (
-          <div className="space-y-6">
-            <CabinManage shipId={ship.id} userRole={ship.userRole} />
           </div>
         ),
       });

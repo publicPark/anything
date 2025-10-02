@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
@@ -8,6 +8,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CabinList } from "@/components/CabinList";
+import { CabinManage } from "@/components/CabinManage";
+import { ShipTabs } from "@/components/ShipTabs";
 import { Ship } from "@/types/database";
 import { Button } from "@/components/ui/Button";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -23,7 +25,10 @@ export default function ShipCabinsForm() {
   const [ship, setShip] = useState<Ship | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<"captain" | "mechanic" | "crew" | null>(null);
+  const [userRole, setUserRole] = useState<
+    "captain" | "mechanic" | "crew" | null
+  >(null);
+  const [activeTab, setActiveTab] = useState<string>("viewCabins");
 
   const shipPublicId = params.public_id as string;
 
@@ -69,11 +74,44 @@ export default function ShipCabinsForm() {
       }
     } catch (err: unknown) {
       console.error("Failed to fetch ship details:", err);
-      setError(err instanceof Error ? err.message : t("ships.errorLoadingShip"));
+      setError(
+        err instanceof Error ? err.message : t("ships.errorLoadingShip")
+      );
     } finally {
       setIsLoading(false);
     }
   };
+
+  // 탭 생성 함수 - 정비공 이상만 탭 표시
+  const createTabs = useCallback(() => {
+    if (!ship) return [];
+
+    // 정비공 이상만 탭 사용
+    if (userRole === "captain" || userRole === "mechanic") {
+      return [
+        {
+          id: "viewCabins",
+          label: t("ships.shipCabinsList"),
+          content: (
+            <div className="space-y-6">
+              <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
+            </div>
+          ),
+        },
+        {
+          id: "manageCabins",
+          label: t("ships.cabinsManage"),
+          content: (
+            <div className="space-y-6">
+              <CabinManage shipId={ship.id} userRole={userRole} />
+            </div>
+          ),
+        },
+      ];
+    }
+
+    return [];
+  }, [ship, userRole, t, shipPublicId]);
 
   if (profileLoading || isLoading) {
     return (
@@ -123,8 +161,16 @@ export default function ShipCabinsForm() {
         )} */}
       </div>
 
-      {/* 선실 목록 */}
-      <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
+      {/* 정비공 이상만 탭 표시, 일반 사용자는 선실 목록만 */}
+      {createTabs().length > 0 ? (
+        <ShipTabs
+          tabs={createTabs()}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      ) : (
+        <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
+      )}
     </div>
   );
 }

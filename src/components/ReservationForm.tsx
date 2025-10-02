@@ -8,10 +8,6 @@ import {
   createReservationAction,
   updateReservationSlackMessage,
 } from "@/app/actions/reservations";
-import {
-  updateReservationNotification,
-  deleteReservationNotification,
-} from "@/lib/notifications";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -235,7 +231,8 @@ export function ReservationForm({
             startDateTime.toISOString(),
             endDateTime.toISOString(),
             formData.purpose.trim(),
-            cabinId
+            cabinId,
+            locale
           );
         } catch (slackError) {
           console.error("Slack message update failed:", slackError);
@@ -248,7 +245,7 @@ export function ReservationForm({
           startISO: startDateTime.toISOString(),
           endISO: endDateTime.toISOString(),
           purpose: formData.purpose.trim(),
-          locale: "ko",
+          locale: locale,
         });
         if (!result.ok)
           throw new Error(result.message || "Failed to create reservation");

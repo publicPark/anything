@@ -148,7 +148,8 @@ export async function updateReservationSlackMessage(
   startISO: string,
   endISO: string,
   purpose: string,
-  cabinId: string
+  cabinId: string,
+  locale: "ko" | "en"
 ) {
   const supabase = await createServerSupabase();
 
@@ -216,7 +217,7 @@ export async function updateReservationSlackMessage(
       purpose,
       locale: "ko",
       shipPublicId: ship.public_id,
-      linkLabel: "상태 보기",
+      linkLabel: t("ships.viewStatus", locale),
       messageTs: reservation.slack_message_ts,
     });
 

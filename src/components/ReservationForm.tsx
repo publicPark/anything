@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
 import { createClient } from "@/lib/supabase/client";
-import { createReservationAction } from "@/app/actions/reservations";
+import {
+  createReservationAction,
+  updateReservationSlackMessage,
+} from "@/app/actions/reservations";
+import {
+  updateReservationNotification,
+  deleteReservationNotification,
+} from "@/lib/notifications";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -42,6 +49,7 @@ export function ReservationForm({
   } = useReservationStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 로컬 타임존 기준 YYYY-MM-DD 생성
   const getLocalYYYYMMDD = (d: Date) => {
@@ -219,6 +227,23 @@ export function ReservationForm({
         });
 
         if (error) throw error;
+
+        // 예약 수정 시 Slack 메시지 업데이트 (서버 액션으로 처리)
+        try {
+          await updateReservationSlackMessage(
+            editingReservation.id,
+            startDateTime.toISOString(),
+            endDateTime.toISOString(),
+            formData.purpose.trim(),
+            cabinId
+          );
+        } catch (slackError) {
+          console.error("Slack message update failed:", slackError);
+          // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
+        }
+
+        // 성공 메시지 표시
+        setSuccessMessage(t("ships.reservationUpdated"));
       } else {
         // 예약 생성 (서버 액션 통해 Slack 전송)
         const result = await createReservationAction({
@@ -238,6 +263,13 @@ export function ReservationForm({
         ...prev,
         purpose: "",
       }));
+
+      // 성공 메시지 표시
+      setSuccessMessage(
+        editingReservation
+          ? t("ships.reservationUpdated")
+          : t("ships.reservationCreated")
+      );
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
@@ -285,6 +317,14 @@ export function ReservationForm({
             message={error}
             variant="destructive"
             onClose={() => setError(null)}
+          />
+        )}
+
+        {successMessage && (
+          <ErrorMessage
+            message={successMessage}
+            variant="success"
+            onClose={() => setSuccessMessage(null)}
           />
         )}
 

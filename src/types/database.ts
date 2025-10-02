@@ -92,6 +92,7 @@ export interface CabinReservation {
   end_time: string;
   purpose: string;
   status: ReservationStatus;
+  slack_message_ts: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -157,7 +158,7 @@ export interface Database {
           request_message?: string;
         };
         Returns: {
-          type: 'success' | 'error';
+          type: "success" | "error";
           data?: ShipMember;
           message?: string;
         };

@@ -94,6 +94,7 @@ CREATE TABLE cabin_reservations (
   end_time TIMESTAMP WITH TIME ZONE NOT NULL,
   purpose TEXT NOT NULL,
   status reservation_status DEFAULT 'confirmed' NOT NULL,
+  slack_message_ts TEXT, -- Slack 메시지 timestamp (메시지 수정용)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -104,7 +105,9 @@ CREATE TABLE ship_notifications (
   ship_id UUID REFERENCES ships(id) ON DELETE CASCADE NOT NULL,
   channel TEXT NOT NULL, -- 'slack', 'discord' 등
   enabled BOOLEAN DEFAULT TRUE NOT NULL,
-  webhook_url TEXT NOT NULL,
+  webhook_url TEXT,
+  slack_bot_token TEXT, -- Slack Bot User OAuth Token (xoxb-...)
+  slack_channel_id TEXT, -- Slack 채널 ID
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(ship_id, channel)
@@ -1221,16 +1224,16 @@ DECLARE
 BEGIN
   -- 현재 사용자 ID 가져오기
   current_user_id := auth.uid();
-  
+
   -- 예약 정보 조회
   SELECT * INTO reservation_record FROM cabin_reservations WHERE id = reservation_uuid;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Reservation not found';
   END IF;
-  
+
   -- 권한 확인 (자신의 예약이거나 비회원 예약이거나 mechanic 이상)
   IF NOT (
-    reservation_record.user_id = current_user_id OR 
+    reservation_record.user_id = current_user_id OR
     reservation_record.user_id IS NULL OR
     EXISTS (
       SELECT 1 FROM ships s
@@ -1243,7 +1246,7 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Insufficient permissions';
   END IF;
-  
+
   -- 시간 충돌 검사 (자신의 예약 제외)
   IF EXISTS (
     SELECT 1 FROM cabin_reservations cr
@@ -1256,18 +1259,21 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Time conflict: Another reservation exists during this time';
   END IF;
-  
+
   -- 예약 수정
-  UPDATE cabin_reservations 
+  UPDATE cabin_reservations
   SET start_time = new_start_time,
       end_time = new_end_time,
       purpose = new_purpose
   WHERE id = reservation_uuid
   RETURNING * INTO updated_reservation;
-  
+
   RETURN updated_reservation;
 END;
 $$;
+
+-- pg_net extension 활성화 (HTTP 요청용)
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
 -- 선실 예약 삭제 함수
 CREATE OR REPLACE FUNCTION delete_cabin_reservation(

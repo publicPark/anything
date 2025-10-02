@@ -18,6 +18,8 @@ interface MessageSettingsProps {
 interface NotificationSettings {
   slack: {
     webhookUrl: string;
+    botToken: string;
+    channelId: string;
     enabled: boolean;
   };
   discord: {
@@ -36,7 +38,7 @@ export function MessageSettings({
 }: MessageSettingsProps) {
   const { t } = useI18n();
   const [settings, setSettings] = useState<NotificationSettings>({
-    slack: { webhookUrl: "", enabled: false },
+    slack: { webhookUrl: "", botToken: "", channelId: "", enabled: false },
     discord: { webhookUrl: "", enabled: false },
   });
   const [saving, setSaving] = useState(false);
@@ -49,7 +51,9 @@ export function MessageSettings({
         const supabase = createClient();
         const { data: notifications } = await supabase
           .from("ship_notifications")
-          .select("channel, webhook_url, enabled")
+          .select(
+            "channel, webhook_url, slack_bot_token, slack_channel_id, enabled"
+          )
           .eq("ship_id", shipId);
 
         if (notifications) {
@@ -61,6 +65,8 @@ export function MessageSettings({
           setSettings({
             slack: {
               webhookUrl: slackNotif?.webhook_url || "",
+              botToken: slackNotif?.slack_bot_token || "",
+              channelId: slackNotif?.slack_channel_id || "",
               enabled: slackNotif?.enabled || false,
             },
             discord: {
@@ -132,14 +138,16 @@ export function MessageSettings({
       const supabase = createClient();
 
       // Slack 설정 저장/업데이트
-      if (settings.slack.webhookUrl.trim()) {
+      if (settings.slack.webhookUrl.trim() || settings.slack.botToken.trim()) {
         const { error: slackError } = await supabase
           .from("ship_notifications")
           .upsert(
             {
               ship_id: shipId,
               channel: "slack",
-              webhook_url: settings.slack.webhookUrl.trim(),
+              webhook_url: settings.slack.webhookUrl.trim() || null,
+              slack_bot_token: settings.slack.botToken.trim() || null,
+              slack_channel_id: settings.slack.channelId.trim() || null,
               enabled: settings.slack.enabled,
             },
             { onConflict: "ship_id,channel" }
@@ -151,7 +159,7 @@ export function MessageSettings({
           return;
         }
       } else {
-        // 웹훅 URL이 비어있으면 삭제
+        // 모든 Slack 설정이 비어있으면 삭제
         await supabase
           .from("ship_notifications")
           .delete()
@@ -228,22 +236,69 @@ export function MessageSettings({
           </label>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Slack 웹훅 URL
-          </label>
-          <input
-            type="url"
-            value={settings.slack.webhookUrl}
-            onChange={(e) =>
-              setSettings((prev) => ({
-                ...prev,
-                slack: { ...prev.slack, webhookUrl: e.target.value },
-              }))
-            }
-            className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="https://hooks.slack.com/services/..."
-          />
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Slack 웹훅 URL (선택사항 - API 우선 사용)
+            </label>
+            <input
+              type="url"
+              value={settings.slack.webhookUrl}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  slack: { ...prev.slack, webhookUrl: e.target.value },
+                }))
+              }
+              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="https://hooks.slack.com/services/..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Bot API가 실패할 때만 사용됩니다. 메시지 수정/삭제에는 필요하지 않습니다.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Slack Bot User OAuth Token (권장)
+            </label>
+            <input
+              type="password"
+              value={settings.slack.botToken}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  slack: { ...prev.slack, botToken: e.target.value },
+                }))
+              }
+              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
+              placeholder="xoxb-..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              메시지 수정/삭제를 위해 필요합니다
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Slack 채널 ID
+            </label>
+            <input
+              type="text"
+              value={settings.slack.channelId}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  slack: { ...prev.slack, channelId: e.target.value },
+                }))
+              }
+              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
+              placeholder="C1234567890"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              채널 URL에서 마지막 부분 (예: #general → C1234567890)
+            </p>
+          </div>
         </div>
 
         <div>

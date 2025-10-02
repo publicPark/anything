@@ -1,5 +1,11 @@
 export type SlackPayload = { text: string };
 
+export type SlackUpdatePayload = {
+  channel: string;
+  ts: string;
+  text: string;
+};
+
 export async function postToSlack(
   webhookUrl: string,
   payload: SlackPayload
@@ -40,6 +46,85 @@ export async function postToSlack(
       const jitter = Math.floor(Math.random() * 300);
       await new Promise((resolve) => setTimeout(resolve, delaysMs[i] + jitter));
     }
+  }
+}
+
+// Slack API를 사용한 메시지 전송 (ts 반환)
+export async function postSlackMessage(
+  botToken: string,
+  channelId: string,
+  text: string
+): Promise<string> {
+  const response = await fetch("https://slack.com/api/chat.postMessage", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      text: text,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
+  }
+
+  return data.ts; // 메시지 timestamp 반환
+}
+
+// Slack API를 사용한 메시지 수정
+export async function updateSlackMessage(
+  botToken: string,
+  channelId: string,
+  messageTs: string,
+  text: string
+): Promise<void> {
+  const response = await fetch("https://slack.com/api/chat.update", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      ts: messageTs,
+      text: text,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
+  }
+}
+
+// Slack API를 사용한 메시지 삭제
+export async function deleteSlackMessage(
+  botToken: string,
+  channelId: string,
+  messageTs: string
+): Promise<void> {
+  const response = await fetch("https://slack.com/api/chat.delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      ts: messageTs,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
   }
 }
 

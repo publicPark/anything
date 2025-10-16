@@ -6,6 +6,8 @@ import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { generateMetadata as generateI18nMetadata } from "@/lib/metadata-helpers";
 import { defaultLocale } from "@/lib/i18n";
+import CookieConsent from "@/components/CookieConsent";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,11 +31,21 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID ? (
+          <Script
+            id="adsense-init"
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        ) : null}
         <ThemeProvider>
           <Navigation />
           <main className="min-h-screen bg-background">{children}</main>
           <Footer />
         </ThemeProvider>
+        <CookieConsent />
       </body>
     </html>
   );

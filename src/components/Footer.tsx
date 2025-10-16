@@ -27,6 +27,18 @@ export function Footer() {
             >
               {t("faq.title")}
             </Link>
+            <Link
+              href={`/${locale}/privacy`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("legal.privacy.title")}
+            </Link>
+            <Link
+              href={`/${locale}/terms`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("legal.terms.title")}
+            </Link>
           </div>
         </div>
       </div>

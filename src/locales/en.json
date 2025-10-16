@@ -85,6 +85,24 @@
     "systemMode": "System",
     "goBack": "Go Back"
   },
+  "cookie": {
+    "title": "We use cookies",
+    "message": "We use cookies to improve your experience. You can accept or decline optional cookies.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "updated": "Last updated",
+      "content": "We respect your privacy. We collect only necessary data to operate this service, such as account and usage information."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "updated": "Last updated",
+      "content": "By using this service, you agree to our rules. Do not abuse the service or infringe on others' rights."
+    }
+  },
   "ships": {
     "title": "Teams",
     "pageTitle": "Team Home",

@@ -1,13 +1,25 @@
 import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
+import { getSiteUrl } from "@/lib/env";
+import { createClient } from "@/lib/supabase/server";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://your-domain.com"; // Replace with your actual domain
-  const paths = ["/", "/login", "/profile", "/settings"];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = getSiteUrl() || "https://bookabin.vercel.app";
+  const paths = [
+    "/",
+    "/login",
+    "/profile",
+    "/settings",
+    "/faq",
+    "/ships",
+    "/privacy",
+    "/terms",
+    "/lab",
+  ];
 
   const sitemap: MetadataRoute.Sitemap = [];
 
-  // Generate sitemap entries for each locale and path
+  // Static pages
   locales.forEach((locale) => {
     paths.forEach((path) => {
       sitemap.push({
@@ -24,6 +36,39 @@ export default function sitemap(): MetadataRoute.Sitemap {
       });
     });
   });
+
+  // Dynamic: public ships (exclude member_only)
+  try {
+    const supabase = await createClient();
+    const { data: ships, error } = await supabase
+      .from("ships")
+      .select("public_id, updated_at, member_only")
+      .eq("member_only", false);
+
+    if (!error && ships) {
+      ships.forEach((ship) => {
+        locales.forEach((locale) => {
+          const path = `/ship/${ship.public_id}`;
+          sitemap.push({
+            url: `${baseUrl}/${locale}${path}`,
+            lastModified: ship.updated_at
+              ? new Date(ship.updated_at)
+              : new Date(),
+            changeFrequency: "weekly",
+            priority: 0.7,
+            alternates: {
+              languages: {
+                ko: `${baseUrl}/ko${path}`,
+                en: `${baseUrl}/en${path}`,
+              },
+            },
+          });
+        });
+      });
+    }
+  } catch {
+    // If DB fetch fails, return static sitemap only
+  }
 
   return sitemap;
 }

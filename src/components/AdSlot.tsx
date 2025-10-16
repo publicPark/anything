@@ -28,7 +28,9 @@ export default function AdSlot({
 
   return (
     <ins
-      ref={(el) => (insRef.current = el as HTMLModElement)}
+      ref={(el) => {
+        insRef.current = el as HTMLModElement | null;
+      }}
       className={`adsbygoogle ${className ?? ""}`.trim()}
       style={{ display: "block" }}
       data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID}

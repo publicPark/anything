@@ -70,7 +70,7 @@ export class NotificationErrorHandler {
    * Promise.allSettled의 결과를 처리하는 데 유용합니다.
    */
   static handleSettledResult(
-    result: PromiseSettledResult<any>,
+    result: PromiseSettledResult<unknown>,
     context: string
   ): void {
     if (result.status === "rejected") {
@@ -130,7 +130,7 @@ export class NotificationErrorHandler {
    * Promise.allSettled의 결과를 받아서 적절히 로깅합니다.
    */
   static handleBatchResults(
-    results: PromiseSettledResult<any>[],
+    results: PromiseSettledResult<unknown>[],
     contexts: string[]
   ): { successCount: number; failureCount: number } {
     let successCount = 0;

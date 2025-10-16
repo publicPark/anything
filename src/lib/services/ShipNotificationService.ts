@@ -5,9 +5,17 @@ import {
   CabinInfo,
   DatabaseNotificationSettings,
   ReservationContext,
+  NotificationChannel,
 } from "@/types/notifications";
 
-export type NotificationSettings = DatabaseNotificationSettings;
+// App-internal mapped settings shape (camelCase keys)
+export type NotificationSettings = {
+  channel: NotificationChannel;
+  webhookUrl?: string | null;
+  slackBotToken?: string | null;
+  slackChannelId?: string | null;
+  enabled: boolean;
+};
 
 // 알림 설정 조회 및 구성 서비스
 export class ShipNotificationService {

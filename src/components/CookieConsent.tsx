@@ -1,15 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useI18n } from "@/hooks/useI18n";
+import { usePathname } from "next/navigation";
 
 const CONSENT_COOKIE = "cookie_consent";
 
 export default function CookieConsent() {
   const { t, locale } = useI18n();
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+
+  // Exclude on ship detail and cabin detail pages
+  const isExcludedPath = useMemo(() => {
+    if (!pathname) return false;
+    // /{locale}/ship/{public_id}
+    const shipDetail = /^\/[a-z]{2}\/ship\/[^/]+$/;
+    // /{locale}/ship/{public_id}/cabin/{cabin_public_id}
+    const cabinDetail = /^\/[a-z]{2}\/ship\/[^/]+\/cabin\/[^/]+$/;
+    return shipDetail.test(pathname) || cabinDetail.test(pathname);
+  }, [pathname]);
 
   useEffect(() => {
+    if (isExcludedPath) {
+      setVisible(false);
+      return;
+    }
     try {
       const consent = document.cookie
         .split(";")
@@ -19,9 +35,9 @@ export default function CookieConsent() {
     } catch {
       setVisible(true);
     }
-  }, []);
+  }, [isExcludedPath]);
 
-  if (!visible) return null;
+  if (!visible || isExcludedPath) return null;
 
   const accept = () => {
     try {

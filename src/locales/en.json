@@ -372,17 +372,6 @@
     "shipCabinsDescription": "View room list for {shipName} team"
   },
   "admin": {
-    "title": "Admin",
-    "description": "System administration page",
-    "ships": "Ship Management",
-    "reservations": "Reservation Management",
-    "users": "User Management",
-    "searchUser": "Search",
-    "searchUserPlaceholder": "User code or name",
-    "username": "Username",
-    "displayName": "Name",
-    "role": "Role",
-    "adjustRole": "Adjust Role",
     "noUsersFound": "No users found"
   },
   "reservations": {

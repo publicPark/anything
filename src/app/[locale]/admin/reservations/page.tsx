@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useNavigation } from "@/hooks/useNavigation";
 
 export default function ReservationsPage() {
-  const { t, locale } = useI18n();
+  const { locale } = useI18n();
   const { profile, loading: profileLoading } = useProfile();
   const { getLocalizedPath } = useNavigation();
   const router = useRouter();
@@ -30,7 +30,9 @@ export default function ReservationsPage() {
   }, [profileLoading, profile, router, locale]);
 
   const handleDeleteAllPastReservations = async () => {
-    if (!confirm(t("reservations.confirmDeleteAllPast"))) {
+    if (
+      !confirm("Delete all past reservations? This action cannot be undone.")
+    ) {
       return;
     }
 
@@ -52,7 +54,7 @@ export default function ReservationsPage() {
       }
 
       if (!pastReservations || pastReservations.length === 0) {
-        setSuccess(t("reservations.noPastReservations"));
+        setSuccess("No past reservations to delete.");
         return;
       }
 
@@ -70,15 +72,14 @@ export default function ReservationsPage() {
       }
 
       setSuccess(
-        t("reservations.allPastReservationsDeleted").replace(
-          "{count}",
-          pastReservations.length.toString()
-        )
+        `${pastReservations.length} past reservations have been deleted.`
       );
     } catch (err: unknown) {
       console.error("Failed to delete past reservations:", err);
       setError(
-        err instanceof Error ? err.message : t("reservations.errorDeletingPast")
+        err instanceof Error
+          ? err.message
+          : "Error occurred while deleting past reservations."
       );
     } finally {
       setIsLoading(false);
@@ -96,7 +97,9 @@ export default function ReservationsPage() {
   if (profile?.role !== "chaos") {
     return (
       <div className="max-w-4xl mx-auto p-4 md:p-6">
-        <ErrorMessage message={t("reservations.accessDenied")} />
+        <ErrorMessage
+          message={"You do not have permission to access this page."}
+        />
       </div>
     );
   }
@@ -106,14 +109,8 @@ export default function ReservationsPage() {
       {/* Breadcrumbs */}
       <Breadcrumb
         items={[
-          {
-            label: t("admin.title"),
-            href: getLocalizedPath("/admin"),
-          },
-          {
-            label: t("admin.reservations"),
-            isCurrentPage: true,
-          },
+          { label: "Admin", href: getLocalizedPath("/admin") },
+          { label: "Reservation Management", isCurrentPage: true },
         ]}
       />
 
@@ -130,10 +127,10 @@ export default function ReservationsPage() {
             {isLoading ? (
               <>
                 <LoadingSpinner />
-                <span className="ml-2">{t("common.processing")}</span>
+                <span className="ml-2">Processing...</span>
               </>
             ) : (
-              t("reservations.deleteAllPast")
+              "Delete All Past Reservations"
             )}
           </Button>
 

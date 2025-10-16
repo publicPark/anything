@@ -363,17 +363,6 @@
     "shipCabinsDescription": "{shipName} 팀의 선실 목록을 확인하세요"
   },
   "admin": {
-    "title": "관리",
-    "description": "시스템 관리 페이지",
-    "ships": "배 관리",
-    "reservations": "예약 관리",
-    "users": "유저 관리",
-    "searchUser": "검색",
-    "searchUserPlaceholder": "사용자명 또는 이름",
-    "username": "사용자명",
-    "displayName": "이름",
-    "role": "권한",
-    "adjustRole": "권한 조정",
     "noUsersFound": "검색된 유저가 없습니다"
   },
   "reservations": {

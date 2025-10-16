@@ -710,6 +710,7 @@ export default function ShipDetail() {
                 shipName={ship.name}
                 shipPublicId={ship.public_id}
                 locale={locale}
+                timeZone={ship.time_zone || "Asia/Seoul"}
                 onSaved={fetchShipDetails}
               />
             </div>

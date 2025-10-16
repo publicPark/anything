@@ -13,6 +13,7 @@ interface MessageSettingsProps {
   shipName: string;
   shipPublicId?: string;
   locale: string;
+  timeZone?: string;
   slackWebhookUrl?: string | null;
   onSaved?: () => void;
 }
@@ -35,6 +36,8 @@ export function MessageSettings({
   shipName,
   shipPublicId,
   locale,
+  timeZone,
+  // ship timezone will be fetched from DB below, but allow prop pass-through if needed later
   slackWebhookUrl,
   onSaved,
 }: MessageSettingsProps) {
@@ -44,6 +47,8 @@ export function MessageSettings({
     discord: { webhookUrl: "", enabled: false },
   });
   const [saving, setSaving] = useState(false);
+  const [savingSlack, setSavingSlack] = useState(false);
+  const [savingDiscord, setSavingDiscord] = useState(false);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
@@ -105,6 +110,7 @@ export function MessageSettings({
         locale: locale === "ko" ? "ko" : "en",
         shipPublicId,
         linkLabel: t("ships.viewStatus"),
+        timeZone,
       });
     } catch {
       return "";
@@ -121,43 +127,36 @@ export function MessageSettings({
       end.setHours(14, 30, 0, 0);
 
       return composeReservationDiscordText({
-        roomName: shipName,
+        roomName: `${shipName} ${t("ships.cabinName")}`,
         startISO: start.toISOString(),
         endISO: end.toISOString(),
         purpose: t("ships.reservationPurposePlaceholder"),
         locale: locale === "ko" ? "ko" : "en",
         shipPublicId,
         linkLabel: t("ships.viewStatus"),
+        timeZone,
       });
     } catch {
       return "";
     }
   }, [shipName, locale, t, shipPublicId]);
 
-  const handleSave = async () => {
-    if (saving) return;
-    setSaving(true);
+  const handleSaveSlack = async () => {
+    if (savingSlack) return;
+    setSavingSlack(true);
     try {
       const supabase = createClient();
-
-      // 입력값 검증
       const webhook = settings.slack.webhookUrl.trim();
       const token = settings.slack.botToken.trim();
       const channel = settings.slack.channelId.trim();
 
-      // 최소 조합: (token + channel) 또는 (webhook)
       const hasApiCombo = token.length > 0 && channel.length > 0;
       const hasWebhook = webhook.length > 0;
-
-      // 부분 입력 케이스 처리 (예: 채널만 입력 등)
       const someProvided = webhook || token || channel;
       if (someProvided && !hasApiCombo && !hasWebhook) {
-        // 불완전 입력 → 에러 토스트 후 저장 중단
         toast.error(t("validation.allFieldsRequired"));
         return;
       }
-
-      // 간단한 형식 검증 (있을 때만)
       if (token && !token.startsWith("xoxb-")) {
         toast.error(t("validation.required"));
         return;
@@ -174,29 +173,20 @@ export function MessageSettings({
         return;
       }
 
-      // Slack 설정 저장/업데이트
-      if (hasWebhook || token) {
-        const { error: slackError } = await supabase
-          .from("ship_notifications")
-          .upsert(
-            {
-              ship_id: shipId,
-              channel: "slack",
-              webhook_url: hasWebhook ? webhook : null,
-              slack_bot_token: token || null,
-              slack_channel_id: channel || null,
-              enabled: settings.slack.enabled,
-            },
-            { onConflict: "ship_id,channel" }
-          );
-
-        if (slackError) {
-          console.error("Slack 설정 저장 실패:", slackError);
-          toast.error(t("validation.allFieldsRequired"));
-          return;
-        }
+      if (hasWebhook || hasApiCombo) {
+        const { error } = await supabase.from("ship_notifications").upsert(
+          {
+            ship_id: shipId,
+            channel: "slack",
+            webhook_url: hasWebhook ? webhook : null,
+            slack_bot_token: hasApiCombo ? token : null,
+            slack_channel_id: hasApiCombo ? channel : null,
+            enabled: settings.slack.enabled,
+          },
+          { onConflict: "ship_id,channel" }
+        );
+        if (error) throw error;
       } else {
-        // 모든 Slack 설정이 비어있으면 삭제
         await supabase
           .from("ship_notifications")
           .delete()
@@ -204,27 +194,35 @@ export function MessageSettings({
           .eq("channel", "slack");
       }
 
-      // Discord 설정 저장/업데이트
-      if (settings.discord.webhookUrl.trim()) {
-        const { error: discordError } = await supabase
-          .from("ship_notifications")
-          .upsert(
-            {
-              ship_id: shipId,
-              channel: "discord",
-              webhook_url: settings.discord.webhookUrl.trim(),
-              enabled: settings.discord.enabled,
-            },
-            { onConflict: "ship_id,channel" }
-          );
+      onSaved?.();
+      toast.success(t("ships.save"));
+    } catch (error) {
+      console.error("Slack Save Error:", error);
+      toast.error(t("errors.auth.serverError"));
+    } finally {
+      setSavingSlack(false);
+    }
+  };
 
-        if (discordError) {
-          console.error("Discord 설정 저장 실패:", discordError);
-          toast.error(t("validation.allFieldsRequired"));
-          return;
-        }
+  const handleSaveDiscord = async () => {
+    if (savingDiscord) return;
+    setSavingDiscord(true);
+    try {
+      const supabase = createClient();
+      const webhook = settings.discord.webhookUrl.trim();
+
+      if (webhook) {
+        const { error } = await supabase.from("ship_notifications").upsert(
+          {
+            ship_id: shipId,
+            channel: "discord",
+            webhook_url: webhook,
+            enabled: settings.discord.enabled,
+          },
+          { onConflict: "ship_id,channel" }
+        );
+        if (error) throw error;
       } else {
-        // 웹훅 URL이 비어있으면 삭제
         await supabase
           .from("ship_notifications")
           .delete()
@@ -235,10 +233,66 @@ export function MessageSettings({
       onSaved?.();
       toast.success(t("ships.save"));
     } catch (error) {
-      console.error("Network Error:", error);
+      console.error("Discord Save Error:", error);
       toast.error(t("errors.auth.serverError"));
     } finally {
-      setSaving(false);
+      setSavingDiscord(false);
+    }
+  };
+
+  const handleToggleSlack = async (enabled: boolean) => {
+    // Optimistic update
+    setSettings((prev) => ({ ...prev, slack: { ...prev.slack, enabled } }));
+    try {
+      const supabase = createClient();
+      const webhook = settings.slack.webhookUrl.trim() || null;
+      const token = settings.slack.botToken.trim() || null;
+      const channel = settings.slack.channelId.trim() || null;
+      const { error } = await supabase.from("ship_notifications").upsert(
+        {
+          ship_id: shipId,
+          channel: "slack",
+          webhook_url: webhook || null,
+          slack_bot_token: token || null,
+          slack_channel_id: channel || null,
+          enabled,
+        },
+        { onConflict: "ship_id,channel" }
+      );
+      if (error) throw error;
+    } catch (error) {
+      // Rollback
+      setSettings((prev) => ({
+        ...prev,
+        slack: { ...prev.slack, enabled: !enabled },
+      }));
+      console.error("Slack Toggle Error:", error);
+      toast.error(t("errors.auth.serverError"));
+    }
+  };
+
+  const handleToggleDiscord = async (enabled: boolean) => {
+    setSettings((prev) => ({ ...prev, discord: { ...prev.discord, enabled } }));
+    try {
+      const supabase = createClient();
+      const webhook = settings.discord.webhookUrl.trim() || null;
+      const { error } = await supabase.from("ship_notifications").upsert(
+        {
+          ship_id: shipId,
+          channel: "discord",
+          webhook_url: webhook,
+          enabled,
+        },
+        { onConflict: "ship_id,channel" }
+      );
+      if (error) throw error;
+    } catch (error) {
+      setSettings((prev) => ({
+        ...prev,
+        discord: { ...prev.discord, enabled: !enabled },
+      }));
+      console.error("Discord Toggle Error:", error);
+      toast.error(t("errors.auth.serverError"));
     }
   };
 
@@ -263,12 +317,7 @@ export function MessageSettings({
           </h4>
           <Toggle
             checked={settings.slack.enabled}
-            onChange={(enabled) =>
-              setSettings((prev) => ({
-                ...prev,
-                slack: { ...prev.slack, enabled },
-              }))
-            }
+            onChange={handleToggleSlack}
             aria-label={t("ships.slackTitle")}
           />
         </div>
@@ -338,7 +387,7 @@ export function MessageSettings({
           </div>
         </div>
 
-        <div>
+        <div className="space-y-2">
           <div className="text-sm font-medium text-foreground mb-2">
             {t("ships.slackExampleTitle")}
           </div>
@@ -347,64 +396,70 @@ export function MessageSettings({
               {slackPreviewText}
             </pre>
           </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveSlack}
+              className="px-3 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+              disabled={savingSlack}
+            >
+              {savingSlack ? t("common.processing") : t("ships.save")}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Discord 설정 */}
-      {/* <div className="space-y-4">
+      <div className="space-y-4 bg-background rounded-lg border border-border p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h4 className="text-lg font-semibold text-foreground">Discord 알림</h4>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={settings.discord.enabled}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                discord: { ...prev.discord, enabled: e.target.checked }
-              }))}
-              className="rounded border-border"
-            />
-            <span className="text-sm text-foreground">활성화</span>
-          </label>
+          <h4 className="text-lg font-semibold text-foreground">
+            {t("ships.discordTitle")}
+          </h4>
+          <Toggle
+            checked={settings.discord.enabled}
+            onChange={handleToggleDiscord}
+            aria-label={t("ships.discordTitle")}
+          />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Discord 웹훅 URL
+            {t("ships.discordWebhookUrl")}
           </label>
           <input
             type="url"
             value={settings.discord.webhookUrl}
-            onChange={(e) => setSettings(prev => ({
-              ...prev,
-              discord: { ...prev.discord, webhookUrl: e.target.value }
-            }))}
+            onChange={(e) =>
+              setSettings((prev) => ({
+                ...prev,
+                discord: { ...prev.discord, webhookUrl: e.target.value },
+              }))
+            }
             className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="https://discord.com/api/webhooks/..."
           />
         </div>
-        
-        <div>
+
+        <div className="space-y-2">
           <div className="text-sm font-medium text-foreground mb-2">
-            Discord 메시지 미리보기
+            {t("ships.discordExampleTitle")}
           </div>
           <div className="bg-muted p-3 rounded-md border">
             <pre className="text-sm whitespace-pre-wrap text-foreground">
               {discordPreviewText}
             </pre>
           </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveDiscord}
+              className="px-3 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
+              disabled={savingDiscord}
+            >
+              {savingDiscord ? t("common.processing") : t("ships.save")}
+            </button>
+          </div>
         </div>
-      </div> */}
-
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleSave}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
-          disabled={saving}
-        >
-          {saving ? t("common.processing") : t("ships.save")}
-        </button>
       </div>
     </div>
   );

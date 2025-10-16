@@ -271,6 +271,9 @@
     "slackChannelId": "Slack 채널 ID",
     "slackChannelIdHelp": "채널 URL에서 마지막 부분 (예: #general → C1234567890)",
     "slackWebhookHelp": "간단한 등록 전용 웹훅. Bot API가 실패할 때만 사용됩니다.",
+    "discordTitle": "Discord 알림",
+    "discordWebhookUrl": "Discord 웹훅 URL",
+    "discordExampleTitle": "Discord 메시지 미리보기",
     "timeZone": "시간대",
     "timeZonePlaceholder": "예: Asia/Seoul"
   },

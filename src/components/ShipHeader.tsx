@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { formatReservationSlackText } from "@/lib/notifications/slack";
@@ -43,27 +43,23 @@ interface ShipHeaderProps {
     name: string;
     description: string;
     member_only: boolean;
+    time_zone: string;
     slack_webhook_url?: string | null;
-    time_zone?: string;
   };
-  setEditFormData: (data: {
-    name: string;
-    description: string;
-    member_only: boolean;
-    slack_webhook_url?: string | null;
-    time_zone?: string;
-  }) => void;
+  setEditFormData: Dispatch<
+    SetStateAction<{
+      name: string;
+      description: string;
+      member_only: boolean;
+      time_zone: string;
+      slack_webhook_url?: string | null;
+    }>
+  >;
 }
 
 // 스타일 상수 - 글로벌 컬러 시스템 사용
 const SHIP_STATUS_STYLES = {
   memberOnly: "px-3 py-1 text-sm bg-warning-100 text-warning-800 rounded-full",
-} as const;
-
-const ROLE_STYLES = {
-  captain: "px-3 py-1 text-sm font-medium rounded-full role-captain",
-  mechanic: "px-3 py-1 text-sm font-medium rounded-full role-mechanic",
-  crew: "px-3 py-1 text-sm font-medium rounded-full role-crew",
 } as const;
 
 export function ShipHeader({
@@ -85,8 +81,6 @@ export function ShipHeader({
   const { t } = useI18n();
   const [showJoinRequestModal, setShowJoinRequestModal] = useState(false);
 
-  const canManageMembers =
-    ship?.userRole === "captain" || ship?.userRole === "mechanic";
   const canEditShip =
     ship?.userRole === "captain" || ship?.userRole === "mechanic";
   const canDeleteShip = ship?.userRole === "captain";
@@ -125,7 +119,8 @@ export function ShipHeader({
         start.toISOString(),
         end.toISOString(),
         t("ships.reservationPurposePlaceholder"),
-        (locale === "ko" ? "ko" : "en") as "ko" | "en"
+        (locale === "ko" ? "ko" : "en") as "ko" | "en",
+        ship.time_zone || "Asia/Seoul"
       );
     } catch {
       return "";
@@ -401,12 +396,6 @@ export function ShipHeader({
             {!isEditing && (
               <div className="flex flex-col md:flex-row md:items-center gap-2">
                 <div className="flex items-center gap-2">
-                  {/* {ship.userRole && (
-                    <span className={ROLE_STYLES[ship.userRole]}>
-                      {t(`ships.roles.${ship.userRole}`)}
-                    </span>
-                  )} */}
-
                   {(!ship.member_only || ship.isMember) && (
                     <Button onClick={onViewCabins} variant="primary">
                       {t("ships.viewCabins")}

@@ -279,6 +279,9 @@
     "slackChannelId": "Slack Channel ID",
     "slackChannelIdHelp": "The last segment from the channel URL (e.g., #general → C1234567890)",
     "slackWebhookHelp": "Simple webhook for posting only. Used when Bot API fails.",
+    "discordTitle": "Discord Notifications",
+    "discordWebhookUrl": "Discord Webhook URL",
+    "discordExampleTitle": "Discord Message Preview",
     "timeZone": "Time Zone",
     "timeZonePlaceholder": "e.g., Asia/Seoul"
   },

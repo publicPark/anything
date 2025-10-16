@@ -74,6 +74,7 @@ export async function createReservationAction(input: CreateReservationInput) {
         purpose: input.purpose,
         locale: input.locale,
         shipPublicId: context.ship.publicId,
+        timeZone: context.ship.timeZone,
         // linkLabel: `${context.ship.name} ${t(
         //   "ships.viewStatus",
         //   input.locale
@@ -151,6 +152,7 @@ export async function updateReservationSlackMessage(
       purpose,
       locale,
       shipPublicId: context.ship.publicId,
+      timeZone: context.ship.timeZone,
       linkLabel: `${context.ship.name} ${t("ships.viewStatus", locale)}`,
       messageTs: reservation.slack_message_ts,
     });

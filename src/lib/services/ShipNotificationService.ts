@@ -19,7 +19,7 @@ export class ShipNotificationService {
   async getShipInfo(shipId: string): Promise<ShipInfo | null> {
     const { data, error } = await this.supabase
       .from("ships")
-      .select("id, name, public_id")
+      .select("id, name, public_id, time_zone")
       .eq("id", shipId)
       .single();
 
@@ -32,6 +32,7 @@ export class ShipNotificationService {
       id: data.id,
       name: data.name,
       publicId: data.public_id,
+      timeZone: data.time_zone || undefined,
     };
   }
 

@@ -35,6 +35,7 @@ export type ReservationNotificationParams = {
   locale: "ko" | "en";
   shipPublicId?: string;
   linkLabel?: string;
+  timeZone?: string;
 };
 
 // 메시지 업데이트 파라미터
@@ -53,6 +54,7 @@ export type ShipInfo = {
   id: string;
   name: string;
   publicId?: string;
+  timeZone?: string;
 };
 
 export type CabinInfo = {

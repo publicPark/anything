@@ -263,8 +263,14 @@
     "errorDeletingReservations": "예약 삭제 중 오류가 발생했습니다",
     "shipInfo": "의 정보",
     "shipCabinsList": "선실 목록",
-    "slackWebhookUrl": "Slack Webhook URL",
-    "slackExampleTitle": "Slack 메시지 미리보기"
+    "slackTitle": "Slack 알림",
+    "slackWebhookUrl": "Slack Webhook URL (선택)",
+    "slackExampleTitle": "Slack 메시지 미리보기",
+    "slackBotTokenLabel": "Slack Bot User OAuth Token (권장)",
+    "slackBotTokenHelp": "등록/수정/삭제를 위해 필요합니다.",
+    "slackChannelId": "Slack 채널 ID",
+    "slackChannelIdHelp": "채널 URL에서 마지막 부분 (예: #general → C1234567890)",
+    "slackWebhookHelp": "간단한 등록 전용 웹훅. Bot API가 실패할 때만 사용됩니다."
   },
   "common": {
     "loading": "로딩 중...",

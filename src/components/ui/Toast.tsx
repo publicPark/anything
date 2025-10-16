@@ -1,57 +1,68 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type ToastType = "success" | "error" | "info";
 
 interface ToastProps {
   message: string;
-  type: "success" | "error" | "info";
+  type: ToastType;
   duration?: number;
   onClose?: () => void;
 }
 
 export function Toast({ message, type, duration = 3000, onClose }: ToastProps) {
   const [visible, setVisible] = useState(true);
+  const [hovered, setHovered] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  const variantClass = useMemo(() => {
+    switch (type) {
+      case "success":
+        return "bg-emerald-100 text-emerald-900 border-emerald-200";
+      case "error":
+        return "bg-red-100 text-red-900 border-red-200";
+      default:
+        return "bg-blue-100 text-blue-900 border-blue-200";
+    }
+  }, [type]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (hovered) return;
+    timerRef.current = window.setTimeout(() => {
       setVisible(false);
       onClose?.();
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
+    }, duration) as unknown as number;
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, [duration, onClose, hovered]);
 
   if (!visible) return null;
 
-  const typeStyles = {
-    success: {
-      backgroundColor: "var(--success-100)",
-      color: "var(--success-800)",
-    },
-    error: {
-      backgroundColor: "var(--error-100)",
-      color: "var(--error-800)",
-    },
-    info: {
-      backgroundColor: "var(--info-100)",
-      color: "var(--info-800)",
-    },
-  };
+  const icon = type === "success" ? "✓" : type === "error" ? "⚠" : "i";
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 px-4 py-2 rounded-md shadow-lg transition-all duration-300"
-      style={typeStyles[type]}
+      role={type === "error" ? "alert" : "status"}
+      aria-live={type === "error" ? "assertive" : "polite"}
+      className={`w-[320px] max-w-[90vw] rounded-md shadow-lg border ${variantClass} transition-all duration-200`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <div className="flex items-center space-x-2">
-        <span>{message}</span>
+      <div className="flex items-start gap-3 px-4 py-3">
+        <span aria-hidden className="mt-0.5 select-none">
+          {icon}
+        </span>
+        <span className="flex-1 text-sm leading-5">{message}</span>
         <button
+          type="button"
+          aria-label="Close"
           onClick={() => {
             setVisible(false);
             onClose?.();
           }}
-          className="ml-2 opacity-80 hover:opacity-60 transition-opacity"
-          style={{ color: "var(--foreground)" }}
+          className="shrink-0 rounded p-1/2 text-current/70 hover:text-current/100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           ✕
         </button>
@@ -60,23 +71,45 @@ export function Toast({ message, type, duration = 3000, onClose }: ToastProps) {
   );
 }
 
-interface ToastContainerProps {
-  toasts: Array<{
-    id: string;
-    message: string;
-    type: "success" | "error" | "info";
-  }>;
-  onRemove: (id: string) => void;
+interface ToastItem {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
 }
 
-export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+interface ToastContainerProps {
+  toasts: ToastItem[];
+  onRemove: (id: string) => void;
+  position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
+}
+
+export function ToastContainer({
+  toasts,
+  onRemove,
+  position = "top-right",
+}: ToastContainerProps) {
+  const posClass =
+    position === "top-right"
+      ? "top-4 right-4"
+      : position === "top-left"
+      ? "top-4 left-4"
+      : position === "bottom-right"
+      ? "bottom-4 right-4"
+      : "bottom-4 left-4";
+
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div
+      className={`fixed ${posClass} z-50 space-y-2`}
+      aria-live="polite"
+      aria-atomic="false"
+    >
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
           message={toast.message}
           type={toast.type}
+          duration={toast.duration}
           onClose={() => onRemove(toast.id)}
         />
       ))}
@@ -86,32 +119,27 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 
 // Toast 관리 훅
 export function useToast() {
-  const [toasts, setToasts] = useState<
-    Array<{
-      id: string;
-      message: string;
-      type: "success" | "error" | "info";
-    }>
-  >([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const addToast = (
-    message: string,
-    type: "success" | "error" | "info" = "info"
-  ) => {
-    const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
+  const add = (message: string, type: ToastType = "info", duration = 3000) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setToasts((prev) => [...prev, { id, message, type, duration }]);
+    return id;
   };
 
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const remove = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
   return {
     toasts,
-    addToast,
-    removeToast,
-    success: (message: string) => addToast(message, "success"),
-    error: (message: string) => addToast(message, "error"),
-    info: (message: string) => addToast(message, "info"),
+    add,
+    remove,
+    success: (message: string, duration?: number) =>
+      add(message, "success", duration),
+    error: (message: string, duration?: number) =>
+      add(message, "error", duration),
+    info: (message: string, duration?: number) =>
+      add(message, "info", duration),
   };
 }

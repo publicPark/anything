@@ -696,7 +696,7 @@ export default function ShipDetail() {
         label: t("ships.messageSettings"),
         content: (
           <div className="space-y-6">
-            <div className="bg-background rounded-lg border border-border p-6">
+            <div className="bg-muted rounded-lg border border-border p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
                 {t("ships.messageSettings")}
               </h3>

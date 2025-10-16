@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { ToastContainer, useToast } from "@/components/ui/Toast";
+import { Toggle } from "@/components/ui/Toggle";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
 import { composeReservationSlackText } from "@/lib/notifications/slack";
@@ -43,6 +45,7 @@ export function MessageSettings({
   });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   // 알림 설정 로드
   useEffect(() => {
@@ -137,17 +140,51 @@ export function MessageSettings({
     try {
       const supabase = createClient();
 
+      // 입력값 검증
+      const webhook = settings.slack.webhookUrl.trim();
+      const token = settings.slack.botToken.trim();
+      const channel = settings.slack.channelId.trim();
+
+      // 최소 조합: (token + channel) 또는 (webhook)
+      const hasApiCombo = token.length > 0 && channel.length > 0;
+      const hasWebhook = webhook.length > 0;
+
+      // 부분 입력 케이스 처리 (예: 채널만 입력 등)
+      const someProvided = webhook || token || channel;
+      if (someProvided && !hasApiCombo && !hasWebhook) {
+        // 불완전 입력 → 에러 토스트 후 저장 중단
+        toast.error(t("errors.validation.allFieldsRequired"));
+        return;
+      }
+
+      // 간단한 형식 검증 (있을 때만)
+      if (token && !token.startsWith("xoxb-")) {
+        toast.error(t("errors.validation.required"));
+        return;
+      }
+      if (channel && !/^C[A-Z0-9]{8,}$/i.test(channel)) {
+        toast.error(t("errors.validation.required"));
+        return;
+      }
+      if (
+        webhook &&
+        !/^https:\/\/hooks\.slack\.com\/services\//.test(webhook)
+      ) {
+        toast.error(t("errors.validation.required"));
+        return;
+      }
+
       // Slack 설정 저장/업데이트
-      if (settings.slack.webhookUrl.trim() || settings.slack.botToken.trim()) {
+      if (hasWebhook || token) {
         const { error: slackError } = await supabase
           .from("ship_notifications")
           .upsert(
             {
               ship_id: shipId,
               channel: "slack",
-              webhook_url: settings.slack.webhookUrl.trim() || null,
-              slack_bot_token: settings.slack.botToken.trim() || null,
-              slack_channel_id: settings.slack.channelId.trim() || null,
+              webhook_url: hasWebhook ? webhook : null,
+              slack_bot_token: token || null,
+              slack_channel_id: channel || null,
               enabled: settings.slack.enabled,
             },
             { onConflict: "ship_id,channel" }
@@ -155,7 +192,7 @@ export function MessageSettings({
 
         if (slackError) {
           console.error("Slack 설정 저장 실패:", slackError);
-          alert(`Slack 설정 저장 실패: ${slackError.message}`);
+          toast.error(t("errors.validation.allFieldsRequired"));
           return;
         }
       } else {
@@ -183,7 +220,7 @@ export function MessageSettings({
 
         if (discordError) {
           console.error("Discord 설정 저장 실패:", discordError);
-          alert(`Discord 설정 저장 실패: ${discordError.message}`);
+          toast.error(t("errors.validation.allFieldsRequired"));
           return;
         }
       } else {
@@ -196,9 +233,10 @@ export function MessageSettings({
       }
 
       onSaved?.();
+      toast.success(t("ships.save"));
     } catch (error) {
       console.error("Network Error:", error);
-      alert("네트워크 오류가 발생했습니다.");
+      toast.error(t("errors.auth.serverError"));
     } finally {
       setSaving(false);
     }
@@ -208,7 +246,7 @@ export function MessageSettings({
     return (
       <div className="flex justify-center items-center py-8">
         <div className="text-sm text-muted-foreground">
-          설정을 불러오는 중...
+          {t("common.loading")}
         </div>
       </div>
     );
@@ -216,54 +254,32 @@ export function MessageSettings({
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toast.toasts} onRemove={toast.remove} />
       {/* Slack 설정 */}
-      <div className="space-y-4">
+      <div className="space-y-4 bg-background rounded-lg border border-border p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <h4 className="text-lg font-semibold text-foreground">Slack 알림</h4>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={settings.slack.enabled}
-              onChange={(e) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  slack: { ...prev.slack, enabled: e.target.checked },
-                }))
-              }
-              className="rounded border-border"
-            />
-            <span className="text-sm text-foreground">활성화</span>
-          </label>
+          <h4 className="text-lg font-semibold text-foreground">
+            {t("ships.slackTitle")}
+          </h4>
+          <Toggle
+            checked={settings.slack.enabled}
+            onChange={(enabled) =>
+              setSettings((prev) => ({
+                ...prev,
+                slack: { ...prev.slack, enabled },
+              }))
+            }
+            aria-label={t("ships.slackTitle")}
+          />
         </div>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Slack Webhook URL (선택사항 - API 우선 사용)
+              {t("ships.slackBotTokenLabel")}
             </label>
             <input
-              type="url"
-              value={settings.slack.webhookUrl}
-              onChange={(e) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  slack: { ...prev.slack, webhookUrl: e.target.value },
-                }))
-              }
-              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="https://hooks.slack.com/services/..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              메시지 등록 전용입니다. Bot API가 실패할 때만 사용됩니다.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Slack Bot User OAuth Token (권장)
-            </label>
-            <input
-              type="password"
+              type="text"
               value={settings.slack.botToken}
               onChange={(e) =>
                 setSettings((prev) => ({
@@ -275,13 +291,13 @@ export function MessageSettings({
               placeholder="xoxb-..."
             />
             <p className="text-xs text-muted-foreground mt-1">
-              메시지 수정/삭제를 위해 필요합니다
+              {t("ships.slackBotTokenHelp")}
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Slack 채널 ID
+              {t("ships.slackChannelId")}
             </label>
             <input
               type="text"
@@ -296,14 +312,35 @@ export function MessageSettings({
               placeholder="C1234567890"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              채널 URL에서 마지막 부분 (예: #general → C1234567890)
+              {t("ships.slackChannelIdHelp")}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t("ships.slackWebhookUrl")}
+            </label>
+            <input
+              type="url"
+              value={settings.slack.webhookUrl}
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  slack: { ...prev.slack, webhookUrl: e.target.value },
+                }))
+              }
+              className="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="https://hooks.slack.com/services/..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("ships.slackWebhookHelp")}
             </p>
           </div>
         </div>
 
         <div>
           <div className="text-sm font-medium text-foreground mb-2">
-            Slack 메시지 미리보기
+            {t("ships.slackExampleTitle")}
           </div>
           <div className="bg-muted p-3 rounded-md border">
             <pre className="text-sm whitespace-pre-wrap text-foreground">
@@ -366,7 +403,7 @@ export function MessageSettings({
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md disabled:opacity-50"
           disabled={saving}
         >
-          {saving ? "저장 중..." : "저장"}
+          {saving ? t("common.processing") : t("ships.save")}
         </button>
       </div>
     </div>

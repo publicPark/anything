@@ -270,8 +270,14 @@
     "errorDeletingReservations": "An error occurred while deleting reservations",
     "shipInfo": "'s Info",
     "shipCabinsList": "Cabin List",
-    "slackWebhookUrl": "Slack Webhook URL",
-    "slackExampleTitle": "Slack Message Preview"
+    "slackTitle": "Slack Notifications",
+    "slackWebhookUrl": "Slack Webhook URL (optional)",
+    "slackExampleTitle": "Slack Message Preview",
+    "slackBotTokenLabel": "Slack Bot User OAuth Token (recommended)",
+    "slackBotTokenHelp": "Required for posting/updating/deleting messages.",
+    "slackChannelId": "Slack Channel ID",
+    "slackChannelIdHelp": "The last segment from the channel URL (e.g., #general → C1234567890)",
+    "slackWebhookHelp": "Simple webhook for posting only. Used when Bot API fails."
   },
   "common": {
     "loading": "Loading...",

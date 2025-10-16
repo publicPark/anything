@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
+import { useParticleAnimation } from "@/hooks/useParticleAnimation";
 import { createClient } from "@/lib/supabase/client";
 import {
   createReservationAction,
@@ -37,6 +38,8 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const { t, locale } = useI18n();
   const { profile } = useProfile();
+  const { trigger: triggerParticles, element: particleElement } =
+    useParticleAnimation({ text: t("ships.reservationCreated") });
   const {
     selectedStartTime,
     selectedEndTime,
@@ -258,9 +261,9 @@ export function ReservationForm({
         purpose: "",
       }));
 
-      // 성공 메시지 표시
+      // 성공 메시지 표시 (파티클 애니메이션)
       if (!editingReservation) {
-        alert(t("ships.reservationCreated"));
+        triggerParticles();
       }
       onSuccess();
     } catch (err: unknown) {
@@ -271,70 +274,75 @@ export function ReservationForm({
   };
 
   return (
-    <div className={isModal ? "p-6" : ""}>
-      <div className="space-y-2">
-        {/* 날짜 선택 */}
-        <div>
-          <Calendar
-            selectedDate={formData.date}
-            onDateChange={handleDateChange}
-            reservations={existingReservations}
-          />
-        </div>
+    <>
+      <div className={isModal ? "p-6" : ""}>
+        <div className="space-y-2">
+          {/* 날짜 선택 */}
+          <div>
+            <Calendar
+              selectedDate={formData.date}
+              onDateChange={handleDateChange}
+              reservations={existingReservations}
+            />
+          </div>
 
-        {/* 시간 선택 */}
-        <div>
-          <TimeTable
-            selectedDate={formData.date}
-            reservations={existingReservations}
-          />
-        </div>
+          {/* 시간 선택 */}
+          <div>
+            <TimeTable
+              selectedDate={formData.date}
+              reservations={existingReservations}
+            />
+          </div>
 
-        {/* 예약 목적 */}
-        <div>
-          <textarea
-            id="purpose"
-            name="purpose"
-            value={formData.purpose}
-            onChange={handleInputChange}
-            placeholder={t("ships.reservationPurposePlaceholder")}
-            rows={1}
-            className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            required
-          />
-        </div>
+          {/* 예약 목적 */}
+          <div>
+            <textarea
+              id="purpose"
+              name="purpose"
+              value={formData.purpose}
+              onChange={handleInputChange}
+              placeholder={t("ships.reservationPurposePlaceholder")}
+              rows={1}
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              required
+            />
+          </div>
 
-        {error && (
-          <ErrorMessage
-            message={error}
-            variant="destructive"
-            onClose={() => setError(null)}
-          />
-        )}
+          {error && (
+            <div className="mb-4">
+              <ErrorMessage
+                message={error}
+                variant="destructive"
+                onClose={() => setError(null)}
+              />
+            </div>
+          )}
 
-        {/* 버튼 */}
-        <div>
-          <Button
-            type="button"
-            size="lg"
-            variant="primary"
-            disabled={isLoading}
-            onClick={handleCreateReservation}
-            className="w-full"
-          >
-            {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <LoadingSpinner />
-                <span>{t("common.processing")}</span>
-              </div>
-            ) : editingReservation ? (
-              t("ships.updateReservation")
-            ) : (
-              t("ships.createReservation")
-            )}
-          </Button>
+          {/* 버튼 */}
+          <div>
+            <Button
+              type="button"
+              size="lg"
+              variant="primary"
+              disabled={isLoading}
+              onClick={handleCreateReservation}
+              className="w-full"
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <LoadingSpinner />
+                  <span>{t("common.processing")}</span>
+                </div>
+              ) : editingReservation ? (
+                t("ships.updateReservation")
+              ) : (
+                t("ships.createReservation")
+              )}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+      {particleElement}
+    </>
   );
 }

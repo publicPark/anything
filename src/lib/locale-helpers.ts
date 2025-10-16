@@ -40,10 +40,9 @@ export const LOCALIZED_MESSAGES = {
 
   // Validation
   validation: {
-    validEmail: (locale: Locale) => t("errors.validation.validEmail", locale),
-    required: (locale: Locale) => t("errors.validation.required", locale),
-    userNotFound: (locale: Locale) =>
-      t("errors.validation.userNotFound", locale),
+    validEmail: (locale: Locale) => t("validation.validEmail", locale),
+    required: (locale: Locale) => t("validation.required", locale),
+    userNotFound: (locale: Locale) => t("validation.userNotFound", locale),
   },
 
   // Support

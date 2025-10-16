@@ -74,7 +74,11 @@ export async function createReservationAction(input: CreateReservationInput) {
         purpose: input.purpose,
         locale: input.locale,
         shipPublicId: context.ship.publicId,
-        linkLabel: t("ships.viewStatus", input.locale),
+        // linkLabel: `${context.ship.name} ${t(
+        //   "ships.viewStatus",
+        //   input.locale
+        // )}`,
+        linkLabel: `${t("ships.viewStatus", input.locale)}`,
       });
 
       console.log("Notification sent, slackTs:", slackTs);
@@ -147,7 +151,7 @@ export async function updateReservationSlackMessage(
       purpose,
       locale,
       shipPublicId: context.ship.publicId,
-      linkLabel: t("ships.viewStatus", locale),
+      linkLabel: `${context.ship.name} ${t("ships.viewStatus", locale)}`,
       messageTs: reservation.slack_message_ts,
     });
 

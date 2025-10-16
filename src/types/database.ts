@@ -38,6 +38,7 @@ export interface Ship {
   name: string;
   description: string | null;
   member_only: boolean;
+  time_zone: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -149,6 +150,7 @@ export interface Database {
           ship_name: string;
           ship_description?: string;
           is_member_only?: boolean;
+          ship_time_zone?: string;
         };
         Returns: Ship;
       };

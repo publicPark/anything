@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { formatReservationSlackText } from "@/lib/notifications/slack";
+import { IANATimeZones } from "@/lib/timezones";
+import { Select } from "@/components/ui/Select";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { JoinRequestModal } from "@/components/JoinRequestModal";
 import { Ship, ShipMember, Profile } from "@/types/database";
@@ -30,6 +32,7 @@ interface ShipHeaderProps {
     description: string;
     member_only: boolean;
     slack_webhook_url?: string | null;
+    time_zone?: string;
   }) => void;
   onEditCancel: () => void;
   onViewCabins: () => void;
@@ -41,12 +44,14 @@ interface ShipHeaderProps {
     description: string;
     member_only: boolean;
     slack_webhook_url?: string | null;
+    time_zone?: string;
   };
   setEditFormData: (data: {
     name: string;
     description: string;
     member_only: boolean;
     slack_webhook_url?: string | null;
+    time_zone?: string;
   }) => void;
 }
 
@@ -239,6 +244,26 @@ export function ShipHeader({
                       {t("ships.memberOnly")}
                     </span>
                   </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    {t("ships.timeZone")}
+                  </label>
+                  <Select
+                    value={editFormData.time_zone || "Asia/Seoul"}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        time_zone: (e.target as HTMLSelectElement).value,
+                      })
+                    }
+                  >
+                    {IANATimeZones.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
                 {/* Slack settings moved to dedicated modal */}
               </div>

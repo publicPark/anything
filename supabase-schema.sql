@@ -41,6 +41,8 @@ CREATE TABLE ships (
   name TEXT NOT NULL,
   description TEXT,
   member_only BOOLEAN DEFAULT FALSE NOT NULL,
+  -- IANA time zone name, e.g. 'Asia/Seoul'
+  time_zone TEXT DEFAULT 'Asia/Seoul' NOT NULL,
   created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -557,7 +559,8 @@ $$;
 CREATE OR REPLACE FUNCTION create_ship(
   ship_name TEXT,
   ship_description TEXT DEFAULT NULL,
-  is_member_only BOOLEAN DEFAULT FALSE
+  is_member_only BOOLEAN DEFAULT FALSE,
+  ship_time_zone TEXT DEFAULT 'Asia/Seoul'
 )
 RETURNS ships
 LANGUAGE plpgsql
@@ -583,8 +586,8 @@ BEGIN
   END IF;
   
   -- 배 생성 (public_id 무작위 'SP' + 랜덤)
-  INSERT INTO ships (public_id, name, description, member_only, created_by)
-  VALUES (generate_ship_public_id(), ship_name, ship_description, is_member_only, user_id)
+  INSERT INTO ships (public_id, name, description, member_only, time_zone, created_by)
+  VALUES (generate_ship_public_id(), ship_name, ship_description, is_member_only, COALESCE(NULLIF(ship_time_zone, ''), 'Asia/Seoul'), user_id)
   RETURNING * INTO new_ship;
   
   -- 배 생성자를 선장으로 자동 가입
@@ -592,9 +595,9 @@ BEGIN
   VALUES (new_ship.id, user_id, 'captain');
   
   -- gaia 사용자는 배 생성 후 titan으로 등급 하락
-  IF user_role = 'gaia' THEN
-    UPDATE profiles SET role = 'titan' WHERE id = user_id;
-  END IF;
+  -- IF user_role = 'gaia' THEN
+  --   UPDATE profiles SET role = 'titan' WHERE id = user_id;
+  -- END IF;
   
   RETURN new_ship;
 END;
@@ -1439,7 +1442,7 @@ CREATE TRIGGER on_auth_user_created
 -- 함수 실행 권한 설정
 GRANT EXECUTE ON FUNCTION create_user_profile(UUID, TEXT) TO authenticated;
 -- Expose the actual 3-arg signature
-GRANT EXECUTE ON FUNCTION create_ship(TEXT, TEXT, BOOLEAN) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_ship(TEXT, TEXT, BOOLEAN, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION join_ship(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION change_member_role(UUID, ship_member_role) TO authenticated;
 GRANT EXECUTE ON FUNCTION transfer_captaincy(UUID) TO authenticated;

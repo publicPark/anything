@@ -53,6 +53,7 @@ export default function ShipDetail() {
     name: "",
     description: "",
     member_only: false,
+    time_zone: "Asia/Seoul",
   });
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
   const lastRejectedRequestId = useRef<string | null>(null);
@@ -580,6 +581,7 @@ export default function ShipDetail() {
       name: ship.name,
       description: ship.description || "",
       member_only: ship.member_only,
+      time_zone: ship.time_zone || "Asia/Seoul",
     });
     setIsEditing(true);
   };
@@ -590,6 +592,7 @@ export default function ShipDetail() {
       name: "",
       description: "",
       member_only: false,
+      time_zone: "Asia/Seoul",
     });
   };
 
@@ -597,6 +600,7 @@ export default function ShipDetail() {
     name: string;
     description: string;
     member_only: boolean;
+    time_zone?: string;
   }) => {
     if (!ship) return;
 
@@ -616,6 +620,7 @@ export default function ShipDetail() {
           name: data.name.trim(),
           description: data.description.trim(),
           member_only: data.member_only,
+          time_zone: data.time_zone || "Asia/Seoul",
         })
         .eq("id", ship.id);
 

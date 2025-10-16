@@ -165,7 +165,7 @@ export default function UserManagementPage() {
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case "titan":
-        return "타이탄";
+        return "티탄";
       case "gaia":
         return "가이아";
       case "chaos":

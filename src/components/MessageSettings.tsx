@@ -153,24 +153,24 @@ export function MessageSettings({
       const someProvided = webhook || token || channel;
       if (someProvided && !hasApiCombo && !hasWebhook) {
         // 불완전 입력 → 에러 토스트 후 저장 중단
-        toast.error(t("errors.validation.allFieldsRequired"));
+        toast.error(t("validation.allFieldsRequired"));
         return;
       }
 
       // 간단한 형식 검증 (있을 때만)
       if (token && !token.startsWith("xoxb-")) {
-        toast.error(t("errors.validation.required"));
+        toast.error(t("validation.required"));
         return;
       }
       if (channel && !/^C[A-Z0-9]{8,}$/i.test(channel)) {
-        toast.error(t("errors.validation.required"));
+        toast.error(t("validation.required"));
         return;
       }
       if (
         webhook &&
         !/^https:\/\/hooks\.slack\.com\/services\//.test(webhook)
       ) {
-        toast.error(t("errors.validation.required"));
+        toast.error(t("validation.required"));
         return;
       }
 
@@ -192,7 +192,7 @@ export function MessageSettings({
 
         if (slackError) {
           console.error("Slack 설정 저장 실패:", slackError);
-          toast.error(t("errors.validation.allFieldsRequired"));
+          toast.error(t("validation.allFieldsRequired"));
           return;
         }
       } else {
@@ -220,7 +220,7 @@ export function MessageSettings({
 
         if (discordError) {
           console.error("Discord 설정 저장 실패:", discordError);
-          toast.error(t("errors.validation.allFieldsRequired"));
+          toast.error(t("validation.allFieldsRequired"));
           return;
         }
       } else {

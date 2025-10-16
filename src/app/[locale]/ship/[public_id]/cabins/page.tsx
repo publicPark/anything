@@ -29,7 +29,7 @@ export async function generateMetadata({
       };
     }
 
-    const title = `${ship.name} ${t.ship.cabinsTitle} - ${t.metadata.title}`;
+    const title = `${ship.name} - ${t.ship.cabinsTitle} - ${t.metadata.title}`;
     const description = t.ship.shipCabinsDescription.replace(
       "{shipName}",
       ship.name
@@ -63,6 +63,6 @@ export default async function ShipCabinsPage({ params }: ShipCabinsPageProps) {
 
   // 멤버 전용 배 권한 체크
   await checkShipMemberAccess(public_id, locale);
-  
+
   return <ShipCabins />;
 }

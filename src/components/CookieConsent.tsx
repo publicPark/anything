@@ -11,14 +11,19 @@ export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const pathname = usePathname();
 
-  // Exclude on ship detail and cabin detail pages
+  // Exclude on ship detail, cabins list, and cabin detail pages
   const isExcludedPath = useMemo(() => {
     if (!pathname) return false;
     // /{locale}/ship/{public_id}
     const shipDetail = /^\/[a-z]{2}\/ship\/[^/]+$/;
+    // /{locale}/ship/{public_id}/cabins
+    const cabinsList = /^\/[a-z]{2}\/ship\/[^/]+\/cabins$/;
     // /{locale}/ship/{public_id}/cabin/{cabin_public_id}
     const cabinDetail = /^\/[a-z]{2}\/ship\/[^/]+\/cabin\/[^/]+$/;
-    return shipDetail.test(pathname) || cabinDetail.test(pathname);
+    return (
+      // shipDetail.test(pathname) ||
+      cabinsList.test(pathname) || cabinDetail.test(pathname)
+    );
   }, [pathname]);
 
   useEffect(() => {

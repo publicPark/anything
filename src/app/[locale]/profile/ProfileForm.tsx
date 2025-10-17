@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useToast } from "@/components/ui/Toast";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 
 export default function ProfileForm() {
@@ -15,14 +16,11 @@ export default function ProfileForm() {
   const [formData, setFormData] = useState({
     display_name: "",
   });
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | null>(
-    null
-  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const { t, locale } = useI18n();
+  const { success, error: showError } = useToast();
 
   if (loading) {
     return (
@@ -70,11 +68,9 @@ export default function ProfileForm() {
     try {
       await updateProfile(formData);
       setIsEditing(false);
-      setMessage(t("profile.updateSuccess"));
-      setMessageType("success");
+      success(t("profile.updateSuccess"));
     } catch {
-      setMessage(t("profile.updateError"));
-      setMessageType("error");
+      showError(t("profile.updateError"));
     }
   };
 
@@ -120,18 +116,6 @@ export default function ProfileForm() {
       </div>
 
       <div className="max-w-md mx-auto bg-muted rounded-lg shadow-lg border border-border p-6">
-        {message && (
-          <ErrorMessage
-            message={message}
-            variant={messageType === "success" ? "success" : "destructive"}
-            className="mb-4"
-            onClose={() => {
-              setMessage("");
-              setMessageType(null);
-            }}
-          />
-        )}
-
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">

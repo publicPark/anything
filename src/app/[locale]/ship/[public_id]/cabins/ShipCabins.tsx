@@ -33,10 +33,10 @@ export default function ShipCabinsForm() {
   const shipPublicId = params.public_id as string;
 
   useEffect(() => {
-    if (!profileLoading && shipPublicId) {
+    if (shipPublicId) {
       fetchShipDetails();
     }
-  }, [profileLoading, shipPublicId]);
+  }, [shipPublicId]);
 
   const fetchShipDetails = async () => {
     if (!shipPublicId) return;
@@ -113,7 +113,7 @@ export default function ShipCabinsForm() {
     return [];
   }, [ship, userRole, t, shipPublicId]);
 
-  if (profileLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <LoadingSpinner />

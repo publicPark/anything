@@ -38,18 +38,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
 
       const supabase = createClient();
 
-      // 회의실 목록 조회
-      const { data: cabinsData, error: cabinsError } = await supabase
-        .from("ship_cabins")
-        .select("*")
-        .eq("ship_id", shipId)
-        .order("name", { ascending: true });
-
-      if (cabinsError) {
-        throw cabinsError;
-      }
-
-      // 오늘 날짜 범위 계산
+      // 오늘 날짜 범위 계산 (한 번만)
       const today = new Date();
       const startOfDay = new Date(
         today.getFullYear(),
@@ -62,38 +51,50 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
         today.getDate() + 1
       );
 
-      // 오늘의 예약 목록만 조회
-      const { data: reservationsData, error: reservationsError } =
-        await supabase
+      // 병렬로 회의실 목록과 예약 목록 조회
+      const [cabinsResult, reservationsResult] = await Promise.all([
+        supabase
+          .from("ship_cabins")
+          .select("*")
+          .eq("ship_id", shipId)
+          .order("name", { ascending: true }),
+        supabase
           .from("cabin_reservations")
           .select("*")
           .eq("status", "confirmed")
-          .in(
-            "cabin_id",
-            (cabinsData || []).map((cabin) => cabin.id)
-          )
           .gte("start_time", startOfDay.toISOString())
-          .lt("start_time", endOfDay.toISOString());
+          .lt("start_time", endOfDay.toISOString()),
+      ]);
 
-      if (reservationsError) {
-        throw reservationsError;
+      if (cabinsResult.error) {
+        throw cabinsResult.error;
       }
 
-      // 상태 정보 추가
-      const reservationsByCabinId = groupReservationsByCabinId(
-        reservationsData || []
+      if (reservationsResult.error) {
+        throw reservationsResult.error;
+      }
+
+      const cabinsData = cabinsResult.data || [];
+      const reservationsData = reservationsResult.data || [];
+
+      // cabin_id로 필터링 (DB에서 in 쿼리 대신 클라이언트에서 필터링)
+      const cabinIds = cabinsData.map((cabin) => cabin.id);
+      const filteredReservations = reservationsData.filter((reservation) =>
+        cabinIds.includes(reservation.cabin_id)
       );
+
+      // 상태 정보 추가
+      const reservationsByCabinId =
+        groupReservationsByCabinId(filteredReservations);
       const cabinsWithStatus = addStatusToCabins(
-        cabinsData || [],
+        cabinsData,
         reservationsByCabinId
       );
 
       setCabins(cabinsWithStatus);
     } catch (err: unknown) {
       console.error("Failed to fetch cabins:", err);
-      setError(
-        err instanceof Error ? err.message : t("ships.errorLoadingCabins")
-      );
+      setError(err instanceof Error ? err.message : "Failed to load cabins");
     } finally {
       setLoading(false);
     }
@@ -126,6 +127,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
   }, [shipId, fetchCabins]);
 
   // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
+  // 30초마다 업데이트로 변경하여 성능 개선
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCabins((prevCabins) =>
@@ -149,7 +151,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
           };
         })
       );
-    }, 1000);
+    }, 30000); // 1초에서 30초로 변경
 
     return () => clearInterval(intervalId);
   }, []);

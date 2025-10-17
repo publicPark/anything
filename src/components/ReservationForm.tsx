@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
 import { useParticleAnimation } from "@/hooks/useParticleAnimation";
+import { useToast } from "@/components/ui/Toast";
 import { createClient } from "@/lib/supabase/client";
 import {
   createReservationAction,
@@ -38,8 +39,9 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const { t, locale } = useI18n();
   const { profile } = useProfile();
+  const toast = useToast();
   const { trigger: triggerParticles, element: particleElement } =
-    useParticleAnimation({ text: t("ships.reservationCreated") });
+    useParticleAnimation();
   const {
     selectedStartTime,
     selectedEndTime,
@@ -252,6 +254,21 @@ export function ReservationForm({
         });
         if (!result.ok)
           throw new Error(result.message || "Failed to create reservation");
+
+        // 알림 전송 성공 시 추가 토스트 표시
+        if (result.slackSent) {
+          if (result.slackMethod === "bot") {
+            toast.default(t("ships.slackBotMessageSent"));
+          } else if (result.slackMethod === "webhook") {
+            toast.default(t("ships.slackWebhookMessageSent"));
+          } else {
+            toast.default(t("ships.slackMessageSent"));
+          }
+        }
+
+        if (result.discordSent) {
+          toast.default(t("ships.discordMessageSent"));
+        }
       }
 
       clearSelection();
@@ -261,9 +278,12 @@ export function ReservationForm({
         purpose: "",
       }));
 
-      // 성공 메시지 표시 (파티클 애니메이션)
+      // 성공 메시지 표시 (파티클 애니메이션 + 토스트)
       if (!editingReservation) {
         triggerParticles();
+        toast.success(t("ships.reservationCreated"));
+      } else {
+        toast.success(t("ships.reservationUpdated"));
       }
       onSuccess();
     } catch (err: unknown) {

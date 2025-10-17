@@ -25,35 +25,39 @@ export class ReservationMessageHandler {
   async sendNotification(
     params: ReservationNotificationParams
   ): Promise<SendNotificationResult> {
-    const promises: Promise<string | void>[] = [];
     let slackTs: string | undefined;
+    let slackMethod: "bot" | "webhook" | undefined;
+    let discordSent = false;
 
     // Slack 알림 전송
     const slackResult = await this.sendSlackNotification(params);
     if (slackResult.ts) {
       slackTs = slackResult.ts;
     }
+    if (slackResult.method) {
+      slackMethod = slackResult.method;
+    }
 
     // Discord 알림 전송
     if (this.config.discord?.webhookUrl) {
       const discordContent = composeReservationDiscordText(params);
-      promises.push(
-        postToDiscord(this.config.discord.webhookUrl, {
+      try {
+        await postToDiscord(this.config.discord.webhookUrl, {
           content: discordContent,
-        }).catch((error) => {
-          console.error("Discord notification failed:", error);
-        })
-      );
+        });
+        console.log("✅ Discord webhook message sent successfully");
+        discordSent = true;
+      } catch (error) {
+        console.error("❌ Discord notification failed:", error);
+      }
     }
 
-    // 모든 알림을 병렬로 전송
-    await Promise.allSettled(promises);
-    return { slackTs };
+    return { slackTs, slackMethod, discordSent };
   }
 
   private async sendSlackNotification(
     params: ReservationNotificationParams
-  ): Promise<{ ts?: string }> {
+  ): Promise<{ ts?: string; method?: "bot" | "webhook" }> {
     // Bot token과 채널 ID가 있으면 API 사용 (webhook 불필요)
     if (this.config.slack?.botToken && this.config.slack?.channelId) {
       const slackText = composeReservationSlackText(params);
@@ -64,7 +68,7 @@ export class ReservationMessageHandler {
           slackText
         );
         console.log("✅ Slack API message sent successfully, ts:", ts);
-        return { ts };
+        return { ts, method: "bot" };
       } catch (error) {
         console.error("❌ Slack API notification failed:", error);
 
@@ -76,6 +80,7 @@ export class ReservationMessageHandler {
               text: slackText,
             });
             console.log("✅ Webhook fallback successful (no ts available)");
+            return { method: "webhook" };
           } catch (webhookError) {
             console.error("❌ Webhook fallback also failed:", webhookError);
           }
@@ -89,6 +94,8 @@ export class ReservationMessageHandler {
       const slackText = composeReservationSlackText(params);
       try {
         await postToSlack(this.config.slack.webhookUrl, { text: slackText });
+        console.log("✅ Slack webhook message sent successfully");
+        return { method: "webhook" };
       } catch (error) {
         console.error("Slack webhook notification failed:", error);
       }

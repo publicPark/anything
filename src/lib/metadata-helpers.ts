@@ -102,12 +102,29 @@ function getPathTranslations(locale: Locale, path: string) {
     "/settings": "settings",
     "/ships": "ships",
     "/ship": "ship",
+    "/privacy": "legal.privacy",
+    "/terms": "legal.terms",
   };
 
   const translationKey = pathMap[path];
   if (!translationKey) return null;
 
-  const pathTranslations = t[translationKey as keyof typeof t];
+  // Handle nested translation keys (e.g., "legal.privacy")
+  const keys = translationKey.split(".");
+  let pathTranslations: Record<string, unknown> = t;
+
+  for (const key of keys) {
+    if (
+      pathTranslations &&
+      typeof pathTranslations === "object" &&
+      key in pathTranslations
+    ) {
+      pathTranslations = pathTranslations[key] as Record<string, unknown>;
+    } else {
+      return null;
+    }
+  }
+
   if (!pathTranslations || typeof pathTranslations !== "object") return null;
 
   return {

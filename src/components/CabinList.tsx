@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
 import { ShipCabin, CabinReservation } from "@/types/database";
@@ -31,62 +31,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCabins();
-
-    // Supabase Realtime 구독
-    const supabase = createClient();
-    const channel = supabase
-      .channel("cabin-reservations")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "cabin_reservations",
-        },
-        (payload) => {
-          // 예약 변경 시 데이터 새로고침
-          fetchCabins();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [shipId]);
-
-  // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCabins((prevCabins) =>
-        prevCabins.map((cabin) => {
-          const { status, currentReservation, nextReservation } =
-            calculateCabinStatus(cabin.todayReservations || []);
-
-          if (
-            status === cabin.currentStatus &&
-            currentReservation === cabin.currentReservation &&
-            nextReservation === cabin.nextReservation
-          ) {
-            return cabin;
-          }
-
-          return {
-            ...cabin,
-            currentStatus: status,
-            currentReservation,
-            nextReservation,
-          };
-        })
-      );
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const fetchCabins = async () => {
+  const fetchCabins = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -152,7 +97,62 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [shipId]);
+
+  useEffect(() => {
+    fetchCabins();
+
+    // Supabase Realtime 구독
+    const supabase = createClient();
+    const channel = supabase
+      .channel("cabin-reservations")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cabin_reservations",
+        },
+        (payload) => {
+          // 예약 변경 시 데이터 새로고침
+          fetchCabins();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shipId, fetchCabins]);
+
+  // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCabins((prevCabins) =>
+        prevCabins.map((cabin) => {
+          const { status, currentReservation, nextReservation } =
+            calculateCabinStatus(cabin.todayReservations || []);
+
+          if (
+            status === cabin.currentStatus &&
+            currentReservation === cabin.currentReservation &&
+            nextReservation === cabin.nextReservation
+          ) {
+            return cabin;
+          }
+
+          return {
+            ...cabin,
+            currentStatus: status,
+            currentReservation,
+            nextReservation,
+          };
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   if (loading) {
     return (

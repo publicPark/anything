@@ -91,18 +91,6 @@
     "accept": "Accept",
     "decline": "Decline"
   },
-  "legal": {
-    "privacy": {
-      "title": "Privacy Policy",
-      "updated": "Last updated",
-      "content": "We respect your privacy. We collect only necessary data to operate this service, such as account and usage information."
-    },
-    "terms": {
-      "title": "Terms of Service",
-      "updated": "Last updated",
-      "content": "By using this service, you agree to our rules. Do not abuse the service or infringe on others' rights."
-    }
-  },
   "ships": {
     "title": "Teams",
     "pageTitle": "Team Home",
@@ -245,6 +233,10 @@
     "timeConflictMessage": "Another reservation exists during this time",
     "reservationCreated": "Reservation created successfully",
     "reservationUpdated": "Reservation updated successfully",
+    "slackMessageSent": "Notification sent to Slack",
+    "slackBotMessageSent": "Notification sent via Slack Bot",
+    "slackWebhookMessageSent": "Notification sent via Slack Webhook",
+    "discordMessageSent": "Notification sent to Discord",
     "reservationDeleted": "Reservation deleted successfully",
     "confirmDeleteReservation": "Are you sure you want to delete this reservation?",
     "guestReservation": "Guest Reservation",
@@ -331,10 +323,10 @@
     "delete": "Delete",
     "deleteAccount": "Delete Account"
   },
-  "faq": {
-    "title": "FAQ",
-    "q1": "How can I create a team?",
-    "a1": "You can create a team once from the home screen."
+  "footer": {
+    "faq": "FAQ",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "timetable": {
     "startTime": "Start Time",

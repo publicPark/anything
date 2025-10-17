@@ -47,6 +47,8 @@ export type UpdateReservationNotificationParams =
 // 메시지 전송 결과
 export type SendNotificationResult = {
   slackTs?: string;
+  slackMethod?: "bot" | "webhook";
+  discordSent?: boolean;
 };
 
 // Ship 및 Cabin 정보

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ToastContainer, useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/Toast";
 import { Toggle } from "@/components/ui/Toggle";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
@@ -308,7 +308,6 @@ export function MessageSettings({
 
   return (
     <div className="space-y-6">
-      <ToastContainer toasts={toast.toasts} onRemove={toast.remove} />
       {/* Slack 설정 */}
       <div className="space-y-4 bg-background rounded-lg border border-border p-4 md:p-6">
         <div className="flex items-center justify-between">

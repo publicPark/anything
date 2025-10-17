@@ -16,9 +16,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground">
-            {t("home.loading")}
-          </div>
+          <div className="text-lg text-muted-foreground">Loading...</div>
         </div>
       </div>
     );
@@ -40,11 +38,13 @@ export default function AdminPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            {t("reservations.accessDenied")}
+            Access denied
           </h1>
-          <p className="text-muted-foreground mb-6">{t("admin.description")}</p>
+          <p className="text-muted-foreground mb-6">
+            System administration page
+          </p>
           <Link href={getLocalizedPath("/")}>
-            <Button variant="secondary">{t("navigation.home")}</Button>
+            <Button variant="secondary">Home</Button>
           </Link>
         </div>
       </div>
@@ -53,15 +53,15 @@ export default function AdminPage() {
 
   const adminSections = [
     {
-      title: t("admin.ships"),
+      title: "Ship Management",
       href: getLocalizedPath("/ships"),
     },
     {
-      title: t("admin.reservations"),
+      title: "Reservation Management",
       href: getLocalizedPath("/admin/reservations"),
     },
     {
-      title: t("admin.users"),
+      title: "User Management",
       href: getLocalizedPath("/admin/users"),
     },
   ];
@@ -70,11 +70,9 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-foreground mb-4">
-            {t("admin.title")}
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground mb-4">Admin</h1>
           <p className="text-muted-foreground text-lg">
-            {t("admin.description")}
+            System administration page
           </p>
         </div>
 

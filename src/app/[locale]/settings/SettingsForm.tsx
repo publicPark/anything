@@ -34,14 +34,24 @@ export default function SettingsForm() {
   };
 
   const switchLanguage = (newLocale: string) => {
+    try {
+      // Persist user preference for locale (1 year)
+      // Note: Cookie will be read in middleware to keep locale consistent across navigation
+      document.cookie = `preferred_locale=${newLocale}; path=/; max-age=${
+        60 * 60 * 24 * 365
+      }; samesite=lax`;
+    } catch (err) {
+      // Fail silently; navigation still updates the URL locale
+    }
+
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
     const newPath = `/${newLocale}${pathWithoutLocale}`;
 
     // Ensure the path is valid
     if (newPath === `/${newLocale}` || newPath === `/${newLocale}/`) {
-      router.push(`/${newLocale}`);
+      router.replace(`/${newLocale}`);
     } else {
-      router.push(newPath);
+      router.replace(newPath);
     }
   };
 

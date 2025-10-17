@@ -3,7 +3,9 @@
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { createClient as createServerSupabase } from "@/lib/supabase/server";
-import { sendReservationNotification } from "@/lib/notifications";
+import { ReservationMessageHandler } from "@/lib/notifications";
+import { ShipNotificationService } from "@/lib/services/ShipNotificationService";
+import { NotificationErrorHandler } from "@/lib/utils/notification-error-handler";
 import { t } from "@/lib/i18n";
 
 type CreateReservationInput = {
@@ -29,67 +31,204 @@ export async function createReservationAction(input: CreateReservationInput) {
     return { ok: false as const, message: error.message };
   }
 
-  after(async () => {
-    try {
-      const { data: cabin } = await supabase
-        .from("ship_cabins")
-        .select("name, ship_id")
-        .eq("id", input.cabinId)
-        .single();
+  // 알림 전송을 동기적으로 처리하여 결과를 반환
+  let slackSent = false;
+  let slackMethod: "bot" | "webhook" | undefined;
+  let discordSent = false;
+  try {
+    const { data: reservation } = await supabase
+      .from("cabin_reservations")
+      .select("id")
+      .eq("cabin_id", input.cabinId)
+      .eq("start_time", input.startISO)
+      .eq("end_time", input.endISO)
+      .eq("purpose", input.purpose.trim())
+      .single();
 
-      if (!cabin) return;
+    if (reservation) {
+      // 서비스 인스턴스 생성
+      const notificationService = new ShipNotificationService(supabase);
 
-      const { data: ship } = await supabase
-        .from("ships")
-        .select("name, public_id")
-        .eq("id", cabin.ship_id)
-        .single();
+      // 예약 컨텍스트 조회 (cabin, ship, notification config)
+      const context = await notificationService.getReservationContext(
+        input.cabinId
+      );
 
-      if (!ship) return;
+      if (context && (context.config.slack || context.config.discord)) {
+        console.log("Sending reservation notification:", {
+          roomName: context.roomName,
+          startISO: input.startISO,
+          endISO: input.endISO,
+          purpose: input.purpose,
+          hasSlackBotToken: !!context.config.slack?.botToken,
+          hasSlackChannelId: !!context.config.slack?.channelId,
+          hasDiscordWebhook: !!context.config.discord?.webhookUrl,
+        });
 
-      // ship_notifications 테이블에서 활성화된 알림 설정 조회
-      const { data: notifications } = await supabase
-        .from("ship_notifications")
-        .select("channel, webhook_url")
-        .eq("ship_id", cabin.ship_id)
-        .eq("enabled", true);
-
-      if (!notifications || notifications.length === 0) return;
-
-      const roomName = cabin.name || ship.name || "Room";
-
-      // 통합 알림 시스템 사용
-      const notificationConfig = {
-        slack: notifications.find((n) => n.channel === "slack")?.webhook_url
-          ? {
-              webhookUrl: notifications.find((n) => n.channel === "slack")!
-                .webhook_url,
-            }
-          : undefined,
-        discord: notifications.find((n) => n.channel === "discord")?.webhook_url
-          ? {
-              webhookUrl: notifications.find((n) => n.channel === "discord")!
-                .webhook_url,
-            }
-          : undefined,
-      };
-
-      // Slack 또는 Discord 웹훅이 하나라도 있으면 알림 전송
-      if (notificationConfig.slack || notificationConfig.discord) {
-        await sendReservationNotification(notificationConfig, {
-          roomName,
+        // 메시지 핸들러로 알림 전송
+        const messageHandler = new ReservationMessageHandler(context.config);
+        const {
+          slackTs,
+          slackMethod: method,
+          discordSent: discord,
+        } = await messageHandler.sendNotification({
+          roomName: context.roomName,
           startISO: input.startISO,
           endISO: input.endISO,
           purpose: input.purpose,
           locale: input.locale,
-          shipPublicId: ship.public_id,
-          linkLabel: t("ships.viewStatus", input.locale),
+          shipPublicId: context.ship.publicId,
+          timeZone: context.ship.timeZone,
+          linkLabel: `${t("ships.viewStatus", input.locale)}`,
         });
+
+        console.log(
+          "Notification sent, slackTs:",
+          slackTs,
+          "slackMethod:",
+          method,
+          "discordSent:",
+          discord
+        );
+
+        // Slack 메시지 ts가 있으면 데이터베이스에 저장
+        if (slackTs) {
+          console.log("Updating reservation with slack_message_ts:", slackTs);
+          const { error: updateError } = await supabase
+            .from("cabin_reservations")
+            .update({ slack_message_ts: slackTs })
+            .eq("id", reservation.id);
+
+          if (updateError) {
+            console.error("Failed to update slack_message_ts:", updateError);
+          } else {
+            console.log("slack_message_ts updated successfully");
+            slackSent = true;
+            slackMethod = method;
+          }
+        } else if (method) {
+          // ts가 없어도 전송은 성공한 경우 (webhook)
+          slackSent = true;
+          slackMethod = method;
+        }
+
+        // Discord 전송 결과
+        if (discord) {
+          discordSent = true;
+        }
       }
-    } catch (e) {
-      console.error("Notification failed", e);
     }
+  } catch (e) {
+    console.error("Notification failed", e);
+  }
+
+  return { ok: true as const, slackSent, slackMethod, discordSent };
+}
+
+export async function updateReservationSlackMessage(
+  reservationId: string,
+  startISO: string,
+  endISO: string,
+  purpose: string,
+  cabinId: string,
+  locale: "ko" | "en"
+) {
+  const supabase = await createServerSupabase();
+
+  try {
+    // 예약 정보 조회 (ts 확인)
+    const { data: reservation } = await supabase
+      .from("cabin_reservations")
+      .select("slack_message_ts")
+      .eq("id", reservationId)
+      .single();
+
+    if (!reservation?.slack_message_ts) {
+      console.log("No slack message ts found, skipping update");
+      return { success: false, reason: "no_slack_ts" };
+    }
+
+    // 서비스 인스턴스 생성
+    const notificationService = new ShipNotificationService(supabase);
+
+    // 예약 컨텍스트 조회
+    const context = await notificationService.getReservationContext(cabinId);
+    if (
+      !context ||
+      !context.config.slack?.botToken ||
+      !context.config.slack?.channelId
+    ) {
+      console.log("Slack bot config missing");
+      return { success: false, reason: "no_slack_config" };
+    }
+
+    // 메시지 핸들러로 메시지 업데이트
+    const messageHandler = new ReservationMessageHandler(context.config);
+    await messageHandler.updateNotification({
+      roomName: context.roomName,
+      startISO,
+      endISO,
+      purpose,
+      locale,
+      shipPublicId: context.ship.publicId,
+      timeZone: context.ship.timeZone,
+      linkLabel: `${t("ships.viewStatus", locale)}`, // ${context.ship.name}
+      messageTs: reservation.slack_message_ts,
+    });
+
+    console.log("Slack message updated successfully");
+    return { success: true };
+  } catch (error) {
+    NotificationErrorHandler.handleSlackError(
+      "update",
+      error,
+      "Reservation message update"
+    );
+    return { success: false, reason: "error", error };
+  }
+}
+
+export async function deleteReservationSlackMessage(
+  messageTs: string,
+  cabinId: string
+) {
+  console.log("🗑️ deleteReservationSlackMessage called:", {
+    messageTs,
+    cabinId,
   });
 
-  return { ok: true as const };
+  if (!messageTs) {
+    console.log("❌ No slack message ts provided, skipping delete");
+    return;
+  }
+
+  const supabase = await createServerSupabase();
+
+  try {
+    console.log("✅ Message ts found, proceeding with delete");
+
+    // 서비스 인스턴스 생성
+    const notificationService = new ShipNotificationService(supabase);
+
+    // 알림 설정 조회
+    const config = await notificationService.getNotificationConfigForCabin(
+      cabinId
+    );
+    if (!config.slack?.botToken || !config.slack?.channelId) {
+      console.log("Slack bot config missing");
+      return;
+    }
+
+    // 메시지 핸들러로 메시지 삭제
+    const messageHandler = new ReservationMessageHandler(config);
+    await messageHandler.deleteNotification(messageTs);
+
+    console.log("Slack message deleted successfully");
+  } catch (error) {
+    NotificationErrorHandler.handleSlackError(
+      "delete",
+      error,
+      "Reservation message delete"
+    );
+  }
 }

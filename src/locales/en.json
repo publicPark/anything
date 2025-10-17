@@ -85,6 +85,12 @@
     "systemMode": "System",
     "goBack": "Go Back"
   },
+  "cookie": {
+    "title": "We use cookies",
+    "message": "We use cookies to improve your experience. You can accept or decline optional cookies.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
   "ships": {
     "title": "Teams",
     "pageTitle": "Team Home",
@@ -227,6 +233,11 @@
     "timeConflictMessage": "Another reservation exists during this time",
     "reservationCreated": "Reservation created successfully",
     "reservationUpdated": "Reservation updated successfully",
+    "slackMessageSent": "Notification sent to Slack",
+    "slackBotMessageSent": "Notification sent via Slack Bot",
+    "slackWebhookMessageSent": "Notification sent via Slack Webhook",
+    "slackMessageUpdated": "Slack message updated",
+    "discordMessageSent": "Notification sent to Discord",
     "reservationDeleted": "Reservation deleted successfully",
     "confirmDeleteReservation": "Are you sure you want to delete this reservation?",
     "guestReservation": "Guest Reservation",
@@ -264,14 +275,26 @@
     "noUpcomingReservations": "No upcoming reservations",
     "noPastReservations": "No past reservations",
     "pastReservationsInfo": "Past reservations can be easily deleted by mechanics.",
+    "selectedDateReservations": "{date} Reservations",
     "deleteAllPastReservations": "Delete all past reservations",
     "confirmDeleteAllPastReservations": "Delete all past reservations? This action cannot be undone.",
     "pastReservationsDeleted": "Past reservations deleted",
     "errorDeletingReservations": "An error occurred while deleting reservations",
     "shipInfo": "'s Info",
     "shipCabinsList": "Cabin List",
-    "slackWebhookUrl": "Slack Webhook URL",
-    "slackExampleTitle": "Slack Message Preview"
+    "slackTitle": "Slack Notifications",
+    "slackWebhookUrl": "Slack Webhook URL (optional)",
+    "slackExampleTitle": "Slack Message Preview",
+    "slackBotTokenLabel": "Slack Bot User OAuth Token (recommended)",
+    "slackBotTokenHelp": "Required for posting/updating messages.",
+    "slackChannelId": "Slack Channel ID",
+    "slackChannelIdHelp": "The last segment from the channel URL (e.g., #general → C1234567890)",
+    "slackWebhookHelp": "Simple webhook for posting only. Used when Bot API fails.",
+    "discordTitle": "Discord Notifications",
+    "discordWebhookUrl": "Discord Webhook URL",
+    "discordExampleTitle": "Discord Message Preview",
+    "timeZone": "Time Zone",
+    "timeZonePlaceholder": "e.g., Asia/Seoul"
   },
   "common": {
     "loading": "Loading...",
@@ -290,16 +313,6 @@
       "exchangeError": "Failed to complete authentication. Please try again.",
       "missingCode": "Invalid authentication request. Please try logging in again.",
       "defaultError": "An authentication error occurred. Please try again."
-    },
-    "validation": {
-      "validEmail": "Please enter a valid email address.",
-      "required": "This field is required.",
-      "userNotFound": "User not found.",
-      "allFieldsRequired": "Please fill in all fields.",
-      "endTimeAfterStart": "End time must be later than start time.",
-      "invalidTimeFormat": "Please enter a valid time format (HH:MM)",
-      "startTimeAfterEnd": "Start time must be earlier than end time.",
-      "endTimeBeforeStart": "End time must be later than start time."
     }
   },
   "ui": {
@@ -311,10 +324,10 @@
     "delete": "Delete",
     "deleteAccount": "Delete Account"
   },
-  "faq": {
-    "title": "FAQ",
-    "q1": "How can I create a team?",
-    "a1": "You can create a team once from the home screen."
+  "footer": {
+    "faq": "FAQ",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   },
   "timetable": {
     "startTime": "Start Time",
@@ -370,17 +383,6 @@
     "shipCabinsDescription": "View room list for {shipName} team"
   },
   "admin": {
-    "title": "Admin",
-    "description": "System administration page",
-    "ships": "Ship Management",
-    "reservations": "Reservation Management",
-    "users": "User Management",
-    "searchUser": "Search",
-    "searchUserPlaceholder": "User code or name",
-    "username": "Username",
-    "displayName": "Name",
-    "role": "Role",
-    "adjustRole": "Adjust Role",
     "noUsersFound": "No users found"
   },
   "reservations": {
@@ -399,5 +401,15 @@
     "notFoundTitle": "Room Not Found",
     "notFoundDescription": "The requested room could not be found",
     "cabinDetailDescription": "View {cabinName} room information for {shipName} team"
+  },
+  "validation": {
+    "validEmail": "Please enter a valid email address.",
+    "required": "This field is required.",
+    "userNotFound": "User not found.",
+    "allFieldsRequired": "Please fill in all fields.",
+    "endTimeAfterStart": "End time must be later than start time.",
+    "invalidTimeFormat": "Please enter a valid time format (HH:MM)",
+    "startTimeAfterEnd": "Start time must be earlier than end time.",
+    "endTimeBeforeStart": "End time must be later than start time."
   }
 }

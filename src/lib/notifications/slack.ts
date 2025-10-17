@@ -1,5 +1,11 @@
 export type SlackPayload = { text: string };
 
+export type SlackUpdatePayload = {
+  channel: string;
+  ts: string;
+  text: string;
+};
+
 export async function postToSlack(
   webhookUrl: string,
   payload: SlackPayload
@@ -43,48 +49,98 @@ export async function postToSlack(
   }
 }
 
+// Slack API를 사용한 메시지 전송 (ts 반환)
+export async function postSlackMessage(
+  botToken: string,
+  channelId: string,
+  text: string
+): Promise<string> {
+  const response = await fetch("https://slack.com/api/chat.postMessage", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      text: text,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
+  }
+
+  return data.ts; // 메시지 timestamp 반환
+}
+
+// Slack API를 사용한 메시지 수정
+export async function updateSlackMessage(
+  botToken: string,
+  channelId: string,
+  messageTs: string,
+  text: string
+): Promise<void> {
+  const response = await fetch("https://slack.com/api/chat.update", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      ts: messageTs,
+      text: text,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
+  }
+}
+
+// Slack API를 사용한 메시지 삭제
+export async function deleteSlackMessage(
+  botToken: string,
+  channelId: string,
+  messageTs: string
+): Promise<void> {
+  const response = await fetch("https://slack.com/api/chat.delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${botToken}`,
+    },
+    body: JSON.stringify({
+      channel: channelId,
+      ts: messageTs,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!data.ok) {
+    throw new Error(`Slack API error: ${data.error}`);
+  }
+}
+
+import { formatDateForTimezone, formatTimeForTimezone } from "@/lib/datetime";
+
 export function formatReservationSlackText(
   roomName: string,
   startISO: string,
   endISO: string,
   purpose: string,
-  locale: "ko" | "en"
+  locale: "ko" | "en",
+  timeZone: string = "Asia/Seoul"
 ): string {
-  const date = new Date(startISO);
-  const intl = locale === "ko" ? "ko-KR" : "en-US";
-
-  const y = date
-    .toLocaleDateString(intl, {
-      year: "2-digit",
-      timeZone: "Asia/Seoul",
-    })
-    .padStart(2, "0");
-  const m = date
-    .toLocaleDateString(intl, {
-      month: "2-digit",
-      timeZone: "Asia/Seoul",
-    })
-    .padStart(2, "0");
-  const d = date
-    .toLocaleDateString(intl, {
-      day: "2-digit",
-      timeZone: "Asia/Seoul",
-    })
-    .padStart(2, "0");
-  const dateStr = `${y}-${m}-${d}`;
-
-  const fmtTime = (iso: string) =>
-    new Date(iso)
-      .toLocaleTimeString(intl, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Seoul",
-      })
-      .replace(/\s/g, "");
-
-  const start = fmtTime(startISO);
-  const end = fmtTime(endISO);
+  const dateStr = formatDateForTimezone(startISO, timeZone);
+  const start = formatTimeForTimezone(startISO, timeZone);
+  const end = formatTimeForTimezone(endISO, timeZone);
   return `[${roomName} / ${dateStr} / ${start}~${end}]\n>${purpose}`;
 }
 
@@ -96,6 +152,7 @@ export type ComposeReservationMessageParams = {
   locale: "ko" | "en";
   shipPublicId?: string;
   linkLabel?: string;
+  timeZone?: string;
 };
 
 export function composeReservationSlackText(
@@ -115,7 +172,8 @@ export function composeReservationSlackText(
     startISO,
     endISO,
     purpose,
-    locale
+    locale,
+    params.timeZone
   );
 
   if (shipPublicId && linkLabel) {

@@ -25,7 +25,19 @@ export function Footer() {
               href={`/${locale}/faq`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {t("faq.title")}
+              {t("footer.faq")}
+            </Link>
+            <Link
+              href={`/${locale}/privacy`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("footer.privacy")}
+            </Link>
+            <Link
+              href={`/${locale}/terms`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("footer.terms")}
             </Link>
           </div>
         </div>

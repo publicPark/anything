@@ -85,6 +85,12 @@
     "systemMode": "시스템",
     "goBack": "돌아가기"
   },
+  "cookie": {
+    "title": "쿠키 사용 안내",
+    "message": "사용자 경험 향상을 위해 쿠키를 사용합니다. 선택 쿠키는 동의 또는 거부하실 수 있습니다.",
+    "accept": "동의",
+    "decline": "거부"
+  },
   "ships": {
     "title": "팀",
     "pageTitle": "팀 홈",
@@ -219,6 +225,11 @@
     "timeConflictMessage": "선택한 시간에 이미 예약이 있습니다",
     "reservationCreated": "예약이 생성되었습니다",
     "reservationUpdated": "예약이 수정되었습니다",
+    "slackMessageSent": "슬랙으로 알림이 전송되었습니다",
+    "slackBotMessageSent": "슬랙 봇으로 알림이 전송되었습니다",
+    "slackWebhookMessageSent": "슬랙 웹훅으로 알림이 전송되었습니다",
+    "slackMessageUpdated": "슬랙 메시지가 업데이트되었습니다",
+    "discordMessageSent": "디스코드로 알림이 전송되었습니다",
     "reservationDeleted": "예약이 삭제되었습니다",
     "confirmDeleteReservation": "이 예약을 삭제하시겠습니까?",
     "guestReservation": "비회원 예약",
@@ -263,8 +274,19 @@
     "errorDeletingReservations": "예약 삭제 중 오류가 발생했습니다",
     "shipInfo": "의 정보",
     "shipCabinsList": "선실 목록",
-    "slackWebhookUrl": "Slack Webhook URL",
-    "slackExampleTitle": "Slack 메시지 미리보기"
+    "slackTitle": "Slack 알림",
+    "slackWebhookUrl": "Slack Webhook URL (선택)",
+    "slackExampleTitle": "Slack 메시지 미리보기",
+    "slackBotTokenLabel": "Slack Bot User OAuth Token (권장)",
+    "slackBotTokenHelp": "등록/수정을 위해 필요합니다.",
+    "slackChannelId": "Slack 채널 ID",
+    "slackChannelIdHelp": "채널 URL에서 마지막 부분 (예: #general → C1234567890)",
+    "slackWebhookHelp": "간단한 등록 전용 웹훅. Bot API가 실패할 때만 사용됩니다.",
+    "discordTitle": "Discord 알림",
+    "discordWebhookUrl": "Discord 웹훅 URL",
+    "discordExampleTitle": "Discord 메시지 미리보기",
+    "timeZone": "시간대",
+    "timeZonePlaceholder": "예: Asia/Seoul"
   },
   "common": {
     "loading": "로딩 중...",
@@ -283,13 +305,6 @@
       "exchangeError": "인증 완료에 실패했습니다. 다시 시도해주세요.",
       "missingCode": "잘못된 인증 요청입니다. 다시 로그인해주세요.",
       "defaultError": "인증 오류가 발생했습니다. 다시 시도해주세요."
-    },
-    "validation": {
-      "validEmail": "유효한 이메일 주소를 입력해주세요.",
-      "required": "필수 입력 항목입니다.",
-      "userNotFound": "사용자를 찾을 수 없습니다.",
-      "allFieldsRequired": "모든 필드를 입력해주세요.",
-      "endTimeAfterStart": "종료 시간은 시작 시간보다 늦어야 합니다."
     }
   },
   "ui": {
@@ -301,12 +316,12 @@
     "delete": "삭제",
     "deleteAccount": "계정 삭제"
   },
-
-  "faq": {
-    "title": "자주 묻는 질문",
-    "q1": "팀을 만들고 싶은데 어떻게 하나요?",
-    "a1": "팀은 홈 화면에서 한번 만들 수 있어요."
+  "footer": {
+    "faq": "자주 묻는 질문",
+    "privacy": "개인정보처리방침",
+    "terms": "이용약관"
   },
+
   "timetable": {
     "startTime": "시작 시간",
     "endTime": "종료 시간",
@@ -351,7 +366,7 @@
   "ship": {
     "title": "팀 페이지",
     "description": "팀의 상세 정보를 확인하세요",
-    "cabinsTitle": "선실",
+    "cabinsTitle": "선실 목록",
     "cabinsDescription": "팀의 선실 목록을 확인하세요",
     "notFoundTitle": "팀을 찾을 수 없습니다",
     "notFoundDescription": "요청하신 팀을 찾을 수 없습니다",
@@ -359,17 +374,6 @@
     "shipCabinsDescription": "{shipName} 팀의 선실 목록을 확인하세요"
   },
   "admin": {
-    "title": "관리",
-    "description": "시스템 관리 페이지",
-    "ships": "배 관리",
-    "reservations": "예약 관리",
-    "users": "유저 관리",
-    "searchUser": "검색",
-    "searchUserPlaceholder": "사용자명 또는 이름",
-    "username": "사용자명",
-    "displayName": "이름",
-    "role": "권한",
-    "adjustRole": "권한 조정",
     "noUsersFound": "검색된 유저가 없습니다"
   },
   "reservations": {

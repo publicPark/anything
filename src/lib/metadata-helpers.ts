@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { Locale, getTranslations } from "./i18n";
+import { getSiteUrl } from "./env";
 
 /**
  * Generate metadata for a specific locale
@@ -48,7 +49,9 @@ export function generateMetadata(locale: Locale, path?: string): Metadata {
     openGraph: {
       type: "website",
       locale: locale === "ko" ? "ko_KR" : "en_US",
-      url: `https://your-domain.com/${locale}${path || ""}`,
+      url: `${getSiteUrl() || "https://your-domain.com"}/${locale}${
+        path || ""
+      }`,
       title: metadata.ogTitle,
       description: metadata.ogDescription,
       siteName: metadata.title,
@@ -68,10 +71,12 @@ export function generateMetadata(locale: Locale, path?: string): Metadata {
       images: [metadata.ogImage],
     },
     alternates: {
-      canonical: `https://your-domain.com/${locale}${path || ""}`,
+      canonical: `${getSiteUrl() || "https://your-domain.com"}/${locale}${
+        path || ""
+      }`,
       languages: {
-        ko: `https://your-domain.com/ko${path || ""}`,
-        en: `https://your-domain.com/en${path || ""}`,
+        ko: `${getSiteUrl() || "https://your-domain.com"}/ko${path || ""}`,
+        en: `${getSiteUrl() || "https://your-domain.com"}/en${path || ""}`,
       },
     },
     other: {
@@ -97,12 +102,29 @@ function getPathTranslations(locale: Locale, path: string) {
     "/settings": "settings",
     "/ships": "ships",
     "/ship": "ship",
+    "/privacy": "legal.privacy",
+    "/terms": "legal.terms",
   };
 
   const translationKey = pathMap[path];
   if (!translationKey) return null;
 
-  const pathTranslations = t[translationKey as keyof typeof t];
+  // Handle nested translation keys (e.g., "legal.privacy")
+  const keys = translationKey.split(".");
+  let pathTranslations: Record<string, unknown> = t;
+
+  for (const key of keys) {
+    if (
+      pathTranslations &&
+      typeof pathTranslations === "object" &&
+      key in pathTranslations
+    ) {
+      pathTranslations = pathTranslations[key] as Record<string, unknown>;
+    } else {
+      return null;
+    }
+  }
+
   if (!pathTranslations || typeof pathTranslations !== "object") return null;
 
   return {

@@ -74,6 +74,7 @@ export interface ShipDetailState {
     name: string;
     description?: string;
     member_only?: boolean;
+    time_zone?: string;
   }) => Promise<Ship | null>;
 
   updateShip: (shipId: string, updates: Partial<Ship>) => Promise<Ship | null>;
@@ -338,6 +339,10 @@ export const useShipStore = create<ShipDetailState>()(
             ship_name: shipData.name,
             ship_description: shipData.description || null,
             is_member_only: shipData.member_only || false,
+            ship_time_zone:
+              shipData.time_zone ||
+              Intl.DateTimeFormat().resolvedOptions().timeZone ||
+              "Asia/Seoul",
           });
 
           if (error) {

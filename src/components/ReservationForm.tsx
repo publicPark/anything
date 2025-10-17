@@ -3,8 +3,13 @@
 import { useState, useEffect } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
+import { useParticleAnimation } from "@/hooks/useParticleAnimation";
+import { useToast } from "@/components/ui/Toast";
 import { createClient } from "@/lib/supabase/client";
-import { createReservationAction } from "@/app/actions/reservations";
+import {
+  createReservationAction,
+  updateReservationSlackMessage,
+} from "@/app/actions/reservations";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -34,6 +39,9 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const { t, locale } = useI18n();
   const { profile } = useProfile();
+  const toast = useToast();
+  const { trigger: triggerParticles, element: particleElement } =
+    useParticleAnimation({ particleCount: 150 });
   const {
     selectedStartTime,
     selectedEndTime,
@@ -169,9 +177,10 @@ export function ReservationForm({
     const endDateTime = createDateTime(formData.date, selectedEndTime);
 
     // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 선택된 간격 단위로 내림한 시각보다 빠르면 막기
+    // 단, 예약 수정 시에는 과거 시간 선택 허용
     const now = new Date();
     const todayLocal = getLocalYYYYMMDD(now);
-    if (formData.date === todayLocal) {
+    if (formData.date === todayLocal && !editingReservation) {
       const flooredNow = new Date(now);
       flooredNow.setSeconds(0, 0);
 
@@ -219,26 +228,80 @@ export function ReservationForm({
         });
 
         if (error) throw error;
-      } else {
-        // 예약 생성 (서버 액션 통해 Slack 전송)
-        const result = await createReservationAction({
-          cabinId,
-          startISO: startDateTime.toISOString(),
-          endISO: endDateTime.toISOString(),
-          purpose: formData.purpose.trim(),
-          locale: "ko",
-        });
-        if (!result.ok)
-          throw new Error(result.message || "Failed to create reservation");
-      }
 
-      clearSelection();
-      // 예약 목적 초기화 (빈칸으로)
-      setFormData((prev) => ({
-        ...prev,
-        purpose: "",
-      }));
-      onSuccess();
+        // UI 업데이트 먼저 처리
+        clearSelection();
+        // 예약 목적 초기화 (빈칸으로)
+        setFormData((prev) => ({
+          ...prev,
+          purpose: "",
+        }));
+
+        // 성공 메시지 표시
+        toast.success(t("ships.reservationUpdated"));
+        onSuccess();
+
+        // 예약 수정 시 Slack 메시지 업데이트 (비동기로 처리)
+        try {
+          const slackResult = await updateReservationSlackMessage(
+            editingReservation.id,
+            startDateTime.toISOString(),
+            endDateTime.toISOString(),
+            formData.purpose.trim(),
+            cabinId,
+            locale
+          );
+
+          // 슬랙 메시지 업데이트 성공 시 토스트 표시
+          if (slackResult.success) {
+            toast.default(t("ships.slackMessageUpdated"));
+          }
+        } catch (slackError) {
+          console.error("Slack message update failed:", slackError);
+          // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
+        }
+      } else {
+        // UI 업데이트 먼저 처리
+        clearSelection();
+        // 예약 목적 초기화 (빈칸으로)
+        setFormData((prev) => ({
+          ...prev,
+          purpose: "",
+        }));
+
+        // 성공 메시지 표시 (파티클 애니메이션 + 토스트)
+        triggerParticles();
+        toast.success(t("ships.reservationCreated"));
+        onSuccess();
+
+        // 예약 생성 및 슬랙 메시지 전송
+        try {
+          const result = await createReservationAction({
+            cabinId,
+            startISO: startDateTime.toISOString(),
+            endISO: endDateTime.toISOString(),
+            purpose: formData.purpose.trim(),
+            locale: locale,
+          });
+
+          // 슬랙 메시지 전송 결과에 따른 토스트 표시
+          if (result.slackSent) {
+            if (result.slackMethod === "bot") {
+              toast.default(t("ships.slackBotMessageSent"));
+            } else if (result.slackMethod === "webhook") {
+              toast.default(t("ships.slackWebhookMessageSent"));
+            } else {
+              toast.default(t("ships.slackMessageSent"));
+            }
+          }
+
+          if (result.discordSent) {
+            toast.default(t("ships.discordMessageSent"));
+          }
+        } catch (error) {
+          console.error("Reservation creation failed:", error);
+        }
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("ships.errorGeneric"));
     } finally {
@@ -247,70 +310,75 @@ export function ReservationForm({
   };
 
   return (
-    <div className={isModal ? "p-6" : ""}>
-      <div className="space-y-2">
-        {/* 날짜 선택 */}
-        <div>
-          <Calendar
-            selectedDate={formData.date}
-            onDateChange={handleDateChange}
-            reservations={existingReservations}
-          />
-        </div>
+    <>
+      <div className={isModal ? "p-6" : ""}>
+        <div className="space-y-2">
+          {/* 날짜 선택 */}
+          <div>
+            <Calendar
+              selectedDate={formData.date}
+              onDateChange={handleDateChange}
+              reservations={existingReservations}
+            />
+          </div>
 
-        {/* 시간 선택 */}
-        <div>
-          <TimeTable
-            selectedDate={formData.date}
-            reservations={existingReservations}
-          />
-        </div>
+          {/* 시간 선택 */}
+          <div>
+            <TimeTable
+              selectedDate={formData.date}
+              reservations={existingReservations}
+            />
+          </div>
 
-        {/* 예약 목적 */}
-        <div>
-          <textarea
-            id="purpose"
-            name="purpose"
-            value={formData.purpose}
-            onChange={handleInputChange}
-            placeholder={t("ships.reservationPurposePlaceholder")}
-            rows={1}
-            className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-            required
-          />
-        </div>
+          {/* 예약 목적 */}
+          <div>
+            <textarea
+              id="purpose"
+              name="purpose"
+              value={formData.purpose}
+              onChange={handleInputChange}
+              placeholder={t("ships.reservationPurposePlaceholder")}
+              rows={1}
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              required
+            />
+          </div>
 
-        {error && (
-          <ErrorMessage
-            message={error}
-            variant="destructive"
-            onClose={() => setError(null)}
-          />
-        )}
+          {error && (
+            <div className="mb-4">
+              <ErrorMessage
+                message={error}
+                variant="destructive"
+                onClose={() => setError(null)}
+              />
+            </div>
+          )}
 
-        {/* 버튼 */}
-        <div>
-          <Button
-            type="button"
-            size="lg"
-            variant="primary"
-            disabled={isLoading}
-            onClick={handleCreateReservation}
-            className="w-full"
-          >
-            {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <LoadingSpinner />
-                <span>{t("common.processing")}</span>
-              </div>
-            ) : editingReservation ? (
-              t("ships.updateReservation")
-            ) : (
-              t("ships.createReservation")
-            )}
-          </Button>
+          {/* 버튼 */}
+          <div>
+            <Button
+              type="button"
+              size="lg"
+              variant="primary"
+              disabled={isLoading}
+              onClick={handleCreateReservation}
+              className="w-full"
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <LoadingSpinner />
+                  <span>{t("common.processing")}</span>
+                </div>
+              ) : editingReservation ? (
+                t("ships.updateReservation")
+              ) : (
+                t("ships.createReservation")
+              )}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+      {particleElement}
+    </>
   );
 }

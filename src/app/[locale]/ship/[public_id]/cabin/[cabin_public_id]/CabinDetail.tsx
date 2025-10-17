@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
@@ -42,11 +42,96 @@ export default function CabinDetail() {
   const shipPublicId = params.public_id as string;
   const cabinPublicId = params.cabin_public_id as string;
 
+  const fetchCabinDetails = useCallback(async () => {
+    if (!shipPublicId || !cabinPublicId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 병렬로 배 정보와 선실 정보 조회
+      const [shipResult, cabinResult] = await Promise.all([
+        supabase
+          .from("ships")
+          .select("*")
+          .eq("public_id", shipPublicId)
+          .maybeSingle(),
+        supabase
+          .from("ship_cabins")
+          .select("*")
+          .eq("public_id", cabinPublicId)
+          .maybeSingle(),
+      ]);
+
+      if (shipResult.error) {
+        throw shipResult.error;
+      }
+
+      if (cabinResult.error) {
+        throw cabinResult.error;
+      }
+
+      const shipData = shipResult.data;
+      const cabinData = cabinResult.data;
+
+      if (!shipData) {
+        throw new Error("Ship not found");
+      }
+
+      if (!cabinData) {
+        throw new Error("Cabin not found");
+      }
+
+      // 선실이 해당 배에 속하는지 확인
+      if (cabinData.ship_id !== shipData.id) {
+        throw new Error("Cabin not found");
+      }
+
+      setShip(shipData);
+      setCabin(cabinData);
+
+      // 예약 목록과 사용자 역할을 병렬로 조회
+      const [reservationsResult, memberResult] = await Promise.all([
+        supabase
+          .from("cabin_reservations")
+          .select("*")
+          .eq("cabin_id", cabinData.id)
+          .eq("status", "confirmed")
+          .order("start_time", { ascending: true }),
+        profile?.id
+          ? supabase
+              .from("ship_members")
+              .select("role")
+              .eq("ship_id", shipData.id)
+              .eq("user_id", profile.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (reservationsResult.error) {
+        throw reservationsResult.error;
+      }
+
+      setReservations(reservationsResult.data || []);
+
+      if (memberResult.data) {
+        setUserRole(memberResult.data.role || null);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to fetch cabin details:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load cabin details"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [shipPublicId, cabinPublicId, profile?.id]);
+
   useEffect(() => {
-    if (!profileLoading && shipPublicId && cabinPublicId) {
+    if (shipPublicId && cabinPublicId) {
       fetchCabinDetails();
     }
-  }, [profileLoading, shipPublicId, cabinPublicId]);
+  }, [shipPublicId, cabinPublicId, fetchCabinDetails]);
 
   // URL 쿼리 파라미터 처리
   useEffect(() => {
@@ -60,7 +145,7 @@ export default function CabinDetail() {
   useEffect(() => {
     const interval = setInterval(() => {
       setLastUpdateTime(new Date());
-    }, 1000); // 1초마다 업데이트
+    }, 30000); // 30초마다 업데이트로 변경하여 성능 개선
 
     return () => clearInterval(interval);
   }, []);
@@ -90,7 +175,7 @@ export default function CabinDetail() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [cabin]);
+  }, [cabin, fetchCabinDetails]);
 
   // 예약 목록만 업데이트하는 함수 (등록/수정/삭제 시 사용)
   const fetchReservationsOnly = async () => {
@@ -113,84 +198,6 @@ export default function CabinDetail() {
       setReservations(reservationsData || []);
     } catch (err) {
       console.error("Failed to update reservations:", err);
-    }
-  };
-
-  const fetchCabinDetails = async () => {
-    if (!shipPublicId || !cabinPublicId) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // 배 정보 조회
-      const { data: shipData, error: shipError } = await supabase
-        .from("ships")
-        .select("*")
-        .eq("public_id", shipPublicId)
-        .maybeSingle();
-
-      if (shipError) {
-        throw shipError;
-      }
-
-      if (!shipData) {
-        throw new Error(t("ships.shipNotFound"));
-      }
-
-      setShip(shipData);
-
-      // 선실 정보 조회
-      const { data: cabinData, error: cabinError } = await supabase
-        .from("ship_cabins")
-        .select("*")
-        .eq("public_id", cabinPublicId)
-        .eq("ship_id", shipData.id)
-        .maybeSingle();
-
-      if (cabinError) {
-        throw cabinError;
-      }
-
-      if (!cabinData) {
-        throw new Error(t("ships.cabinNotFound"));
-      }
-
-      setCabin(cabinData);
-
-      // 예약 목록 조회 (모든 confirmed 예약)
-      const { data: reservationsData, error: reservationsError } =
-        await supabase
-          .from("cabin_reservations")
-          .select("*")
-          .eq("cabin_id", cabinData.id)
-          .eq("status", "confirmed")
-          .order("start_time", { ascending: true });
-
-      if (reservationsError) {
-        throw reservationsError;
-      }
-
-      setReservations(reservationsData || []);
-
-      // 사용자 역할 조회 (로그인된 경우)
-      if (profile) {
-        const { data: memberData } = await supabase
-          .from("ship_members")
-          .select("role")
-          .eq("ship_id", shipData.id)
-          .eq("user_id", profile.id)
-          .maybeSingle();
-
-        setUserRole(memberData?.role || null);
-      }
-    } catch (err: unknown) {
-      console.error("Failed to fetch cabin details:", err);
-      setError(
-        err instanceof Error ? err.message : t("ships.errorLoadingCabin")
-      );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -248,7 +255,7 @@ export default function CabinDetail() {
   const { todayReservations, upcomingReservations, pastReservations } =
     categorizeReservations();
 
-  if (profileLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <LoadingSpinner />
@@ -261,7 +268,7 @@ export default function CabinDetail() {
   }
 
   if (!ship || !cabin) {
-    return <ErrorMessage message={t("ships.cabinNotFound")} />;
+    return <ErrorMessage message="Cabin not found" />;
   }
 
   return (

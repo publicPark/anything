@@ -28,7 +28,7 @@ export function ReservationTabs({
   onUpdate,
   selectedDate,
 }: ReservationTabsProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<"selected" | "past">("selected");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -81,10 +81,13 @@ export function ReservationTabs({
       id: "selected",
       label: t("ships.selectedDateReservations", {
         date:
-          selectedDateObj.toLocaleDateString("ko-KR", {
-            month: "short",
-            day: "numeric",
-          }) + (isToday ? " (오늘)" : ""),
+          selectedDateObj.toLocaleDateString(
+            locale === "ko" ? "ko-KR" : "en-US",
+            {
+              month: "short",
+              day: "numeric",
+            }
+          ) + (isToday ? ` (${t("common.today")})` : ""),
       }),
       content: (
         <div>

@@ -7,6 +7,7 @@ import { useShipActions } from "@/stores/shipStore";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+// timezone is set automatically on create; no manual selection in create form
 
 interface ShipFormProps {
   onSuccess?: () => void;
@@ -146,6 +147,8 @@ export function ShipForm({ onSuccess, onCancel }: ShipFormProps) {
               {t("ships.memberOnlyQuestion")}
             </label>
           </div>
+
+          {/* Time zone is auto-set on create; no manual selection here */}
         </div>
 
         {error && (

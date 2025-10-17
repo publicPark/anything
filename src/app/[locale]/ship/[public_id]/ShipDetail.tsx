@@ -10,7 +10,6 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ShipHeader } from "@/components/ShipHeader";
 import { MemberList } from "@/components/MemberList";
 import { MemberRequestList } from "@/components/MemberRequestList";
-import { CabinManage } from "@/components/CabinManage";
 import { MessageSettings } from "@/components/MessageSettings";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -54,6 +53,7 @@ export default function ShipDetail() {
     name: "",
     description: "",
     member_only: false,
+    time_zone: "Asia/Seoul",
   });
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
   const lastRejectedRequestId = useRef<string | null>(null);
@@ -112,10 +112,7 @@ export default function ShipDetail() {
 
   // crew 사용자가 관리 탭에 접근하려고 하면 viewMembers로 리다이렉트
   useEffect(() => {
-    if (
-      ship?.userRole === "crew" &&
-      (activeTab === "memberRequests" || activeTab === "cabinsManage")
-    ) {
+    if (ship?.userRole === "crew" && activeTab === "memberRequests") {
       setActiveTab("viewMembers");
     }
   }, [ship?.userRole]);
@@ -584,6 +581,7 @@ export default function ShipDetail() {
       name: ship.name,
       description: ship.description || "",
       member_only: ship.member_only,
+      time_zone: ship.time_zone || "Asia/Seoul",
     });
     setIsEditing(true);
   };
@@ -594,6 +592,7 @@ export default function ShipDetail() {
       name: "",
       description: "",
       member_only: false,
+      time_zone: "Asia/Seoul",
     });
   };
 
@@ -601,6 +600,7 @@ export default function ShipDetail() {
     name: string;
     description: string;
     member_only: boolean;
+    time_zone?: string;
   }) => {
     if (!ship) return;
 
@@ -620,6 +620,7 @@ export default function ShipDetail() {
           name: data.name.trim(),
           description: data.description.trim(),
           member_only: data.member_only,
+          time_zone: data.time_zone || "Asia/Seoul",
         })
         .eq("id", ship.id);
 
@@ -694,24 +695,13 @@ export default function ShipDetail() {
         ),
       });
 
-      // 선실 관리 탭
-      tabs.push({
-        id: "cabinsManage",
-        label: t("ships.cabinsManage"),
-        content: (
-          <div className="space-y-6">
-            <CabinManage shipId={ship.id} userRole={ship.userRole} />
-          </div>
-        ),
-      });
-
       // 메시지 설정 탭 (컴포넌트화)
       tabs.push({
         id: "messageSettings",
         label: t("ships.messageSettings"),
         content: (
           <div className="space-y-6">
-            <div className="bg-background rounded-lg border border-border p-6">
+            <div className="bg-muted rounded-lg border border-border p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
                 {t("ships.messageSettings")}
               </h3>
@@ -720,6 +710,7 @@ export default function ShipDetail() {
                 shipName={ship.name}
                 shipPublicId={ship.public_id}
                 locale={locale}
+                timeZone={ship.time_zone || "Asia/Seoul"}
                 onSaved={fetchShipDetails}
               />
             </div>

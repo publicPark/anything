@@ -552,7 +552,9 @@ export function TimeTable({
                   backgroundSize: "1.5em 1.5em",
                 }}
               >
-                <option value={undefined}>{t("timetable.interval")}</option>
+                <option value={undefined} disabled>
+                  {t("timetable.interval")}
+                </option>
                 {INTERVAL_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.value === 60

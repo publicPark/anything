@@ -1,4 +1,4 @@
-export type DiscordPayload = { 
+export type DiscordPayload = {
   content: string;
   username?: string;
   avatar_url?: string;
@@ -32,45 +32,20 @@ export async function postToDiscord(
   }
 }
 
+import { formatDateForTimezone, formatTimeForTimezone } from "@/lib/datetime";
+
 export function formatReservationDiscordText(
   roomName: string,
   startISO: string,
   endISO: string,
   purpose: string,
-  locale: "ko" | "en"
+  locale: "ko" | "en",
+  timeZone: string = "Asia/Seoul"
 ): string {
-  const date = new Date(startISO);
-  const intl = locale === "ko" ? "ko-KR" : "en-US";
-
-  const y = date.toLocaleDateString(intl, { 
-    year: "2-digit",
-    timeZone: "Asia/Seoul"
-  }).padStart(2, "0");
-  const m = date
-    .toLocaleDateString(intl, { 
-      month: "2-digit",
-      timeZone: "Asia/Seoul"
-    })
-    .padStart(2, "0");
-  const d = date.toLocaleDateString(intl, { 
-    day: "2-digit",
-    timeZone: "Asia/Seoul"
-  }).padStart(2, "0");
-  const dateStr = `${y}-${m}-${d}`;
-
-  const fmtTime = (iso: string) =>
-    new Date(iso)
-      .toLocaleTimeString(intl, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Seoul"
-      })
-      .replace(/\s/g, "");
-
-  const start = fmtTime(startISO);
-  const end = fmtTime(endISO);
-  return `**${roomName}** 예약 알림\n📅 ${dateStr} ${start}~${end}\n📝 ${purpose}`;
+  const dateStr = formatDateForTimezone(startISO, timeZone);
+  const start = formatTimeForTimezone(startISO, timeZone);
+  const end = formatTimeForTimezone(endISO, timeZone);
+  return `**${roomName}**\n📅 ${dateStr} ${start}~${end}\n📝 ${purpose}`;
 }
 
 export type ComposeReservationDiscordParams = {
@@ -81,6 +56,7 @@ export type ComposeReservationDiscordParams = {
   locale: "ko" | "en";
   shipPublicId?: string;
   linkLabel?: string;
+  timeZone?: string;
 };
 
 export function composeReservationDiscordText(
@@ -100,7 +76,8 @@ export function composeReservationDiscordText(
     startISO,
     endISO,
     purpose,
-    locale
+    locale,
+    params.timeZone
   );
 
   if (shipPublicId && linkLabel) {

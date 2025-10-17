@@ -25,7 +25,7 @@ export function PastReservations({
 }: PastReservationsProps) {
   const { t } = useI18n();
   const supabase = createClient();
-  
+
   const [pastItems, setPastItems] = useState<CabinReservation[]>([]);
   const [pastPage, setPastPage] = useState(0);
   const PAST_PAGE_SIZE = 4;
@@ -71,9 +71,12 @@ export function PastReservations({
     } catch (e: unknown) {
       // Gracefully handle 416 Range Not Satisfiable
       const message: string = e instanceof Error ? e.message : "";
-      const status: number | undefined = 
-        e && typeof e === "object" && "status" in e && typeof e.status === "number" 
-          ? e.status 
+      const status: number | undefined =
+        e &&
+        typeof e === "object" &&
+        "status" in e &&
+        typeof e.status === "number"
+          ? e.status
           : undefined;
       if (status === 416 || message.includes("Range Not Satisfiable")) {
         setPastHasMore(false);

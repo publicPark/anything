@@ -127,9 +127,7 @@ export default function UserManagementPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground">
-            {t("home.loading")}
-          </div>
+          <div className="text-lg text-muted-foreground">Loading...</div>
         </div>
       </div>
     );
@@ -151,29 +149,18 @@ export default function UserManagementPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-4 text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            {t("reservations.accessDenied")}
+            Access denied
           </h1>
-          <p className="text-muted-foreground mb-6">{t("admin.description")}</p>
+          <p className="text-muted-foreground mb-6">
+            System administration page
+          </p>
           <Link href={getLocalizedPath("/")}>
-            <Button variant="secondary">{t("navigation.home")}</Button>
+            <Button variant="secondary">Home</Button>
           </Link>
         </div>
       </div>
     );
   }
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "titan":
-        return "타이탄";
-      case "gaia":
-        return "가이아";
-      case "chaos":
-        return "카오스";
-      default:
-        return role;
-    }
-  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -195,14 +182,8 @@ export default function UserManagementPage() {
           {/* Breadcrumbs */}
           <Breadcrumb
             items={[
-              {
-                label: t("admin.title"),
-                href: getLocalizedPath("/admin"),
-              },
-              {
-                label: t("admin.users"),
-                isCurrentPage: true,
-              },
+              { label: "Admin", href: getLocalizedPath("/admin") },
+              { label: "User Management", isCurrentPage: true },
             ]}
           />
 
@@ -222,11 +203,11 @@ export default function UserManagementPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-              placeholder={t("admin.searchUserPlaceholder")}
+              placeholder={"User code or name"}
               className="flex-1 px-4 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <Button onClick={handleSearch} disabled={isLoading}>
-              {t("admin.searchUser")}
+              Search
             </Button>
           </div>
         </div>
@@ -271,16 +252,16 @@ export default function UserManagementPage() {
                 <thead className="bg-muted/50 border-b border-border">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      {t("admin.username")}
+                      Username
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      {t("admin.displayName")}
+                      Name
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      {t("admin.role")}
+                      Role
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">
-                      {t("admin.adjustRole")}
+                      Adjust Role
                     </th>
                   </tr>
                 </thead>
@@ -299,7 +280,7 @@ export default function UserManagementPage() {
                             user.role
                           )}`}
                         >
-                          {getRoleDisplayName(user.role)}
+                          {user.role}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -315,7 +296,7 @@ export default function UserManagementPage() {
                               disabled={user.role === role}
                               className="text-xs"
                             >
-                              {getRoleDisplayName(role)}
+                              {role}
                             </Button>
                           ))}
                         </div>

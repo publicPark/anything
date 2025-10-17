@@ -228,6 +228,7 @@
     "slackMessageSent": "슬랙으로 알림이 전송되었습니다",
     "slackBotMessageSent": "슬랙 봇으로 알림이 전송되었습니다",
     "slackWebhookMessageSent": "슬랙 웹훅으로 알림이 전송되었습니다",
+    "slackMessageUpdated": "슬랙 메시지가 업데이트되었습니다",
     "discordMessageSent": "디스코드로 알림이 전송되었습니다",
     "reservationDeleted": "예약이 삭제되었습니다",
     "confirmDeleteReservation": "이 예약을 삭제하시겠습니까?",

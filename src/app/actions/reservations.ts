@@ -145,7 +145,7 @@ export async function updateReservationSlackMessage(
 
     if (!reservation?.slack_message_ts) {
       console.log("No slack message ts found, skipping update");
-      return;
+      return { success: false, reason: "no_slack_ts" };
     }
 
     // 서비스 인스턴스 생성
@@ -159,7 +159,7 @@ export async function updateReservationSlackMessage(
       !context.config.slack?.channelId
     ) {
       console.log("Slack bot config missing");
-      return;
+      return { success: false, reason: "no_slack_config" };
     }
 
     // 메시지 핸들러로 메시지 업데이트
@@ -172,17 +172,19 @@ export async function updateReservationSlackMessage(
       locale,
       shipPublicId: context.ship.publicId,
       timeZone: context.ship.timeZone,
-      linkLabel: `${context.ship.name} ${t("ships.viewStatus", locale)}`,
+      linkLabel: `${t("ships.viewStatus", locale)}`, // ${context.ship.name}
       messageTs: reservation.slack_message_ts,
     });
 
     console.log("Slack message updated successfully");
+    return { success: true };
   } catch (error) {
     NotificationErrorHandler.handleSlackError(
       "update",
       error,
       "Reservation message update"
     );
+    return { success: false, reason: "error", error };
   }
 }
 

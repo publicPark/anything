@@ -75,11 +75,11 @@ export function ReservationItem({
       const supabase = createClient();
 
       // 먼저 Slack 메시지 ts를 조회
-      // const { data: reservationData } = await supabase
-      //   .from("cabin_reservations")
-      //   .select("slack_message_ts")
-      //   .eq("id", reservation.id)
-      //   .single();
+      const { data: reservationData } = await supabase
+        .from("cabin_reservations")
+        .select("slack_message_ts")
+        .eq("id", reservation.id)
+        .single();
 
       // 예약 삭제
       const { error } = await supabase.rpc("delete_cabin_reservation", {
@@ -90,30 +90,34 @@ export function ReservationItem({
         throw error;
       }
 
-      // Slack 메시지가 있으면 삭제 시도 (서버 액션으로 처리)
-      // if (reservationData?.slack_message_ts) {
-      //   console.log("🗑️ Deleting Slack message:", {
-      //     messageTs: reservationData.slack_message_ts,
-      //     cabinId: reservation.cabin_id,
-      //   });
-      //   try {
-      //     await deleteReservationSlackMessage(
-      //       reservationData.slack_message_ts,
-      //       reservation.cabin_id
-      //     );
-      //     console.log("✅ Slack message delete request sent");
-      //   } catch (notificationError) {
-      //     console.error(
-      //       "❌ Failed to delete Slack message:",
-      //       notificationError
-      //     );
-      //     // Slack 메시지 삭제 실패해도 예약 삭제는 성공으로 처리
-      //   }
-      // } else {
-      //   console.log("ℹ️ No Slack message to delete");
-      // }
-
+      // UI 업데이트 먼저 처리
       onUpdate();
+
+      // Slack 메시지가 있으면 삭제 시도 (백그라운드 처리)
+      if (reservationData?.slack_message_ts) {
+        console.log("🗑️ Deleting Slack message:", {
+          messageTs: reservationData.slack_message_ts,
+          cabinId: reservation.cabin_id,
+        });
+        
+        // 백그라운드에서 슬랙 메시지 삭제
+        deleteReservationSlackMessage(
+          reservationData.slack_message_ts,
+          reservation.cabin_id
+        )
+          .then(() => {
+            console.log("✅ Slack message delete request sent");
+          })
+          .catch((notificationError) => {
+            console.error(
+              "❌ Failed to delete Slack message:",
+              notificationError
+            );
+            // Slack 메시지 삭제 실패해도 예약 삭제는 성공으로 처리
+          });
+      } else {
+        console.log("ℹ️ No Slack message to delete");
+      }
     } catch (err: unknown) {
       console.error("Failed to delete reservation:", err);
       setError(err instanceof Error ? err.message : t("ships.errorGeneric"));

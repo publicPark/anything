@@ -7,7 +7,8 @@ import { useParticleAnimation } from "@/hooks/useParticleAnimation";
 import { useToast } from "@/components/ui/Toast";
 import { createClient } from "@/lib/supabase/client";
 import {
-  createReservationAction,
+  createReservationOnlyAction,
+  sendReservationNotificationAction,
   updateReservationSlackMessage,
 } from "@/app/actions/reservations";
 import { Button } from "@/components/ui/Button";
@@ -241,42 +242,29 @@ export function ReservationForm({
         toast.success(t("ships.reservationUpdated"));
         onSuccess();
 
-        // 예약 수정 시 Slack 메시지 업데이트 (비동기로 처리)
-        try {
-          const slackResult = await updateReservationSlackMessage(
-            editingReservation.id,
-            startDateTime.toISOString(),
-            endDateTime.toISOString(),
-            formData.purpose.trim(),
-            cabinId,
-            locale
-          );
-
-          // 슬랙 메시지 업데이트 성공 시 토스트 표시
-          if (slackResult.success) {
-            toast.default(t("ships.slackMessageUpdated"));
-          }
-        } catch (slackError) {
-          console.error("Slack message update failed:", slackError);
-          // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
-        }
+        // 예약 수정 시 Slack 메시지 업데이트 (백그라운드 처리)
+        updateReservationSlackMessage(
+          editingReservation.id,
+          startDateTime.toISOString(),
+          endDateTime.toISOString(),
+          formData.purpose.trim(),
+          cabinId,
+          locale
+        )
+          .then((slackResult) => {
+            // 슬랙 메시지 업데이트 성공 시 토스트 표시
+            if (slackResult.success) {
+              toast.default(t("ships.slackMessageUpdated"));
+            }
+          })
+          .catch((slackError) => {
+            console.error("Slack message update failed:", slackError);
+            // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
+          });
       } else {
-        // UI 업데이트 먼저 처리
-        clearSelection();
-        // 예약 목적 초기화 (빈칸으로)
-        setFormData((prev) => ({
-          ...prev,
-          purpose: "",
-        }));
-
-        // 성공 메시지 표시 (파티클 애니메이션 + 토스트)
-        triggerParticles();
-        toast.success(t("ships.reservationCreated"));
-        onSuccess();
-
-        // 예약 생성 및 슬랙 메시지 전송
+        // 1. 예약 생성만 먼저 처리 (빠른 응답)
         try {
-          const result = await createReservationAction({
+          const result = await createReservationOnlyAction({
             cabinId,
             startISO: startDateTime.toISOString(),
             endISO: endDateTime.toISOString(),
@@ -284,22 +272,56 @@ export function ReservationForm({
             locale: locale,
           });
 
-          // 슬랙 메시지 전송 결과에 따른 토스트 표시
-          if (result.slackSent) {
-            if (result.slackMethod === "bot") {
-              toast.default(t("ships.slackBotMessageSent"));
-            } else if (result.slackMethod === "webhook") {
-              toast.default(t("ships.slackWebhookMessageSent"));
-            } else {
-              toast.default(t("ships.slackMessageSent"));
-            }
-          }
+          if (result.ok) {
+            // UI 업데이트 처리 (즉시)
+            clearSelection();
+            setFormData((prev) => ({
+              ...prev,
+              purpose: "",
+            }));
 
-          if (result.discordSent) {
-            toast.default(t("ships.discordMessageSent"));
+            // 성공 메시지 표시
+            triggerParticles();
+            toast.success(t("ships.reservationCreated"));
+            onSuccess();
+
+            // 2. 슬랙 알림은 백그라운드에서 처리
+            sendReservationNotificationAction({
+              cabinId,
+              startISO: startDateTime.toISOString(),
+              endISO: endDateTime.toISOString(),
+              purpose: formData.purpose.trim(),
+              locale: locale,
+            })
+              .then((notificationResult) => {
+                if (notificationResult.ok) {
+                  // 슬랙 메시지 전송 결과에 따른 토스트 표시
+                  if (notificationResult.slackSent) {
+                    if (notificationResult.slackMethod === "bot") {
+                      toast.default(t("ships.slackBotMessageSent"));
+                    } else if (notificationResult.slackMethod === "webhook") {
+                      toast.default(t("ships.slackWebhookMessageSent"));
+                    } else {
+                      toast.default(t("ships.slackMessageSent"));
+                    }
+                  }
+
+                  if (notificationResult.discordSent) {
+                    toast.default(t("ships.discordMessageSent"));
+                  }
+                }
+              })
+              .catch((error) => {
+                console.error("Notification failed:", error);
+                // 알림 실패해도 예약은 성공으로 처리
+              });
+          } else {
+            // 예약 생성 실패 시 에러 표시
+            setError(result.message || t("ships.errorGeneric"));
           }
         } catch (error) {
           console.error("Reservation creation failed:", error);
+          setError(error instanceof Error ? error.message : t("ships.errorGeneric"));
         }
       }
     } catch (err: unknown) {

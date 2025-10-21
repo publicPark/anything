@@ -8,6 +8,7 @@ import { generateMetadata as generateI18nMetadata } from "@/lib/metadata-helpers
 import { defaultLocale } from "@/lib/i18n";
 import CookieConsent from "@/components/CookieConsent";
 import { ToastProvider } from "@/components/ui/Toast";
+import PageTracker from "@/components/PageTracker";
 import Script from "next/script";
 
 const geistSans = Geist({
@@ -43,6 +44,7 @@ export default function RootLayout({
         ) : null}
         <ThemeProvider>
           <ToastProvider>
+            <PageTracker />
             <Navigation />
             <main className="min-h-screen bg-background">{children}</main>
             <Footer />

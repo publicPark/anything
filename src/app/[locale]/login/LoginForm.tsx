@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
@@ -20,8 +20,35 @@ export default function LoginForm() {
   const supabase = createClient();
   const { t, locale } = useI18n();
 
-  // 원래 페이지 URL 가져오기
-  const next = searchParams.get("next") || `/${locale}/`;
+  // 마지막 방문 페이지 감지 및 원래 페이지 URL 가져오기
+  const getRedirectUrl = () => {
+    // 1. URL 파라미터에서 next 값 확인
+    const urlNext = searchParams.get("next");
+    if (urlNext) return urlNext;
+
+    // 2. 세션 스토리지에서 마지막 방문 페이지 확인
+    if (typeof window !== "undefined") {
+      const lastVisited = sessionStorage.getItem("lastVisitedPage");
+      if (lastVisited && lastVisited !== `/${locale}/login`) {
+        return lastVisited;
+      }
+    }
+
+    // 3. document.referrer 확인 (직접 로그인 페이지로 온 경우가 아닌 경우)
+    if (typeof window !== "undefined" && document.referrer) {
+      const referrerUrl = new URL(document.referrer);
+      const referrerPath = referrerUrl.pathname;
+      // 로그인 페이지가 아닌 다른 페이지에서 온 경우
+      if (!referrerPath.includes("/login") && !referrerPath.includes("/auth")) {
+        return referrerPath;
+      }
+    }
+
+    // 4. 기본값은 홈
+    return `/${locale}/`;
+  };
+
+  const next = getRedirectUrl();
 
   const handleMagicLinkLogin = async (e: React.FormEvent) => {
     e.preventDefault();

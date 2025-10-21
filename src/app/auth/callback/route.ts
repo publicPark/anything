@@ -18,6 +18,28 @@ async function getReturnToFromCookie(request: Request): Promise<string | null> {
 }
 
 /**
+ * Get referrer path from request headers
+ */
+function getReferrerPath(request: Request): string | null {
+  const referrer = request.headers.get("referer");
+  if (!referrer) return null;
+
+  try {
+    const referrerUrl = new URL(referrer);
+    const referrerPath = referrerUrl.pathname;
+
+    // 로그인/인증 페이지가 아닌 경우만 반환
+    if (!referrerPath.includes("/login") && !referrerPath.includes("/auth")) {
+      return referrerPath;
+    }
+  } catch (error) {
+    console.error("Invalid referrer URL:", referrer);
+  }
+
+  return null;
+}
+
+/**
  * Authentication callback handler
  * Handles OAuth callbacks and magic link authentication
  */
@@ -27,10 +49,11 @@ export async function GET(request: Request) {
   const error = searchParams.get("error");
   const errorCode = searchParams.get("error_code");
   const errorDescription = searchParams.get("error_description");
-  // next 파라미터 우선, 없으면 쿠키에서 가져오기, 둘 다 없으면 홈으로
+  // 리다이렉트 우선순위: next 파라미터 > 쿠키 > referrer > 홈
   const next =
     searchParams.get("next") ??
     (await getReturnToFromCookie(request)) ??
+    getReferrerPath(request) ??
     "/ko/";
 
   // Handle authentication errors

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -33,6 +33,7 @@ export default function ShipDetail() {
   const { t, locale } = useI18n();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
 
@@ -60,6 +61,28 @@ export default function ShipDetail() {
   const lastApprovedRequestId = useRef<string | null>(null);
 
   const shipPublicId = params.public_id as string;
+
+  // URL에서 탭 상태 초기화
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (
+      tabFromUrl &&
+      ["viewMembers", "memberRequests", "messageSettings"].includes(tabFromUrl)
+    ) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // 탭 변경 시 URL 업데이트
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set("tab", tabId);
+    router.replace(
+      `/${locale}/ship/${shipPublicId}?${newSearchParams.toString()}`,
+      { scroll: false }
+    );
+  };
 
   // 에러 처리 함수
   const handleError = (err: unknown, defaultMessage: string) => {
@@ -802,7 +825,7 @@ export default function ShipDetail() {
         <ShipTabs
           tabs={createTabs()}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
       )}
     </div>

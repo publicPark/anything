@@ -42,6 +42,7 @@ export type ReservationNotificationParams = {
 export type UpdateReservationNotificationParams =
   ReservationNotificationParams & {
     messageTs?: string; // Slack 메시지 timestamp
+    customText?: string; // 커스텀 텍스트 (삭제 표시 등)
   };
 
 // 메시지 전송 결과

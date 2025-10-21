@@ -321,7 +321,9 @@ export function ReservationForm({
           }
         } catch (error) {
           console.error("Reservation creation failed:", error);
-          setError(error instanceof Error ? error.message : t("ships.errorGeneric"));
+          setError(
+            error instanceof Error ? error.message : t("ships.errorGeneric")
+          );
         }
       }
     } catch (err: unknown) {
@@ -364,6 +366,9 @@ export function ReservationForm({
               className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               required
             />
+            {/* <p className="mb-2 text-xs text-muted-foreground">
+              {t("ships.reservationPurposeExample")}
+            </p> */}
           </div>
 
           {error && (

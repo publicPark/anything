@@ -4,11 +4,12 @@ import { useState, useEffect, type ReactNode } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ReservationForm } from "@/components/ReservationForm";
 import { CabinReservation } from "@/types/database";
-import { deleteReservationSlackMessage } from "@/app/actions/reservations";
+import { deleteReservationSlackMessageAction } from "@/app/actions/slack";
 
 interface ReservationItemProps {
   reservation: CabinReservation;
@@ -34,6 +35,7 @@ export function ReservationItem({
   existingReservations = [],
 }: ReservationItemProps) {
   const { t, locale } = useI18n();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -74,7 +76,7 @@ export function ReservationItem({
     try {
       const supabase = createClient();
 
-      // 먼저 Slack 메시지 ts를 조회
+      // 먼저 Slack 메시지 ts를 조회 (삭제 전에)
       const { data: reservationData } = await supabase
         .from("cabin_reservations")
         .select("slack_message_ts")
@@ -92,31 +94,38 @@ export function ReservationItem({
 
       // UI 업데이트 먼저 처리
       onUpdate();
+      toast.success(t("ships.reservationDeleted"));
 
-      // Slack 메시지가 있으면 삭제 시도 (백그라운드 처리)
-      if (reservationData?.slack_message_ts) {
-        console.log("🗑️ Deleting Slack message:", {
+      // Slack 메시지가 있으면 삭제 (백그라운드 처리)
+      if (reservationData?.slack_message_ts && cabinId) {
+        console.log("🗑️ Marking Slack message as deleted:", {
           messageTs: reservationData.slack_message_ts,
-          cabinId: reservation.cabin_id,
+          cabinId: cabinId,
         });
-        
         // 백그라운드에서 슬랙 메시지 삭제
-        deleteReservationSlackMessage(
-          reservationData.slack_message_ts,
-          reservation.cabin_id
+        deleteReservationSlackMessageAction(
+          cabinId,
+          reservationData.slack_message_ts
         )
-          .then(() => {
-            console.log("✅ Slack message delete request sent");
+          .then((result) => {
+            if (result.success) {
+              console.log("✅ Slack message deleted");
+              try {
+                toast.default(t("ships.slackMessageDeleted"));
+              } catch {}
+            } else {
+              console.log("ℹ️ Slack message update skipped:", result.reason);
+            }
           })
           .catch((notificationError) => {
             console.error(
               "❌ Failed to delete Slack message:",
               notificationError
             );
-            // Slack 메시지 삭제 실패해도 예약 삭제는 성공으로 처리
+            // Slack 메시지 수정 실패해도 예약 삭제는 성공으로 처리
           });
       } else {
-        console.log("ℹ️ No Slack message to delete");
+        console.log("ℹ️ No Slack message to update");
       }
     } catch (err: unknown) {
       console.error("Failed to delete reservation:", err);

@@ -670,7 +670,7 @@ export function TimeTable({
       {/* 시간 선택 상태 표시 */}
       <div className="p-4 bg-muted/30 border-t border-border">
         {selectedStartTime && selectedEndTime ? (
-          <div className="text-sm text-foreground">
+          <div className="text-md text-foreground">
             {/* <span className="font-medium">{t("timetable.reservationTime")}: </span> */}
             <span className="text-foreground font-bold">
               {selectedStartTime} - {selectedEndTime}
@@ -699,7 +699,7 @@ export function TimeTable({
             </span>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-md text-muted-foreground">
             {t("timetable.selectTime")}
           </div>
         )}

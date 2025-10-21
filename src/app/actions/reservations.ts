@@ -17,7 +17,9 @@ type CreateReservationInput = {
 };
 
 // 예약 생성만 하는 함수 (빠른 응답용)
-export async function createReservationOnlyAction(input: CreateReservationInput) {
+export async function createReservationOnlyAction(
+  input: CreateReservationInput
+) {
   const cookieStore = await cookies();
   const supabase = await createServerSupabase();
 
@@ -36,9 +38,11 @@ export async function createReservationOnlyAction(input: CreateReservationInput)
 }
 
 // 슬랙 알림만 하는 함수 (백그라운드 처리용)
-export async function sendReservationNotificationAction(input: CreateReservationInput) {
+export async function sendReservationNotificationAction(
+  input: CreateReservationInput
+) {
   const supabase = await createServerSupabase();
-  
+
   try {
     const { data: reservation } = await supabase
       .from("cabin_reservations")
@@ -310,47 +314,4 @@ export async function updateReservationSlackMessage(
   }
 }
 
-export async function deleteReservationSlackMessage(
-  messageTs: string,
-  cabinId: string
-) {
-  console.log("🗑️ deleteReservationSlackMessage called:", {
-    messageTs,
-    cabinId,
-  });
-
-  if (!messageTs) {
-    console.log("❌ No slack message ts provided, skipping delete");
-    return;
-  }
-
-  const supabase = await createServerSupabase();
-
-  try {
-    console.log("✅ Message ts found, proceeding with delete");
-
-    // 서비스 인스턴스 생성
-    const notificationService = new ShipNotificationService(supabase);
-
-    // 알림 설정 조회
-    const config = await notificationService.getNotificationConfigForCabin(
-      cabinId
-    );
-    if (!config.slack?.botToken || !config.slack?.channelId) {
-      console.log("Slack bot config missing");
-      return;
-    }
-
-    // 메시지 핸들러로 메시지 삭제
-    const messageHandler = new ReservationMessageHandler(config);
-    await messageHandler.deleteNotification(messageTs);
-
-    console.log("Slack message deleted successfully");
-  } catch (error) {
-    NotificationErrorHandler.handleSlackError(
-      "delete",
-      error,
-      "Reservation message delete"
-    );
-  }
-}
+// line-through 삭제 동작은 더 이상 사용하지 않음

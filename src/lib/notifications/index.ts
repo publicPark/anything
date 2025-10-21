@@ -2,7 +2,6 @@ import {
   postToSlack,
   postSlackMessage,
   updateSlackMessage,
-  deleteSlackMessage,
   composeReservationSlackText,
 } from "./slack";
 import { postToDiscord, composeReservationDiscordText } from "./discord";
@@ -121,7 +120,8 @@ export class ReservationMessageHandler {
         messageTs: params.messageTs,
         hasBotToken: !!this.config.slack.botToken,
       });
-      const slackText = composeReservationSlackText(params);
+      const slackText =
+        params.customText || composeReservationSlackText(params);
       console.log("📝 New message text:", slackText);
 
       promises.push(
@@ -153,46 +153,6 @@ export class ReservationMessageHandler {
 
     await Promise.allSettled(promises);
   }
-
-  async deleteNotification(messageTs: string): Promise<void> {
-    const promises: Promise<void>[] = [];
-
-    // Slack 메시지 삭제
-    if (this.config.slack?.botToken && this.config.slack?.channelId) {
-      console.log("🗑️ Deleting Slack message:", {
-        channelId: this.config.slack.channelId,
-        messageTs: messageTs,
-        hasBotToken: !!this.config.slack.botToken,
-      });
-
-      promises.push(
-        deleteSlackMessage(
-          this.config.slack.botToken,
-          this.config.slack.channelId,
-          messageTs
-        )
-          .then(() => {
-            console.log("✅ Slack message deleted successfully");
-          })
-          .catch((error) => {
-            console.error("❌ Slack message delete failed:", error);
-          })
-      );
-    } else {
-      console.warn(
-        "Slack message delete requires bot token and channel ID. Skipping delete."
-      );
-    }
-
-    // Discord 메시지 삭제 (현재 구현되지 않음)
-    if (this.config.discord?.webhookUrl) {
-      console.warn(
-        "Discord message delete not yet implemented. Skipping delete."
-      );
-    }
-
-    await Promise.allSettled(promises);
-  }
 }
 
 // 레거시 함수들 - 하위 호환성을 위해 유지
@@ -210,14 +170,6 @@ export async function updateReservationNotification(
 ): Promise<void> {
   const handler = new ReservationMessageHandler(config);
   return handler.updateNotification(params);
-}
-
-export async function deleteReservationNotification(
-  config: NotificationConfig,
-  messageTs: string
-): Promise<void> {
-  const handler = new ReservationMessageHandler(config);
-  return handler.deleteNotification(messageTs);
 }
 
 export async function sendNotificationToChannel(

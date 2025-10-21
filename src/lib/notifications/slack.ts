@@ -103,7 +103,9 @@ export async function updateSlackMessage(
   }
 }
 
-// Slack API를 사용한 메시지 삭제
+import { formatDateForTimezone, formatTimeForTimezone } from "@/lib/datetime";
+
+// Slack 메시지 삭제 (채널/ts 기반)
 export async function deleteSlackMessage(
   botToken: string,
   channelId: string,
@@ -127,8 +129,6 @@ export async function deleteSlackMessage(
     throw new Error(`Slack API error: ${data.error}`);
   }
 }
-
-import { formatDateForTimezone, formatTimeForTimezone } from "@/lib/datetime";
 
 export function formatReservationSlackText(
   roomName: string,
@@ -186,3 +186,6 @@ export function composeReservationSlackText(
   }
   return text;
 }
+
+// 삭제된 예약을 위한 line-through 처리된 슬랙 메시지 텍스트
+// composeDeletedReservationSlackText: 더 이상 사용하지 않음

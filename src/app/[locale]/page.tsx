@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MyShips } from "@/components/MyShips";
 import { MyReservations } from "@/components/MyReservations";
+import AdSlot from "@/components/AdSlot";
 
 export default function Home() {
   const { profile, loading, error } = useProfile();
@@ -141,6 +142,16 @@ export default function Home() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* 광고 배치 - 카드 밖으로 이동 */}
+        <div className="mt-8">
+          <AdSlot
+            slotId="1234567890"
+            className="max-w-md mx-auto"
+            format="auto"
+            responsive={true}
+          />
         </div>
       </div>
     </div>

@@ -21,7 +21,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = generateI18nMetadata(defaultLocale);
+export const metadata: Metadata = {
+  ...generateI18nMetadata(defaultLocale),
+  other: {
+    "google-adsense-account": "ca-pub-4576804372935643",
+  },
+};
 
 export default function RootLayout({
   children,

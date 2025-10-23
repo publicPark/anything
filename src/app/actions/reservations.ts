@@ -14,6 +14,8 @@ type CreateReservationInput = {
   endISO: string;
   purpose: string;
   locale: "ko" | "en";
+  guestIdentifier?: string;
+  userDisplayName?: string;
 };
 
 // 예약 생성만 하는 함수 (빠른 응답용)
@@ -28,6 +30,8 @@ export async function createReservationOnlyAction(
     reservation_start_time: input.startISO,
     reservation_end_time: input.endISO,
     reservation_purpose: input.purpose.trim(),
+    guest_identifier_param: input.guestIdentifier || null,
+    user_display_name_param: input.userDisplayName || null,
   });
 
   if (error) {
@@ -151,6 +155,8 @@ export async function createReservationAction(input: CreateReservationInput) {
     reservation_start_time: input.startISO,
     reservation_end_time: input.endISO,
     reservation_purpose: input.purpose.trim(),
+    guest_identifier_param: input.guestIdentifier || null,
+    user_display_name_param: input.userDisplayName || null,
   });
 
   if (error) {

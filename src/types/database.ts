@@ -94,6 +94,8 @@ export interface CabinReservation {
   purpose: string;
   status: ReservationStatus;
   slack_message_ts: string | null;
+  guest_identifier: string | null;
+  user_display_name: string | null;
   created_at: string;
   updated_at: string;
 }

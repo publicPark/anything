@@ -262,6 +262,34 @@ export function ReservationForm({
             // Slack 업데이트 실패해도 예약 수정은 성공으로 처리
           });
       } else {
+        // 사용자 정보 수집
+        let guestIdentifier: string | undefined;
+        let userDisplayName: string | undefined;
+
+        if (profile) {
+          // 회원: 사용자 이름 저장
+          userDisplayName =
+            profile.display_name || profile.username || "Unknown";
+        } else {
+          // 비회원: IP + User-Agent 해시 생성
+          try {
+            const response = await fetch("/api/get-client-info");
+            const clientInfo = await response.json();
+            const combined = `${clientInfo.ip}-${clientInfo.userAgent}`;
+            guestIdentifier = btoa(combined).substring(0, 16); // Base64 인코딩 후 16자리만
+
+            // localStorage에 저장하여 나중에 "내 예약" 판별에 사용
+            localStorage.setItem("guest_identifier", guestIdentifier);
+          } catch (error) {
+            console.error("Failed to get client info:", error);
+            // 실패 시 랜덤 식별자 생성
+            guestIdentifier = `guest_${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 8)}`;
+            localStorage.setItem("guest_identifier", guestIdentifier);
+          }
+        }
+
         // 1. 예약 생성만 먼저 처리 (빠른 응답)
         try {
           const result = await createReservationOnlyAction({
@@ -270,6 +298,8 @@ export function ReservationForm({
             endISO: endDateTime.toISOString(),
             purpose: formData.purpose.trim(),
             locale: locale,
+            guestIdentifier,
+            userDisplayName,
           });
 
           if (result.ok) {

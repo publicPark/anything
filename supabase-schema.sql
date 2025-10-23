@@ -97,6 +97,8 @@ CREATE TABLE cabin_reservations (
   purpose TEXT NOT NULL,
   status reservation_status DEFAULT 'confirmed' NOT NULL,
   slack_message_ts TEXT, -- Slack 메시지 timestamp (메시지 수정용)
+  guest_identifier TEXT, -- 비회원 고유 식별자 (IP + User-Agent 해시)
+  user_display_name TEXT, -- 회원 이름 (스냅샷)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -1141,12 +1143,16 @@ BEGIN
 END;
 $$;
 
--- 선실 예약 생성 함수
+-- 선실 예약 생성 함수 (기존 함수 삭제 후 재생성)
+DROP FUNCTION IF EXISTS create_cabin_reservation(UUID, TIMESTAMP WITH TIME ZONE, TIMESTAMP WITH TIME ZONE, TEXT);
+
 CREATE OR REPLACE FUNCTION create_cabin_reservation(
   cabin_uuid UUID,
   reservation_start_time TIMESTAMP WITH TIME ZONE,
   reservation_end_time TIMESTAMP WITH TIME ZONE,
-  reservation_purpose TEXT
+  reservation_purpose TEXT,
+  guest_identifier_param TEXT DEFAULT NULL,
+  user_display_name_param TEXT DEFAULT NULL
 )
 RETURNS cabin_reservations
 LANGUAGE plpgsql
@@ -1200,10 +1206,14 @@ BEGIN
     RAISE EXCEPTION 'Time conflict: Another reservation exists during this time';
   END IF;
   
-  -- 예약 생성
-  INSERT INTO cabin_reservations (cabin_id, user_id, start_time, end_time, purpose)
-  VALUES (cabin_uuid, current_user_id, reservation_start_time, reservation_end_time, reservation_purpose)
-  RETURNING * INTO new_reservation;
+  -- 예약 생성 (사용자 정보 포함)
+  INSERT INTO cabin_reservations (
+    cabin_id, user_id, start_time, end_time, purpose,
+    guest_identifier, user_display_name
+  ) VALUES (
+    cabin_uuid, current_user_id, reservation_start_time, reservation_end_time, reservation_purpose,
+    guest_identifier_param, user_display_name_param
+  ) RETURNING * INTO new_reservation;
   
   RETURN new_reservation;
 END;

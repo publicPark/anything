@@ -218,7 +218,7 @@
     "editReservation": "수정",
     "deleteReservation": "삭제",
     "reservationPurpose": "예약 목적",
-    "reservationPurposePlaceholder": "담당자 및 예약 목적을 입력하세요.",
+    "reservationPurposePlaceholder": "참여자 및 예약 목적을 입력하세요.",
     "reservationPurposeExample": "ex. 홍길동 / 고길동 - 길동 회의",
     "selectingTime": "선택 중인 시간",
     "noReservations": "예약이 없습니다",

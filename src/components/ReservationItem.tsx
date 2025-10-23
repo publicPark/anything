@@ -227,14 +227,66 @@ export function ReservationItem({
     };
   };
 
-  const getReservationType = () => {
+  const getReservationBadges = () => {
+    const badges: Array<{
+      text: string;
+      variant: "primary" | "secondary";
+      clickable?: boolean;
+      onClick?: () => void;
+    }> = [];
+
     if (isGuest) {
-      return t("ships.guestReservation");
+      // 비회원 예약 - 클릭 가능한 뱃지
+      badges.push({
+        text: t("ships.guestReservation"),
+        variant: "secondary" as const,
+        clickable: true,
+        onClick: () => {
+          if (reservation.guest_identifier) {
+            toast.default(`${reservation.guest_identifier}`);
+          } else {
+            toast.default("not set");
+          }
+        },
+      });
+
+      // 내 비회원 예약인지 확인 (localStorage의 guest_identifier와 비교)
+      if (reservation.guest_identifier) {
+        try {
+          const myGuestId = localStorage.getItem("guest_identifier");
+          if (myGuestId === reservation.guest_identifier) {
+            badges.push({
+              text: t("ships.myReservation"),
+              variant: "primary" as const,
+            });
+          }
+        } catch (error) {
+          // localStorage 접근 실패 시 무시
+          console.warn("Failed to access localStorage:", error);
+        }
+      }
+    } else if (reservation.user_id) {
+      // 회원 예약 (내 예약이든 다른 사람 예약이든)
+      const userName = reservation.user_display_name || "😉";
+      badges.push({
+        text: userName,
+        variant: "secondary" as const,
+        // clickable: true,
+        onClick: () => {
+          toast.default(`${reservation.user_id}`);
+        },
+      });
+
+      // 내 예약인 경우에만 "내 예약" 뱃지 추가
+      if (isOwner) {
+        badges.push({
+          text: t("ships.myReservation"),
+          variant: "primary" as const,
+        });
+      }
     }
-    if (isOwner) {
-      return t("ships.myReservation");
-    }
-    return "";
+
+    return badges;
   };
 
   const getReservationStatus = (): "ongoing" | "upcoming" | "ended" => {
@@ -312,16 +364,35 @@ export function ReservationItem({
         <div className="flex items-center gap-2 min-h-[24px]">
           {leftExtra ? (
             leftExtra
-          ) : !hideTypeBadge && getReservationType() ? (
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                isOwner
-                  ? "bg-muted-foreground/30 text-foreground"
-                  : "bg-muted-foreground/20 text-muted-foreground"
-              }`}
-            >
-              {getReservationType()}
-            </span>
+          ) : !hideTypeBadge ? (
+            <div className="flex items-center gap-2">
+              {getReservationBadges().map((badge, index) =>
+                badge.clickable ? (
+                  <button
+                    key={index}
+                    onClick={badge.onClick}
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                      badge.variant === "primary"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted-foreground/20 text-muted-foreground"
+                    }`}
+                  >
+                    {badge.text}
+                  </button>
+                ) : (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      badge.variant === "primary"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted-foreground/20 text-muted-foreground"
+                    }`}
+                  >
+                    {badge.text}
+                  </span>
+                )
+              )}
+            </div>
           ) : null}
         </div>
 

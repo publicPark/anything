@@ -4,6 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useI18n } from "@/hooks/useI18n";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MyShips } from "@/components/MyShips";
 import { MyReservations } from "@/components/MyReservations";
 
@@ -66,7 +67,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-16">
         <div className="text-center">
-          <h1 className="sr-only">홈</h1>
+          <h1 className="sr-only">Bookabin - Home</h1>
           <h3 className="text-xl font-medium mb-8">
             {profile
               ? t("home.welcome", {
@@ -91,9 +92,29 @@ export default function Home() {
               <h2 className="text-2xl font-semibold text-foreground mb-4">
                 {t("home.subtitle")}
               </h2>
-              <p className="text-muted-foreground mb-6 whitespace-pre-line">
+              <p className="text-muted-foreground mb-4 whitespace-pre-line">
                 {t("home.subdescription")}
               </p>
+
+              {/* 상태 뱃지들 */}
+              <div className="flex gap-2 mb-6 justify-center">
+                <StatusBadge
+                  label={t("ships.available")}
+                  tone="success"
+                  className="px-3 py-1 text-sm"
+                />
+                <StatusBadge
+                  label={t("ships.inUse")}
+                  tone="destructive"
+                  blinking={true}
+                  className="px-3 py-1 text-sm"
+                />
+              </div>
+
+              <p className="text-muted-foreground mb-6 text-center">
+                {t("home.loginOptional")}
+              </p>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   variant="secondary"

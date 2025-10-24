@@ -40,10 +40,10 @@
       "problems": {
         "title": "Problems",
         "manual": "Previously, we had to manually write meeting room names and times in Slack messages to make reservations.",
-        "availability": "We had to open doors to check if meeting rooms were currently in use or available.",
-        "overlap": "It was easy to make duplicate reservations because we didn't know if times overlapped."
+        "availability": "We had to open doors to check if meeting rooms were currently in use or empty. 'Oh, you're in a meeting right now. I'm sorry.'",
+        "overlap": "It was difficult to check if times overlapped, so it was easy to make duplicate reservations."
       },
-      "solution": "This system was created to solve these problems.\nTry making a reservation with just a few clicks and automatic Slack messages."
+      "solution": "To solve this, this system was created. Now all these problems are solved.\nTry making a reservation with just a few clicks and it will automatically send a Slack message.\nYou can easily check the status of the meeting room."
     },
     "myReservations": "My Reservations",
     "activeReservations": "Active Reservations",

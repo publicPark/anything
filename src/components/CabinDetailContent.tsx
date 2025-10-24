@@ -44,7 +44,7 @@ const ERROR_MESSAGES = {
 export function CabinDetailContent({
   shipPublicId,
   cabinPublicId,
-  showBreadcrumb = false,
+  showBreadcrumb: _showBreadcrumb = false,
 }: CabinDetailContentProps) {
   const { t } = useI18n();
   const supabase = createClient();

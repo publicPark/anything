@@ -174,7 +174,7 @@ export function ReservationForm({
     };
 
     const startDateTime = createDateTime(formData.date, selectedStartTime);
-    let endDateTime = createDateTime(formData.date, selectedEndTime);
+    const endDateTime = createDateTime(formData.date, selectedEndTime);
     
     // 자정을 넘나드는 경우 처리 (시간 문자열 비교로 자정 넘나드는지 확인)
     const isMidnightCrossing = selectedStartTime > selectedEndTime;

@@ -23,7 +23,7 @@ export default function CabinDetail({ showBreadcrumb = true }: CabinDetailProps 
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile } = useProfile();
 
   const [ship, setShip] = useState<Ship | null>(null);
   const [cabin, setCabin] = useState<ShipCabin | null>(null);
@@ -214,7 +214,6 @@ export default function CabinDetail({ showBreadcrumb = true }: CabinDetailProps 
   const categorizeReservations = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
     const todayReservations: CabinReservation[] = [];
     const upcomingReservations: CabinReservation[] = [];
@@ -256,7 +255,7 @@ export default function CabinDetail({ showBreadcrumb = true }: CabinDetailProps 
     };
   };
 
-  const { todayReservations, upcomingReservations, pastReservations } =
+  const { todayReservations, upcomingReservations } =
     categorizeReservations();
 
   if (isLoading) {

@@ -14,6 +14,7 @@ import { MyReservations } from "@/components/MyReservations";
 import { CabinDetailContent } from "@/components/CabinDetailContent";
 import AdSlot from "@/components/AdSlot";
 import Logo from "@/components/Logo";
+import ParticleAnimation from "@/components/ParticleAnimation";
 import { faqData } from "@/data/faq";
 
 export default function Home() {
@@ -21,6 +22,17 @@ export default function Home() {
   const { t, locale } = useI18n();
   const [tutorialShipId, setTutorialShipId] = useState<string | null>(null);
   const [tutorialShipLoading, setTutorialShipLoading] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
+
+  // 로고 클릭 핸들러 - 폭죽 효과
+  const handleLogoClick = () => {
+    setShowFireworks(true);
+  };
+
+  // 폭죽 애니메이션 완료 핸들러
+  const handleFireworksComplete = () => {
+    setShowFireworks(false);
+  };
 
   // 튜토리얼 팀 ID 조회
   useEffect(() => {
@@ -128,8 +140,13 @@ export default function Home() {
 
             {/* 로고 */}
             {!profile && (
-              <div className="flex justify-center mb-6">
-                <Logo size="lg" className="w-16 h-16" />
+              <div className="flex justify-center mb-12">
+                <div 
+                  className="cursor-pointer hover:scale-110 transition-transform duration-200"
+                  onClick={handleLogoClick}
+                >
+                  <Logo size="xl" className="w-16 h-16 animate-slow-spin" />
+                </div>
               </div>
             )}
 
@@ -231,7 +248,7 @@ export default function Home() {
 
           {/* 예약시스템 탄생 배경 카드 - 별도 카드 */}
           {!profile && (
-            <div className="max-w-4xl mx-auto px-4 mt-8">
+            <div className="max-w-4xl mx-auto mt-8">
               <div className="bg-muted rounded-lg border border-border p-6">
                 <h3 className="text-2xl font-semibold text-foreground mb-4">
                   {t("home.background.title")}
@@ -270,14 +287,14 @@ export default function Home() {
 
           {/* 구분선 */}
           {!profile && tutorialShipId && (
-            <div className="mt-8 max-w-4xl mx-auto px-4">
+            <div className="mt-8 max-w-4xl mx-auto">
               <hr className="border-border mb-6" />
             </div>
           )}
 
           {/* 튜토리얼 팀 선실 목록 - 카드 밖으로 이동 */}
           {!profile && tutorialShipId && (
-            <div className="max-w-4xl mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-foreground">
                   {t("home.tutorialCabins")}
@@ -314,7 +331,7 @@ export default function Home() {
 
           {/* 자주 묻는 질문 섹션 */}
           {!profile && (
-            <div className="max-w-4xl mx-auto px-4 mt-16">
+            <div className="max-w-4xl mx-auto mt-16">
               <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
                 {faqData[locale as keyof typeof faqData]?.title ||
                   faqData.ko.title}
@@ -352,6 +369,15 @@ export default function Home() {
         </div> */}
         </div>
       </div>
+
+      {/* 폭죽 애니메이션 */}
+      <ParticleAnimation
+        isActive={showFireworks}
+        onComplete={handleFireworksComplete}
+        particleCount={200}
+        duration={3000}
+        text="🥳"
+      />
     </>
   );
 }

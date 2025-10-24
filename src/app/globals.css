@@ -187,3 +187,17 @@ body {
 .dark .bg-destructive {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+/* 느린 회전 애니메이션 */
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-slow-spin {
+  animation: slow-spin 16s linear infinite;
+}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface LogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 export default function Logo({ className = "", size = "md" }: LogoProps) {
@@ -14,6 +14,7 @@ export default function Logo({ className = "", size = "md" }: LogoProps) {
     sm: "w-6 h-6",
     md: "w-8 h-8",
     lg: "w-10 h-10",
+    xl: "w-18 h-18",
   };
 
   useEffect(() => {

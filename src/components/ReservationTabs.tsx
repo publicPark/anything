@@ -68,12 +68,18 @@ export function ReservationTabs({
     onUpdate();
   };
 
+  // 로컬 타임존 기준 YYYY-MM-DD 생성
+  const getLocalYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const selectedDateReservations = getSelectedDateReservations();
   const selectedDateObj = selectedDate ? new Date(selectedDate) : new Date();
   const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(
-    today.getMonth() + 1
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayStr = getLocalYYYYMMDD(today);
   const isToday = selectedDate === todayStr;
 
   const tabs = [

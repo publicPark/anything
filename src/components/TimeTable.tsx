@@ -584,11 +584,15 @@ export function TimeTable({
               const isSelected =
                 inputStartMinutes >= slotStartMinutes &&
                 inputStartMinutes < slotEndMinutes;
+              
+              // 자정을 넘나드는 경우 처리
+              const isMidnightCrossing = selectedStartTime && selectedEndTime && selectedStartTime > selectedEndTime;
               const isInSelectedRange = Boolean(
                 selectedStartTime &&
                   selectedEndTime &&
-                  slotStartMinutes >= inputStartMinutes &&
-                  slotStartMinutes < inputEndMinutes
+                  (isMidnightCrossing 
+                    ? (slotStartMinutes >= inputStartMinutes || slotStartMinutes < inputEndMinutes)
+                    : (slotStartMinutes >= inputStartMinutes && slotStartMinutes < inputEndMinutes))
               );
               const isInHoverRange = hoverRange.includes(slot.time);
               const isHovered = hoveredSlot === slot.time;
@@ -670,9 +674,9 @@ export function TimeTable({
       {/* 시간 선택 상태 표시 */}
       <div className="p-4 bg-muted/30 border-t border-border">
         {selectedStartTime && selectedEndTime ? (
-          <div className="text-md text-foreground">
+          <div className="text-md text-foreground font-mono">
             {/* <span className="font-medium">{t("timetable.reservationTime")}: </span> */}
-            <span className="text-foreground font-bold">
+            <span className="text-foreground font-extrabold">
               {selectedStartTime} - {selectedEndTime}
             </span>
             <span className="text-muted-foreground ml-2">
@@ -680,7 +684,14 @@ export function TimeTable({
               {(() => {
                 const startMinutes = timeToMinutes(selectedStartTime);
                 const endMinutes = timeToMinutes(selectedEndTime);
-                const totalMinutes = endMinutes - startMinutes;
+                
+                // 자정을 넘나드는 경우 처리
+                let totalMinutes = endMinutes - startMinutes;
+                if (totalMinutes < 0) {
+                  // 자정을 넘나드는 경우: 24시간(1440분)을 더함
+                  totalMinutes += 24 * 60;
+                }
+                
                 const hours = Math.floor(totalMinutes / 60);
                 const minutes = totalMinutes % 60;
 

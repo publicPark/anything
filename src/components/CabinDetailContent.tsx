@@ -56,9 +56,17 @@ export function CabinDetailContent({
   // UI 상태
   const [showReservationForm, setShowReservationForm] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  // 로컬 타임존 기준 YYYY-MM-DD 생성
+  const getLocalYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
-    return today.toISOString().split("T")[0];
+    return getLocalYYYYMMDD(today);
   });
 
   useEffect(() => {

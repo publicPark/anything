@@ -356,14 +356,14 @@ export default function Home() {
           )}
 
           {/* 광고 배치 - 카드 밖으로 이동 */}
-          {/* <div className="mt-8">
+          <div className="mt-8">
           <AdSlot
             slotId="1234567890"
             className="max-w-md mx-auto"
             format="auto"
             responsive={true}
           />
-        </div> */}
+        </div>
         </div>
       </div>
 

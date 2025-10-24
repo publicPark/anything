@@ -54,6 +54,7 @@ export function ReservationForm({
 
   // 로컬 타임존 기준 YYYY-MM-DD 생성
   const getLocalYYYYMMDD = (d: Date) => {
+    // 로컬 시간대를 명시적으로 사용
     const year = d.getFullYear();
     const month = `${d.getMonth() + 1}`.padStart(2, "0");
     const day = `${d.getDate()}`.padStart(2, "0");
@@ -93,16 +94,9 @@ export function ReservationForm({
       const startDate = new Date(editingReservation.start_time);
       const endDate = new Date(editingReservation.end_time);
 
-      const startTimeStr = startDate.toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      const endTimeStr = endDate.toLocaleTimeString("ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
+      // 24시간 형식으로 직접 변환 (toLocaleTimeString 대신)
+      const startTimeStr = `${startDate.getHours().toString().padStart(2, "0")}:${startDate.getMinutes().toString().padStart(2, "0")}`;
+      const endTimeStr = `${endDate.getHours().toString().padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
 
       setSelectedTimes(startTimeStr, endTimeStr);
     }
@@ -159,12 +153,17 @@ export function ReservationForm({
     }
 
     // 시간 검증 및 날짜 계산
-    const createDateTime = (dateStr: string, timeStr: string): Date => {
+    const createDateTime = (dateStr: string, timeStr: string, isEndTime = false): Date => {
       const [hours, minutes] = timeStr.split(":").map(Number);
       const date = new Date(dateStr);
 
+      // 24:00 시간 처리 (다음 날 00:00으로 변환)
+      if (hours === 24 && minutes === 0) {
+        date.setDate(date.getDate() + 1);
+        date.setHours(0, 0, 0, 0);
+      }
       // 24시간을 넘어가면 다음 날로 처리
-      if (hours >= 24) {
+      else if (hours >= 24) {
         date.setDate(date.getDate() + 1);
         date.setHours(hours - 24, minutes, 0, 0);
       } else {
@@ -175,7 +174,14 @@ export function ReservationForm({
     };
 
     const startDateTime = createDateTime(formData.date, selectedStartTime);
-    const endDateTime = createDateTime(formData.date, selectedEndTime);
+    let endDateTime = createDateTime(formData.date, selectedEndTime);
+    
+    // 자정을 넘나드는 경우 처리 (시간 문자열 비교로 자정 넘나드는지 확인)
+    const isMidnightCrossing = selectedStartTime > selectedEndTime;
+    if (isMidnightCrossing) {
+      // 종료 시간을 다음 날로 설정
+      endDateTime.setDate(endDateTime.getDate() + 1);
+    }
 
     // 과거 시간 방지: 오늘 날짜인 경우 현재 시각을 선택된 간격 단위로 내림한 시각보다 빠르면 막기
     // 단, 예약 수정 시에는 과거 시간 선택 허용
@@ -208,7 +214,8 @@ export function ReservationForm({
       }
     }
 
-    if (endDateTime <= startDateTime) {
+    // 자정을 넘나드는 경우가 아닌데 종료 시간이 시작 시간보다 이른 경우만 에러
+    if (!isMidnightCrossing && endDateTime <= startDateTime) {
       setError(t("validation.endTimeAfterStart"));
       return;
     }
@@ -393,7 +400,7 @@ export function ReservationForm({
               onChange={handleInputChange}
               placeholder={t("ships.reservationPurposePlaceholder")}
               rows={1}
-              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full px-4 py-3 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               required
             />
             {/* <p className="mb-2 text-xs text-muted-foreground">

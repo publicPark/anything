@@ -32,7 +32,19 @@
     "errorTitle": "오류가 발생했습니다",
     "retry": "다시 시도",
     "goToLogin": "로그인",
-    "tutorial": "튜토리얼",
+    "tutorial": "그냥 해보기",
+    "tutorialCabins": "미리보기",
+    "goToCabins": "이동",
+    "background": {
+      "title": "예약시스템 탄생 배경",
+      "problems": {
+        "title": "문제점",
+        "manual": "기존에는 회의실명과 시간을 직접 적어서 슬랙 메시지로 예약했어요.",
+        "availability": "지금 회의실이 사용중인지 비어있는지 문을 열어서 확인해야 했어요.",
+        "overlap": "시간이 겹치는지 몰라서 중복으로 예약하기도 쉬웠어요."
+      },
+      "solution": "이 문제를 해결하기 위해 탄생했어요.\n간단하게 클릭 몇 번으로 예약하고 자동 슬랙 메시지를 보내보세요."
+    },
     "myReservations": "내 예약",
     "activeReservations": "안지난 예약",
     "noMyReservations": "내 예약이 아직 없습니다"

@@ -14,6 +14,7 @@ interface CabinInfoProps {
   reservations: CabinReservation[];
   todayReservations: CabinReservation[];
   showReservationForm: boolean;
+  showButton?: boolean;
   onToggleReservationForm: () => void;
   onReservationSuccess: () => void;
   lastUpdateTime?: Date;
@@ -26,6 +27,7 @@ export function CabinInfo({
   reservations,
   todayReservations,
   showReservationForm,
+  showButton = false,
   onToggleReservationForm,
   onReservationSuccess,
   lastUpdateTime,
@@ -76,19 +78,21 @@ export function CabinInfo({
       {/* 예약 폼 */}
       {showReservationForm && <hr className="border-border" />}
       <div className="mb-6">
-        {/* <div className="flex items-center justify-between mb-4">
-          <Button
-            className="w-full"
-            type="button"
-            variant={showReservationForm ? "secondary" : "primary"}
-            size="lg"
-            onClick={onToggleReservationForm}
-          >
-            {showReservationForm
-              ? t("ships.cancelReservation")
-              : t("ships.reserveCabin")}
-          </Button>
-        </div> */}
+        {showButton && (
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              className="w-full"
+              type="button"
+              variant={showReservationForm ? "secondary" : "primary"}
+              size="lg"
+              onClick={onToggleReservationForm}
+            >
+              {showReservationForm
+                ? t("ships.cancelReservation")
+                : t("ships.reserveCabin")}
+            </Button>
+          </div>
+        )}
 
         {showReservationForm && (
           <ReservationForm

@@ -32,7 +32,19 @@
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
     "goToLogin": "Login",
-    "tutorial": "Tutorial",
+    "tutorial": "Try It",
+    "tutorialCabins": "Preview",
+    "goToCabins": "Go",
+    "background": {
+      "title": "Reservation System Background",
+      "problems": {
+        "title": "Problems",
+        "manual": "Previously, we had to manually write meeting room names and times in Slack messages to make reservations.",
+        "availability": "We had to open doors to check if meeting rooms were currently in use or available.",
+        "overlap": "It was easy to make duplicate reservations because we didn't know if times overlapped."
+      },
+      "solution": "This system was created to solve these problems.\nTry making a reservation with just a few clicks and automatic Slack messages."
+    },
     "myReservations": "My Reservations",
     "activeReservations": "Active Reservations",
     "noMyReservations": "You have no reservations yet"

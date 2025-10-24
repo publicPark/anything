@@ -214,9 +214,6 @@ export default function Home() {
                   />
                 </div>
 
-                <p className="text-muted-foreground mb-6 text-center">
-                  {t("home.loginOptional")}
-                </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                   <Button

@@ -27,12 +27,11 @@
     "welcomeMessage": "Welcome to Reservation System!",
     "subtitle": "What is the Reservation System?",
     "subdescription": "You can reserve space and check the status in real time.\nAs shown below!",
-    "loginOptional": "Login is optional.",
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
     "goToLogin": "Login",
-    "tutorial": "Try It",
+    "tutorial": "Just Explore",
     "tutorialCabins": "Preview",
     "goToCabins": "Go",
     "background": {

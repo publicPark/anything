@@ -113,7 +113,13 @@ export default function Home() {
   return (
     <>
       <Head>
-        <link rel="preload" as="image" href="/catcatcat.png" />
+        <link
+          rel="preload"
+          as="image"
+          href="/catcatcat.webp"
+          type="image/webp"
+        />
+        <link rel="preload" as="image" href="/catcatcat.png" type="image/png" />
       </Head>
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 py-16">
@@ -138,18 +144,21 @@ export default function Home() {
             {/* 고양이 이미지 */}
             {!profile && (
               <div className="flex justify-center mb-8">
-                <Image
-                  src="/catcatcat.png"
-                  alt="Cat"
-                  width={400}
-                  height={300}
-                  priority
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                  className="w-full max-w-md object-contain"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  quality={85}
-                />
+                <picture>
+                  <source srcSet="/catcatcat.webp" type="image/webp" />
+                  <Image
+                    src="/catcatcat.png"
+                    alt="Cat"
+                    width={400}
+                    height={300}
+                    priority
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    className="w-full max-w-md object-contain"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    quality={85}
+                  />
+                </picture>
               </div>
             )}
 

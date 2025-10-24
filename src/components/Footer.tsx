@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/hooks/useI18n";
+import LanguageSettingsModal from "./LanguageSettingsModal";
 
 export function Footer() {
   const { t, locale } = useI18n();
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   return (
     <footer className="border-t border-border bg-background">
@@ -15,12 +18,12 @@ export function Footer() {
           </div>
 
           <div className="flex items-center space-x-6">
-            <Link
-              href={`/${locale}/settings`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <button
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               {t("settings.title")}
-            </Link>
+            </button>
             <Link
               href={`/${locale}/faq`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -42,6 +45,12 @@ export function Footer() {
           </div>
         </div>
       </div>
+
+      {/* 설정 모달 */}
+      <LanguageSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
     </footer>
   );
 }

@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // 공개적으로 접근 가능한 경로들
-  const publicPaths = ["/login", "/auth", "/", "/settings", "/ship"];
+  const publicPaths = ["/login", "/auth", "/", "/ship"];
   const pathname = request.nextUrl.pathname;
   const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
 

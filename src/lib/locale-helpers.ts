@@ -29,7 +29,6 @@ export const LOCALIZED_MESSAGES = {
 
   // UI
   ui: {
-    settings: (locale: Locale) => t("ui.settings", locale),
     tryAgain: (locale: Locale) => t("ui.tryAgain", locale),
     goHome: (locale: Locale) => t("ui.goHome", locale),
     or: (locale: Locale) => t("ui.or", locale),

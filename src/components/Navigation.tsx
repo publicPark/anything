@@ -5,7 +5,6 @@ import { useProfile } from "@/hooks/useProfile";
 import Link from "next/link";
 import { useI18n } from "@/hooks/useI18n";
 import { useNavigation } from "@/hooks/useNavigation";
-import SettingsButton from "@/components/SettingsButton";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import Logo from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -192,7 +191,6 @@ export default function Navigation() {
                   {t("navigation.login")}
                 </Link>
               )}
-              {/* <SettingsButton /> */}
             </div>
           </div>
         </div>

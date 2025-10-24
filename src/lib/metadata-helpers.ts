@@ -22,6 +22,7 @@ export function generateMetadata(locale: Locale, path?: string): Metadata {
   }
 
   return {
+    metadataBase: new URL(getSiteUrl() || "https://bookabin.vercel.app"),
     title,
     description,
     keywords: metadata.keywords,
@@ -99,7 +100,6 @@ function getPathTranslations(locale: Locale, path: string) {
     "/": "home",
     "/login": "login",
     "/profile": "profile",
-    "/settings": "settings",
     "/ships": "ships",
     "/ship": "ship",
     "/privacy": "legal.privacy",
@@ -140,7 +140,7 @@ function getPathTranslations(locale: Locale, path: string) {
  */
 export function generateStaticMetadata() {
   const locales: Locale[] = ["ko", "en"];
-  const paths = ["/", "/login", "/profile", "/settings", "/ships"];
+  const paths = ["/", "/login", "/profile", "/ships"];
 
   const metadata: Record<string, Metadata> = {};
 

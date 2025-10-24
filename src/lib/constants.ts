@@ -8,7 +8,6 @@ export const URL_PATTERNS = {
   HOME: "/",
   LOGIN: "/login",
   PROFILE: "/profile",
-  SETTINGS: "/settings",
 } as const;
 
 // Locale constants

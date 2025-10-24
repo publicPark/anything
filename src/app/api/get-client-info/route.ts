@@ -13,12 +13,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ip,
       userAgent,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+      },
     });
   } catch (error) {
     console.error("Failed to get client info:", error);
     return NextResponse.json({
       ip: "unknown",
       userAgent: "unknown",
+    }, {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 }

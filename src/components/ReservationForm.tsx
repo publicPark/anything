@@ -280,7 +280,22 @@ export function ReservationForm({
         } else {
           // 비회원: IP + User-Agent 해시 생성
           try {
-            const response = await fetch("/api/get-client-info");
+            const response = await fetch("/api/get-client-info", {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+              throw new Error("Response is not JSON");
+            }
+
             const clientInfo = await response.json();
             const combined = `${clientInfo.ip}-${clientInfo.userAgent}`;
             guestIdentifier = btoa(combined).substring(0, 16); // Base64 인코딩 후 16자리만

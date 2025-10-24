@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import Head from "next/head";
 import { useProfile } from "@/hooks/useProfile";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
@@ -56,7 +58,12 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-muted-foreground">
+          <div className="animate-pulse">
+            <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4"></div>
+            <div className="h-4 bg-muted rounded w-32 mx-auto mb-2"></div>
+            <div className="h-4 bg-muted rounded w-24 mx-auto"></div>
+          </div>
+          <div className="text-lg text-muted-foreground mt-4">
             {t("home.loading")}
           </div>
         </div>
@@ -104,216 +111,229 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <div className="text-center">
-          <h1 className="sr-only">Bookabin - Home</h1>
+    <>
+      <Head>
+        <link rel="preload" as="image" href="/catcatcat.png" />
+      </Head>
+      <div className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="sr-only">Bookabin - Home</h1>
 
-          {/* 로고 */}
-          {!profile && (
-            <div className="flex justify-center mb-6">
-              <Logo size="lg" className="w-16 h-16" />
-            </div>
-          )}
-
-          <h3 className="text-xl font-medium mb-8">
-            {profile
-              ? t("home.welcome", {
-                  name: profile.display_name || profile.username,
-                })
-              : t("home.welcomeMessage")}
-          </h3>
-
-          {/* 고양이 이미지 */}
-          {!profile && (
-            <div className="flex justify-center mb-8">
-              <img
-                src="/catcatcat.png"
-                alt="Cat"
-                className="w-full max-w-md object-contain"
-              />
-            </div>
-          )}
-
-          {profile ? (
-            <div className="mx-auto max-w-6xl">
-              <div className="grid grid-cols-1 md:grid-cols-4 md:gap-8 gap-6 items-start">
-                <div className="md:col-span-2">
-                  <MyShips />
-                </div>
-                <div className="md:col-span-2">
-                  <MyReservations />
-                </div>
+            {/* 로고 */}
+            {!profile && (
+              <div className="flex justify-center mb-6">
+                <Logo size="lg" className="w-16 h-16" />
               </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-foreground mb-4">
-                {t("home.subtitle")}
-              </h2>
-              <p className="text-muted-foreground mb-4 whitespace-pre-line">
-                {t("home.subdescription")}
-              </p>
+            )}
 
-              {/* 상태 뱃지들 */}
-              <div className="flex gap-2 mb-6 justify-center">
-                <StatusBadge
-                  label={t("ships.available")}
-                  tone="success"
-                  className="px-3 py-1 text-sm"
-                />
-                <StatusBadge
-                  label={t("ships.inUse")}
-                  tone="destructive"
-                  blinking={true}
-                  className="px-3 py-1 text-sm"
+            <h3 className="text-xl font-medium mb-8">
+              {profile
+                ? t("home.welcome", {
+                    name: profile.display_name || profile.username,
+                  })
+                : t("home.welcomeMessage")}
+            </h3>
+
+            {/* 고양이 이미지 */}
+            {!profile && (
+              <div className="flex justify-center mb-8">
+                <Image
+                  src="/catcatcat.png"
+                  alt="Cat"
+                  width={400}
+                  height={300}
+                  priority
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  className="w-full max-w-md object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  quality={85}
                 />
               </div>
+            )}
 
-              <p className="text-muted-foreground mb-6 text-center">
-                {t("home.loginOptional")}
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    const currentPath = window.location.pathname;
-                    window.location.href = `/${locale}/login?next=${encodeURIComponent(
-                      currentPath
-                    )}`;
-                  }}
-                  className="flex-1"
-                >
-                  {t("home.goToLogin")}
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    const publicId = "SPtest" + locale;
-                    window.location.href = `/${locale}/ship/${publicId}`;
-                  }}
-                  className="flex-1"
-                >
-                  {t("home.tutorial")}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 예약시스템 탄생 배경 카드 - 별도 카드 */}
-        {!profile && (
-          <div className="max-w-4xl mx-auto px-4 mt-8">
-            <div className="bg-muted rounded-lg border border-border p-6">
-              <h3 className="text-2xl font-semibold text-foreground mb-4">
-                {t("home.background.title")}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xl font-semibold text-foreground mb-2">
-                    {t("home.background.problems.title")}
-                  </h4>
-                  <ul className="space-y-2 text-md text-muted-foreground">
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">1.</span>
-                      <span>{t("home.background.problems.manual")}</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">2.</span>
-                      <span>{t("home.background.problems.availability")}</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">3.</span>
-                      <span>{t("home.background.problems.overlap")}</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="pt-2">
-                  <p className="text-lg text-foreground whitespace-pre-line">
-                    {t("home.background.solution")}
-                  </p>
+            {profile ? (
+              <div className="mx-auto max-w-6xl">
+                <div className="grid grid-cols-1 md:grid-cols-4 md:gap-8 gap-6 items-start">
+                  <div className="md:col-span-2">
+                    <MyShips />
+                  </div>
+                  <div className="md:col-span-2">
+                    <MyReservations />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            ) : (
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold text-foreground mb-4">
+                  {t("home.subtitle")}
+                </h2>
+                <p className="text-muted-foreground mb-4 whitespace-pre-line">
+                  {t("home.subdescription")}
+                </p>
 
-        {/* 구분선 */}
-        {!profile && tutorialShipId && (
-          <div className="mt-8 max-w-4xl mx-auto px-4">
-            <hr className="border-border mb-6" />
-          </div>
-        )}
-
-        {/* 튜토리얼 팀 선실 목록 - 카드 밖으로 이동 */}
-        {!profile && tutorialShipId && (
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">
-                {t("home.tutorialCabins")}
-              </h3>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  const publicId = "SPtest" + locale;
-                  window.location.href = `/${locale}/ship/${publicId}/cabins`;
-                }}
-                className="text-sm"
-              >
-                {t("home.goToCabins")}
-              </Button>
-            </div>
-
-            {/* Featured Cabin */}
-            {tutorialShipId && (
-              <div className="mb-6">
-                <div className="bg-muted rounded-lg border border-border p-6">
-                  <CabinDetailContent
-                    shipPublicId={`SPtest${locale}`}
-                    cabinPublicId={
-                      locale === "ko" ? "CABIN000006" : "CBF2E9BDF36B"
-                    }
-                    showBreadcrumb={false}
+                {/* 상태 뱃지들 */}
+                <div className="flex gap-2 mb-6 justify-center">
+                  <StatusBadge
+                    label={t("ships.available")}
+                    tone="success"
+                    className="px-3 py-1 text-sm"
                   />
+                  <StatusBadge
+                    label={t("ships.inUse")}
+                    tone="destructive"
+                    blinking={true}
+                    className="px-3 py-1 text-sm"
+                  />
+                </div>
+
+                <p className="text-muted-foreground mb-6 text-center">
+                  {t("home.loginOptional")}
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const currentPath = window.location.pathname;
+                      window.location.href = `/${locale}/login?next=${encodeURIComponent(
+                        currentPath
+                      )}`;
+                    }}
+                    className="flex-1"
+                  >
+                    {t("home.goToLogin")}
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      const publicId = "SPtest" + locale;
+                      window.location.href = `/${locale}/ship/${publicId}`;
+                    }}
+                    className="flex-1"
+                  >
+                    {t("home.tutorial")}
+                  </Button>
                 </div>
               </div>
             )}
           </div>
-        )}
 
-        {/* 자주 묻는 질문 섹션 */}
-        {!profile && (
-          <div className="max-w-4xl mx-auto px-4 mt-16">
-            <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
-              {faqData[locale as keyof typeof faqData]?.title ||
-                faqData.ko.title}
-            </h3>
-            <div className="space-y-6">
-              {(
-                faqData[locale as keyof typeof faqData]?.items ||
-                faqData.ko.items
-              ).map((item, index) => (
-                <div
-                  key={index}
-                  className="border-b border-border pb-4 last:border-b-0"
-                >
-                  <h4 className="text-lg font-semibold text-foreground mb-2">
-                    {item.question}
-                  </h4>
-                  <div
-                    className="text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: item.answer }}
-                  />
+          {/* 예약시스템 탄생 배경 카드 - 별도 카드 */}
+          {!profile && (
+            <div className="max-w-4xl mx-auto px-4 mt-8">
+              <div className="bg-muted rounded-lg border border-border p-6">
+                <h3 className="text-2xl font-semibold text-foreground mb-4">
+                  {t("home.background.title")}
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-xl font-semibold text-foreground mb-2">
+                      {t("home.background.problems.title")}
+                    </h4>
+                    <ul className="space-y-2 text-md text-muted-foreground">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">1.</span>
+                        <span>{t("home.background.problems.manual")}</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">2.</span>
+                        <span>
+                          {t("home.background.problems.availability")}
+                        </span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-2">3.</span>
+                        <span>{t("home.background.problems.overlap")}</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="pt-2">
+                    <p className="text-lg text-foreground whitespace-pre-line">
+                      {t("home.background.solution")}
+                    </p>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 광고 배치 - 카드 밖으로 이동 */}
-        {/* <div className="mt-8">
+          {/* 구분선 */}
+          {!profile && tutorialShipId && (
+            <div className="mt-8 max-w-4xl mx-auto px-4">
+              <hr className="border-border mb-6" />
+            </div>
+          )}
+
+          {/* 튜토리얼 팀 선실 목록 - 카드 밖으로 이동 */}
+          {!profile && tutorialShipId && (
+            <div className="max-w-4xl mx-auto px-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("home.tutorialCabins")}
+                </h3>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const publicId = "SPtest" + locale;
+                    window.location.href = `/${locale}/ship/${publicId}/cabins`;
+                  }}
+                  className="text-sm"
+                >
+                  {t("home.goToCabins")}
+                </Button>
+              </div>
+
+              {/* Featured Cabin */}
+              {tutorialShipId && (
+                <div className="mb-6">
+                  <div className="bg-muted rounded-lg border border-border p-6">
+                    <CabinDetailContent
+                      shipPublicId={`SPtest${locale}`}
+                      cabinPublicId={
+                        locale === "ko" ? "CABIN000006" : "CBF2E9BDF36B"
+                      }
+                      showBreadcrumb={false}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 자주 묻는 질문 섹션 */}
+          {!profile && (
+            <div className="max-w-4xl mx-auto px-4 mt-16">
+              <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
+                {faqData[locale as keyof typeof faqData]?.title ||
+                  faqData.ko.title}
+              </h3>
+              <div className="space-y-6">
+                {(
+                  faqData[locale as keyof typeof faqData]?.items ||
+                  faqData.ko.items
+                ).map((item, index) => (
+                  <div
+                    key={index}
+                    className="border-b border-border pb-4 last:border-b-0"
+                  >
+                    <h4 className="text-lg font-semibold text-foreground mb-2">
+                      {item.question}
+                    </h4>
+                    <div
+                      className="text-muted-foreground"
+                      dangerouslySetInnerHTML={{ __html: item.answer }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 광고 배치 - 카드 밖으로 이동 */}
+          {/* <div className="mt-8">
           <AdSlot
             slotId="1234567890"
             className="max-w-md mx-auto"
@@ -321,7 +341,8 @@ export default function Home() {
             responsive={true}
           />
         </div> */}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

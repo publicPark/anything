@@ -6,14 +6,25 @@ import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { RoleBadge } from "@/components/ui/RoleBadge";
 import { CabinInfo } from "@/components/CabinInfo";
 import { ReservationTabs } from "@/components/ReservationTabs";
 import { ShipCabin, Ship, CabinReservation } from "@/types/database";
+import { useRouter } from "next/navigation";
 
 interface CabinDetailContentProps {
   shipPublicId: string;
   cabinPublicId: string;
   showBreadcrumb?: boolean;
+  // 튜토리얼 모드용 props
+  tutorialMode?: boolean;
+  preloadedData?: {
+    ship: Ship | null;
+    cabin: ShipCabin | null;
+    reservations: CabinReservation[];
+    userRole?: "captain" | "mechanic" | "crew" | null;
+  };
 }
 
 interface CabinDetailState {
@@ -44,14 +55,42 @@ const ERROR_MESSAGES = {
 export function CabinDetailContent({
   shipPublicId,
   cabinPublicId,
-  showBreadcrumb: _showBreadcrumb = false,
+  showBreadcrumb = false,
+  tutorialMode = false,
+  preloadedData,
 }: CabinDetailContentProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const supabase = createClient();
   const { profile } = useProfile();
+  const router = useRouter();
 
   // 상태를 하나의 객체로 관리
-  const [state, setState] = useState<CabinDetailState>(INITIAL_STATE);
+  const [state, setState] = useState<CabinDetailState>(() => {
+    // 튜토리얼 모드일 때 미리 로드된 데이터로 초기화
+    if (tutorialMode && preloadedData) {
+      return {
+        ship: preloadedData.ship,
+        cabin: preloadedData.cabin,
+        reservations: preloadedData.reservations,
+        userRole: null, // 튜토리얼에서는 사용자 역할 없음
+        isLoading: false,
+        error: null,
+      };
+    }
+    
+    // SSR 모드일 때 미리 로드된 데이터로 초기화
+    if (preloadedData) {
+      return {
+        ship: preloadedData.ship,
+        cabin: preloadedData.cabin,
+        reservations: preloadedData.reservations,
+        userRole: preloadedData.userRole || null,
+        isLoading: false,
+        error: null,
+      };
+    }
+    return INITIAL_STATE;
+  });
 
   // UI 상태
   const [showReservationForm, setShowReservationForm] = useState(true);
@@ -72,6 +111,9 @@ export function CabinDetailContent({
   useEffect(() => {
     const fetchCabinDetails = async () => {
       if (!shipPublicId || !cabinPublicId) return;
+      
+      // 튜토리얼 모드이거나 미리 로드된 데이터가 있을 때는 fetch하지 않음
+      if (tutorialMode || preloadedData) return;
 
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
@@ -140,7 +182,7 @@ export function CabinDetailContent({
     };
 
     fetchCabinDetails();
-  }, [shipPublicId, cabinPublicId, profile?.id]);
+  }, [shipPublicId, cabinPublicId, profile?.id, tutorialMode, preloadedData]);
 
   const handleReservationSuccess = useCallback(() => {
     // setShowReservationForm(false);
@@ -222,6 +264,32 @@ export function CabinDetailContent({
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumbs - 조건부 표시 */}
+      {showBreadcrumb && state.ship && state.cabin && (
+        <Breadcrumb
+          items={[
+            {
+              label: (
+                <span className="flex items-center gap-2">
+                  {state.ship.name}
+                  {state.userRole && <RoleBadge role={state.userRole} size="sm" />}
+                </span>
+              ),
+              onClick: () => router.push(`/${locale}/ship/${shipPublicId}`),
+            },
+            {
+              label: t("cabins.viewAllCabins"),
+              onClick: () =>
+                router.push(`/${locale}/ship/${shipPublicId}/cabins`),
+            },
+            {
+              label: state.cabin.name,
+              isCurrentPage: true,
+            },
+          ]}
+        />
+      )}
+
       {/* 메인 컨텐츠 - 좌우 분할 레이아웃 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* 왼쪽 - cabin 정보 + 예약폼 */}
@@ -231,6 +299,7 @@ export function CabinDetailContent({
             reservations={state.reservations}
             todayReservations={todayReservations}
             showReservationForm={showReservationForm}
+            showButton={tutorialMode}
             onToggleReservationForm={() =>
               setShowReservationForm(!showReservationForm)
             }
@@ -247,8 +316,8 @@ export function CabinDetailContent({
             todayReservations={todayReservations}
             upcomingReservations={upcomingReservations}
             cabinId={state.cabin.id}
-            currentUserId={profile?.id}
-            userRole={state.userRole || undefined}
+            currentUserId={tutorialMode ? undefined : profile?.id}
+            userRole={tutorialMode ? undefined : (state.userRole || undefined)}
             existingReservations={state.reservations}
             onUpdate={fetchReservationsOnly}
             selectedDate={selectedDate}

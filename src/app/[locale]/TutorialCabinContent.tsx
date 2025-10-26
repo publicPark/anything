@@ -23,13 +23,14 @@ export function TutorialCabinContent({
   locale 
 }: TutorialCabinContentProps) {
   const { t } = useI18n();
-  const [showReservationForm, setShowReservationForm] = useState(false);
+  const [showReservationForm, setShowReservationForm] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+  const [reservations, setReservations] = useState(cabinData.reservations);
 
-  const { ship, cabin, reservations } = cabinData;
+  const { ship, cabin } = cabinData;
 
   // 오늘과 이번 주 예약 분류 (Hook 규칙을 위해 early return 전에 호출)
   const { todayReservations, upcomingReservations } = useMemo(() => {
@@ -62,8 +63,37 @@ export function TutorialCabinContent({
   }
 
   const handleReservationSuccess = () => {
-    // 튜토리얼에서는 실제 예약을 만들지 않으므로 폼만 닫기
-    setShowReservationForm(false);
+    // 예약 성공 후 예약 목록만 업데이트 (폼은 계속 표시)
+    fetchUpdatedReservations();
+  };
+
+  const handleUpdate = () => {
+    // 예약 목록을 다시 가져와서 업데이트
+    fetchUpdatedReservations();
+  };
+
+  const fetchUpdatedReservations = async () => {
+    try {
+      // Supabase 클라이언트를 사용해서 최신 예약 목록을 가져오기
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      
+      const { data: reservations, error } = await supabase
+        .from("cabin_reservations")
+        .select("*")
+        .eq("cabin_id", cabin.id)
+        .eq("status", "confirmed")
+        .order("start_time", { ascending: true });
+
+      if (error) {
+        console.error('Failed to fetch updated reservations:', error);
+        return;
+      }
+
+      setReservations(reservations || []);
+    } catch (error) {
+      console.error('Failed to fetch updated reservations:', error);
+    }
   };
 
   return (
@@ -96,7 +126,7 @@ export function TutorialCabinContent({
             currentUserId={undefined} // 튜토리얼이므로 사용자 ID 없음
             userRole={undefined} // 튜토리얼이므로 사용자 역할 없음
             existingReservations={reservations}
-            onUpdate={() => {}} // 튜토리얼에서는 업데이트 없음
+            onUpdate={handleUpdate}
             selectedDate={selectedDate}
           />
         </div>

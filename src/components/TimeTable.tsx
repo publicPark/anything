@@ -41,13 +41,15 @@ export function TimeTable({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
 
   // Add state for selected interval
-  const [selectedInterval, setSelectedInterval] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("timetable-interval");
-      return saved ? parseInt(saved, 10) : DEFAULT_INTERVAL;
+  const [selectedInterval, setSelectedInterval] = useState<number>(DEFAULT_INTERVAL);
+
+  // Load interval from localStorage on client side
+  useEffect(() => {
+    const saved = localStorage.getItem("timetable-interval");
+    if (saved) {
+      setSelectedInterval(parseInt(saved, 10));
     }
-    return DEFAULT_INTERVAL;
-  });
+  }, []);
 
   // 유틸리티 함수들
   const getSelectedDateObj = useCallback(

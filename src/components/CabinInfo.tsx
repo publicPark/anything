@@ -2,8 +2,17 @@
 
 import { Button } from "@/components/ui/Button";
 import { CabinReservationSummary } from "@/components/CabinReservationSummary";
-import { ReservationForm } from "@/components/ReservationForm";
 import { ShipCabin, CabinReservation } from "@/types/database";
+import dynamic from "next/dynamic";
+
+const ReservationForm = dynamic(() => import("@/components/ReservationForm").then(mod => ({ default: mod.ReservationForm })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="text-sm text-muted-foreground">Loading reservation form...</div>
+    </div>
+  ),
+});
 import { calculateCabinStatus } from "@/lib/cabin-status";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { renderTextWithLinks } from "@/lib/text-helpers";

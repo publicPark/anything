@@ -15,8 +15,17 @@ import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Calendar } from "@/components/ui/Calendar";
-import { TimeTable } from "@/components/TimeTable";
 import { CabinReservation } from "@/types/database";
+import dynamic from "next/dynamic";
+
+const TimeTable = dynamic(() => import("@/components/TimeTable").then(mod => ({ default: mod.TimeTable })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="text-sm text-muted-foreground">Loading timetable...</div>
+    </div>
+  ),
+});
 import { useReservationStore } from "@/stores/reservationStore";
 
 interface ReservationFormProps {

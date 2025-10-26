@@ -30,6 +30,7 @@ export default function FaqPage() {
             </div>
           ))}
         </div>
+
       </div>
     </div>
   );

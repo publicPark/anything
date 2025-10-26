@@ -227,67 +227,78 @@ export function ReservationItem({
     };
   };
 
-  const getReservationBadges = () => {
-    const badges: Array<{
-      text: string;
-      variant: "primary" | "secondary";
-      clickable?: boolean;
-      onClick?: () => void;
-    }> = [];
+  const [badges, setBadges] = useState<Array<{
+    text: string;
+    variant: "primary" | "secondary";
+    clickable?: boolean;
+    onClick?: () => void;
+  }>>([]);
 
-    if (isGuest) {
-      // 비회원 예약 - 클릭 가능한 뱃지
-      badges.push({
-        text: t("ships.guestReservation"),
-        variant: "secondary" as const,
-        clickable: true,
-        onClick: () => {
-          if (reservation.guest_identifier) {
-            toast.default(`${reservation.guest_identifier}`);
-          } else {
-            toast.default("not set");
-          }
-        },
-      });
+  useEffect(() => {
+    const getReservationBadges = () => {
+      const newBadges: Array<{
+        text: string;
+        variant: "primary" | "secondary";
+        clickable?: boolean;
+        onClick?: () => void;
+      }> = [];
 
-      // 내 비회원 예약인지 확인 (localStorage의 guest_identifier와 비교)
-      if (reservation.guest_identifier) {
-        try {
-          const myGuestId = localStorage.getItem("guest_identifier");
-          if (myGuestId === reservation.guest_identifier) {
-            badges.push({
-              text: t("ships.myReservation"),
-              variant: "primary" as const,
-            });
+      if (isGuest) {
+        // 비회원 예약 - 클릭 가능한 뱃지
+        newBadges.push({
+          text: t("ships.guestReservation"),
+          variant: "secondary" as const,
+          clickable: true,
+          onClick: () => {
+            if (reservation.guest_identifier) {
+              toast.default(`${reservation.guest_identifier}`);
+            } else {
+              toast.default("not set");
+            }
+          },
+        });
+
+        // 내 비회원 예약인지 확인 (localStorage의 guest_identifier와 비교)
+        if (reservation.guest_identifier) {
+          try {
+            const myGuestId = localStorage.getItem("guest_identifier");
+            if (myGuestId === reservation.guest_identifier) {
+              newBadges.push({
+                text: t("ships.myReservation"),
+                variant: "primary" as const,
+              });
+            }
+          } catch (error) {
+            // localStorage 접근 실패 시 무시
+            console.warn("Failed to access localStorage:", error);
           }
-        } catch (error) {
-          // localStorage 접근 실패 시 무시
-          console.warn("Failed to access localStorage:", error);
+        }
+      } else if (reservation.user_id) {
+        // 회원 예약 (내 예약이든 다른 사람 예약이든)
+        const userName = reservation.user_display_name || "😉";
+        newBadges.push({
+          text: userName,
+          variant: "secondary" as const,
+          // clickable: true,
+          onClick: () => {
+            toast.default(`${reservation.user_id}`);
+          },
+        });
+
+        // 내 예약인 경우에만 "내 예약" 뱃지 추가
+        if (isOwner) {
+          newBadges.push({
+            text: t("ships.myReservation"),
+            variant: "primary" as const,
+          });
         }
       }
-    } else if (reservation.user_id) {
-      // 회원 예약 (내 예약이든 다른 사람 예약이든)
-      const userName = reservation.user_display_name || "😉";
-      badges.push({
-        text: userName,
-        variant: "secondary" as const,
-        // clickable: true,
-        onClick: () => {
-          toast.default(`${reservation.user_id}`);
-        },
-      });
 
-      // 내 예약인 경우에만 "내 예약" 뱃지 추가
-      if (isOwner) {
-        badges.push({
-          text: t("ships.myReservation"),
-          variant: "primary" as const,
-        });
-      }
-    }
+      return newBadges;
+    };
 
-    return badges;
-  };
+    setBadges(getReservationBadges());
+  }, [isGuest, reservation.guest_identifier, reservation.user_id, reservation.user_display_name, isOwner]);
 
   const getReservationStatus = (): "ongoing" | "upcoming" | "ended" => {
     const now = new Date();
@@ -366,7 +377,7 @@ export function ReservationItem({
             leftExtra
           ) : !hideTypeBadge ? (
             <div className="flex items-center gap-2">
-              {getReservationBadges().map((badge, index) =>
+              {badges.map((badge, index) =>
                 badge.clickable ? (
                   <button
                     key={index}

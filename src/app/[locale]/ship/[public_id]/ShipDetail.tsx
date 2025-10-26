@@ -821,15 +821,6 @@ export default function ShipDetail() {
         setEditFormData={setEditFormData}
       />
 
-      {/* 광고 배치 - 배 정보와 탭 사이 */}
-      <div className="my-6">
-        <AdSlot
-          slotId="1234567892"
-          className="w-full"
-          format="auto"
-          responsive={true}
-        />
-      </div>
 
       {/* 탭 시스템 - member_only 배가 아니거나 멤버인 경우에만 표시 */}
       {(!ship.member_only || ship.isMember) && (

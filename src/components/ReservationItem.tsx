@@ -246,7 +246,7 @@ export function ReservationItem({
       if (isGuest) {
         // 비회원 예약 - 클릭 가능한 뱃지
         newBadges.push({
-          text: t("ships.guestReservation"),
+          text: t("cabins.guestReservation"),
           variant: "secondary" as const,
           clickable: true,
           onClick: () => {
@@ -264,7 +264,7 @@ export function ReservationItem({
             const myGuestId = localStorage.getItem("guest_identifier");
             if (myGuestId === reservation.guest_identifier) {
               newBadges.push({
-                text: t("ships.myReservation"),
+                text: t("cabins.myReservation"),
                 variant: "primary" as const,
               });
             }
@@ -288,7 +288,7 @@ export function ReservationItem({
         // 내 예약인 경우에만 "내 예약" 뱃지 추가
         if (isOwner) {
           newBadges.push({
-            text: t("ships.myReservation"),
+            text: t("cabins.myReservation"),
             variant: "primary" as const,
           });
         }

@@ -179,16 +179,19 @@ export default async function Home({ params }: HomeProps) {
           />
         )}
 
-        {/* 회의실 미리보기 - 비로그인 사용자용 */}
+        {/* 선실 목록 - 비로그인 사용자용 */}
         {!user && tutorialShipId && (
           <div className="max-w-4xl mx-auto mt-16">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-semibold text-foreground mb-2">
-                {t("home.cabinPreview.title", locale as Locale)}
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-semibold text-foreground">
+                {t("home.cabinsPreview.title", locale as Locale)}
               </h3>
-              <p className="text-muted-foreground">
-                {t("home.cabinPreview.description", locale as Locale)}
-              </p>
+              <a 
+                href={`/${locale}/ship/SPtest${locale}/cabins`}
+                className="px-3 py-1.5 text-sm font-medium text-primary border border-primary/20 rounded-md hover:bg-primary/5 hover:border-primary/30 transition-all inline-block"
+              >
+                {t("home.cabinsPreview.viewAll", locale as Locale)}
+              </a>
             </div>
             <CabinList 
               shipId={tutorialShipId}

@@ -32,8 +32,7 @@
     "retry": "다시 시도",
     "goToLogin": "로그인",
     "tutorial": "그냥 둘러보기",
-    "tutorialCabins": "미리보기",
-    "goToCabins": "이동",
+    "tryReservation": "예약 신청 해보기",
     "background": {
       "title": "예약시스템 탄생 배경",
       "problems": {
@@ -47,10 +46,10 @@
     "myReservations": "내 예약",
     "activeReservations": "안지난 예약",
     "noMyReservations": "내 예약이 아직 없습니다",
-    "cabinPreview": {
-      "title": "회의실 미리보기",
+    "cabinsPreview": {
+      "title": "미리보기",
       "description": "실시간으로 회의실 상태를 확인해보세요",
-      "viewAll": "전체 보기"
+      "viewAll": "이동"
     }
   },
   "login": {
@@ -257,8 +256,6 @@
     "discordMessageSent": "디스코드로 알림이 전송되었습니다",
     "reservationDeleted": "예약이 삭제되었습니다",
     "confirmDeleteReservation": "이 예약을 삭제하시겠습니까?",
-    "guestReservation": "비회원 예약",
-    "myReservation": "내 예약",
     "statusOngoing": "진행중",
     "statusUpcoming": "예정",
     "statusEnded": "종료",
@@ -387,7 +384,9 @@
     "noNextReservation": "다음 예약 없음",
     "reservationTitle": "예약 제목",
     "reservationDescription": "예약 설명",
-    "viewAllCabins": "선실 목록"
+    "viewAllCabins": "선실 목록",
+    "guestReservation": "비회원 예약",
+    "myReservation": "내 예약"
   },
   "ship": {
     "title": "팀 페이지",

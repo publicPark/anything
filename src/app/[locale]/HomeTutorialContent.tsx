@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations, t, Locale } from "@/lib/i18n";
-import { TutorialCabinButton } from "./TutorialCabinButton";
 import { CabinDetailContent } from "@/components/CabinDetailContent";
 import { Ship, ShipCabin, CabinReservation } from "@/types/database";
 
@@ -25,12 +24,11 @@ export async function HomeTutorialContent({
   const cabinData = await fetchTutorialCabinData(locale);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold text-foreground">
-          {translate("home.tutorialCabins")}
+    <div className="max-w-4xl mx-auto mt-16">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold text-foreground mb-2">
+          {translate("home.tryReservation")}
         </h2>
-        <TutorialCabinButton locale={locale} />
       </div>
 
       {/* Featured Cabin */}

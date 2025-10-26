@@ -32,8 +32,7 @@
     "retry": "Try Again",
     "goToLogin": "Login",
     "tutorial": "Just Explore",
-    "tutorialCabins": "Preview",
-    "goToCabins": "Go",
+    "tryReservation": "Try Reservation",
     "background": {
       "title": "Reservation System Background",
       "problems": {
@@ -47,10 +46,10 @@
     "myReservations": "My Reservations",
     "activeReservations": "Active Reservations",
     "noMyReservations": "You have no reservations yet",
-    "cabinPreview": {
-      "title": "Cabin Preview",
+    "cabinsPreview": {
+      "title": "Preview",
       "description": "Check cabin status in real time",
-      "viewAll": "View All"
+      "viewAll": "Go"
     }
   },
   "login": {
@@ -257,8 +256,6 @@
     "discordMessageSent": "Notification sent to Discord",
     "reservationDeleted": "Reservation deleted successfully",
     "confirmDeleteReservation": "Are you sure you want to delete this reservation?",
-    "guestReservation": "Guest Reservation",
-    "myReservation": "My Reservation",
     "statusOngoing": "Ongoing",
     "statusUpcoming": "Upcoming",
     "statusEnded": "Ended",
@@ -386,7 +383,9 @@
     "noNextReservation": "No upcoming reservations",
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",
-    "viewAllCabins": "Cabin List"
+    "viewAllCabins": "Cabin List",
+    "guestReservation": "Guest",
+    "myReservation": "Mine"
   },
   "ship": {
     "title": "Team Page",

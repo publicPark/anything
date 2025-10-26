@@ -69,10 +69,12 @@ export default function LanguageSettingsModal({
     // router.replace를 비동기로 실행하여 UI 블로킹 방지
     requestAnimationFrame(() => {
       router.replace(newPath);
-      // 언어 전환 후 모달 닫기
-      onClose();
+      // 언어 전환 완료 후 로딩 상태 해제
+      setTimeout(() => {
+        setIsSwitching(false);
+      }, 500); // 500ms 후 로딩 상태 해제
     });
-  }, [locale, isSwitching, pathname, router, onClose]);
+  }, [locale, isSwitching, pathname, router]);
 
   // 모달이 열릴 때 로딩 상태 초기화
   useEffect(() => {

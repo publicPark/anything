@@ -229,6 +229,44 @@ export function CabinDetailContent({
     }
   }, [state.cabin]);
 
+  // Realtime 구독 - cabin이 로드된 후에 설정
+  useEffect(() => {
+    if (!state.cabin || tutorialMode) return;
+
+    const channel = supabase
+      .channel("cabin-reservations-detail")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cabin_reservations",
+          filter: `cabin_id=eq.${state.cabin.id}`,
+        },
+        (payload) => {
+          console.log("Realtime update received:", payload);
+          // 예약 변경 시 데이터 새로고침
+          fetchReservationsOnly();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [state.cabin, tutorialMode, fetchReservationsOnly]);
+
+  // 실시간 상태 업데이트를 위한 타이머 (30초마다)
+  useEffect(() => {
+    if (tutorialMode) return;
+
+    const interval = setInterval(() => {
+      setLastUpdateTime(new Date());
+    }, 30000); // 30초마다 업데이트
+
+    return () => clearInterval(interval);
+  }, [tutorialMode]);
+
   // 예약 목록 계산을 useMemo로 최적화
   const { todayReservations, upcomingReservations } = useMemo(() => {
     const today = new Date();

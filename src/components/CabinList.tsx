@@ -22,13 +22,14 @@ import Link from "next/link";
 interface CabinListProps {
   shipId: string;
   shipPublicId: string;
+  preloadedCabins?: CabinWithStatus[];
 }
 
-export function CabinList({ shipId, shipPublicId }: CabinListProps) {
+export function CabinList({ shipId, shipPublicId, preloadedCabins }: CabinListProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const [cabins, setCabins] = useState<CabinWithStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cabins, setCabins] = useState<CabinWithStatus[]>(preloadedCabins || []);
+  const [loading, setLoading] = useState(!preloadedCabins);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCabins = useCallback(async () => {
@@ -101,7 +102,10 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
   }, [shipId]);
 
   useEffect(() => {
-    fetchCabins();
+    // preloadedCabins가 없을 때만 fetch
+    if (!preloadedCabins) {
+      fetchCabins();
+    }
 
     // Supabase Realtime 구독
     const supabase = createClient();
@@ -124,7 +128,7 @@ export function CabinList({ shipId, shipPublicId }: CabinListProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [shipId, fetchCabins]);
+  }, [shipId, fetchCabins, preloadedCabins]);
 
   // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
   // 30초마다 업데이트로 변경하여 성능 개선

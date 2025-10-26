@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -11,76 +11,109 @@ import { CabinList } from "@/components/CabinList";
 import { CabinManage } from "@/components/CabinManage";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Ship } from "@/types/database";
+import { CabinWithStatus } from "@/lib/cabin-status";
 import { Button } from "@/components/ui/Button";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { RoleBadge } from "@/components/ui/RoleBadge";
+import {
+  addStatusToCabins,
+  groupReservationsByCabinId,
+} from "@/lib/cabin-status";
 
-export default function ShipCabinsForm() {
+interface ShipCabinsContentProps {
+  shipPublicId: string;
+  preloadedData: {
+    ship: Ship | null;
+    cabins: CabinWithStatus[];
+    userRole: "captain" | "mechanic" | "crew" | null;
+  };
+}
+
+export function ShipCabinsContent({ shipPublicId, preloadedData }: ShipCabinsContentProps) {
   const { t, locale } = useI18n();
-  const params = useParams();
   const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
   const router = useRouter();
 
-  const [ship, setShip] = useState<Ship | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // SSR 데이터로 초기화
+  const [ship, setShip] = useState<Ship | null>(preloadedData.ship);
+  const [cabins, setCabins] = useState<CabinWithStatus[]>(preloadedData.cabins);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<
-    "captain" | "mechanic" | "crew" | null
-  >(null);
+  const [userRole, setUserRole] = useState<"captain" | "mechanic" | "crew" | null>(
+    preloadedData.userRole
+  );
   const [activeTab, setActiveTab] = useState<string>("viewCabins");
 
-  const shipPublicId = params.public_id as string;
-
+  // Realtime 구독 - 예약 변경사항 감지
   useEffect(() => {
-    if (shipPublicId) {
-      fetchShipDetails();
-    }
-  }, [shipPublicId]);
+    if (!ship) return;
 
-  const fetchShipDetails = async () => {
-    if (!shipPublicId) return;
+    const channel = supabase
+      .channel("cabin-reservations-list")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "cabin_reservations",
+        },
+        (payload) => {
+          console.log("Realtime update received:", payload);
+          // 예약 변경 시 데이터 새로고침
+          fetchCabins();
+        }
+      )
+      .subscribe();
 
-    setIsLoading(true);
-    setError(null);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ship]);
+
+  const fetchCabins = useCallback(async () => {
+    if (!ship) return;
 
     try {
-      // 배 정보 조회
-      const { data: shipData, error: shipError } = await supabase
-        .from("ships")
-        .select("*")
-        .eq("public_id", shipPublicId)
-        .maybeSingle();
-
-      if (shipError) {
-        throw shipError;
-      }
-
-      if (!shipData) {
-        throw new Error(t("ships.shipNotFound"));
-      }
-
-      setShip(shipData);
-
-      // 사용자 역할 조회 (로그인된 경우)
-      if (profile) {
-        const { data: memberData } = await supabase
-          .from("ship_members")
-          .select("role")
-          .eq("ship_id", shipData.id)
-          .eq("user_id", profile.id)
-          .maybeSingle();
-        setUserRole(memberData?.role || null);
-      }
-    } catch (err: unknown) {
-      console.error("Failed to fetch ship details:", err);
-      setError(
-        err instanceof Error ? err.message : t("ships.errorLoadingShip")
+      const supabase = createClient();
+      
+      // 오늘 날짜 범위 계산
+      const today = new Date();
+      const startOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
       );
-    } finally {
-      setIsLoading(false);
+      const endOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+
+      // 예약 정보 조회
+      const { data: reservations, error: reservationsError } = await supabase
+        .from("cabin_reservations")
+        .select("*")
+        .eq("status", "confirmed")
+        .gte("start_time", startOfDay.toISOString())
+        .lte("start_time", endOfDay.toISOString())
+        .order("start_time", { ascending: true });
+
+      if (reservationsError) throw reservationsError;
+
+      // 상태 정보 추가
+      const reservationsByCabinId = groupReservationsByCabinId(reservations || []);
+      const cabinsWithStatus = addStatusToCabins(cabins, reservationsByCabinId);
+
+      setCabins(cabinsWithStatus);
+    } catch (err: unknown) {
+      console.error("Failed to fetch cabins:", err);
     }
-  };
+  }, [ship, cabins]);
 
   // 탭 생성 함수 - 정비공 이상만 탭 표시
   const createTabs = useCallback(() => {
@@ -94,7 +127,11 @@ export default function ShipCabinsForm() {
           label: t("ships.shipCabinsList"),
           content: (
             <div className="space-y-6">
-              <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
+              <CabinList 
+                shipId={ship.id} 
+                shipPublicId={shipPublicId}
+                preloadedCabins={cabins}
+              />
             </div>
           ),
         },
@@ -169,7 +206,11 @@ export default function ShipCabinsForm() {
           onTabChange={setActiveTab}
         />
       ) : (
-        <CabinList shipId={ship.id} shipPublicId={shipPublicId} />
+        <CabinList 
+          shipId={ship.id} 
+          shipPublicId={shipPublicId}
+          preloadedCabins={cabins}
+        />
       )}
     </div>
   );

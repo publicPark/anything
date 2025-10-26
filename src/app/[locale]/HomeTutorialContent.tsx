@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTranslations, t, Locale } from "@/lib/i18n";
 import { TutorialCabinButton } from "./TutorialCabinButton";
-import { TutorialCabinWrapper } from "./TutorialCabinWrapper";
+import { CabinDetailContent } from "@/components/CabinDetailContent";
 import { Ship, ShipCabin, CabinReservation } from "@/types/database";
 
 interface HomeTutorialContentProps {
@@ -36,10 +36,18 @@ export async function HomeTutorialContent({
       {/* Featured Cabin */}
       <div className="mb-6">
         <div className="bg-muted rounded-lg border border-border p-6">
-          <TutorialCabinWrapper 
-            cabinData={cabinData}
-            locale={locale}
-          />
+          {cabinData.ship && cabinData.cabin ? (
+            <CabinDetailContent
+              shipPublicId={cabinData.ship.public_id}
+              cabinPublicId={cabinData.cabin.public_id}
+              tutorialMode={true}
+              preloadedData={cabinData}
+            />
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Cabin not found</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

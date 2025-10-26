@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -15,6 +15,7 @@ import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { RoleBadge } from "@/components/ui/RoleBadge";
 import AdSlot from "@/components/AdSlot";
+import DeleteShipModal from "@/components/DeleteShipModal";
 import {
   Ship,
   ShipMember,
@@ -30,22 +31,43 @@ interface ShipWithDetails extends Ship {
   hasPendingRequest?: boolean;
 }
 
-export default function ShipDetail() {
+interface ShipDetailContentProps {
+  shipPublicId: string;
+  preloadedData: {
+    ship: Ship | null;
+    userRole?: "captain" | "mechanic" | "crew" | null;
+  };
+}
+
+export function ShipDetailContent({ shipPublicId, preloadedData }: ShipDetailContentProps) {
   const { t, locale } = useI18n();
-  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
   const { profile, loading: profileLoading } = useProfile();
 
-  const [ship, setShip] = useState<ShipWithDetails | null>(null);
+  // SSR 데이터로 초기화
+  const [ship, setShip] = useState<ShipWithDetails | null>(() => {
+    if (!preloadedData.ship) return null;
+    
+    return {
+      ...preloadedData.ship,
+      members: [],
+      userRole: preloadedData.userRole as ShipMemberRole | undefined,
+      isMember: !!preloadedData.userRole,
+      hasPendingRequest: false,
+    };
+  });
+  
   const [memberRequests, setMemberRequests] = useState<
     (ShipMemberRequest & { profiles: Profile | undefined })[]
   >([]);
   const [rejectedRequests, setRejectedRequests] = useState<
     (ShipMemberRequest & { profiles: Profile | undefined })[]
   >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // SSR로 초기 로딩 제거
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true); // 멤버 정보 로딩 상태
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // 팀 삭제 모달 상태
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("viewMembers");
@@ -60,8 +82,6 @@ export default function ShipDetail() {
   const [isProcessingRequest, setIsProcessingRequest] = useState(false);
   const lastRejectedRequestId = useRef<string | null>(null);
   const lastApprovedRequestId = useRef<string | null>(null);
-
-  const shipPublicId = params.public_id as string;
 
   // URL에서 탭 상태 초기화
   useEffect(() => {
@@ -124,6 +144,13 @@ export default function ShipDetail() {
     }
   }, [profileLoading, shipPublicId]);
 
+  // SSR 데이터가 있을 때 멤버 정보 로드
+  useEffect(() => {
+    if (preloadedData.ship && ship && !profileLoading) {
+      loadMembersAndRequests();
+    }
+  }, [preloadedData.ship, ship?.id, profileLoading]);
+
   // 승인 요청이 있으면 자동으로 멤버 가입 신청 탭으로 이동
   useEffect(() => {
     if (
@@ -141,8 +168,149 @@ export default function ShipDetail() {
     }
   }, [ship?.userRole]);
 
+
+  // Ship 멤버 변경 실시간 업데이트 구독
+  useEffect(() => {
+    if (!ship) return;
+
+    const channel = supabase
+      .channel("ship-members-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ship_members",
+          filter: `ship_id=eq.${ship.id}`,
+        },
+        (payload) => {
+          console.log("Ship member update received:", payload);
+          // 멤버 정보 새로고침
+          loadMembersAndRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ship?.id, supabase]);
+
+  // Ship 멤버 요청 실시간 업데이트 구독
+  useEffect(() => {
+    if (!ship) return;
+
+    const channel = supabase
+      .channel("ship-member-requests-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ship_member_requests",
+          filter: `ship_id=eq.${ship.id}`,
+        },
+        (payload) => {
+          console.log("Ship member request update received:", payload);
+          // 멤버 요청 정보 새로고침
+          if (ship.userRole === "captain" || ship.userRole === "mechanic") {
+            fetchMemberRequests(ship.id);
+            fetchRejectedRequests(ship.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [ship?.id, ship?.userRole, supabase]);
+
+  // 멤버 정보와 요청 정보를 로드하는 함수
+  const loadMembersAndRequests = useCallback(async () => {
+    if (!ship) return;
+
+    setIsLoadingMembers(true);
+    try {
+      // 배 멤버 정보와 프로필 정보를 JOIN으로 한 번에 조회 (N+1 문제 해결)
+      const { data: membersWithProfiles, error: membersError } = await supabase
+        .from("ship_members")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            display_name
+          )
+        `)
+        .eq("ship_id", ship.id);
+
+      if (membersError) {
+        throw membersError;
+      }
+
+      // 현재 사용자의 멤버십 확인 (로그인한 경우에만)
+      const userMembership = profile
+        ? membersWithProfiles?.find((member) => member.user_id === profile.id)
+        : null;
+
+      // 프로필 정보 정리 (JOIN 결과 처리)
+      const processedMembers = (membersWithProfiles || []).map((member) => ({
+        ...member,
+        profile: member.profiles || {
+          username: `user_${member.user_id.slice(0, 8)}`,
+          display_name: null,
+        },
+      }));
+
+      // 사용자의 승인 요청 상태 확인
+      let hasPendingRequest = false;
+      if (profile) {
+        const { data: pendingRequest } = await supabase
+          .from("ship_member_requests")
+          .select("id")
+          .eq("ship_id", ship.id)
+          .eq("user_id", profile.id)
+          .eq("status", "pending")
+          .maybeSingle();
+
+        hasPendingRequest = !!pendingRequest;
+      }
+
+      // 배 정보 업데이트
+      setShip((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          members: processedMembers,
+          userRole: userMembership?.role || null,
+          isMember: !!userMembership,
+          hasPendingRequest,
+        };
+      });
+
+      // 멤버 요청 정보 로드 (병렬 처리로 최적화)
+      if (ship.userRole === "captain" || ship.userRole === "mechanic") {
+        await Promise.all([
+          fetchMemberRequests(ship.id),
+          fetchRejectedRequests(ship.id)
+        ]);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to load members:", err);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [ship, profile, supabase]);
+
   const fetchShipDetails = async () => {
     if (!shipPublicId) return;
+
+    // SSR 데이터가 있으면 배 정보는 건너뛰고 멤버 정보만 로드
+    if (preloadedData.ship) {
+      // 멤버 정보만 로드
+      await loadMembersAndRequests();
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -572,31 +740,9 @@ export default function ShipDetail() {
     }
   };
 
-  const handleDeleteShip = async () => {
+  const handleDeleteShip = () => {
     if (!ship) return;
-
-    if (!confirm(t("ships.confirmDeleteShip"))) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("ships").delete().eq("id", ship.id);
-
-      if (error) {
-        throw error;
-      }
-
-      // 성공 시 홈으로 이동
-      router.push(`/${locale}`);
-    } catch (err: unknown) {
-      console.error(
-        "Failed to delete ship:",
-        err instanceof Error ? err.message : String(err)
-      );
-      setError(
-        err instanceof Error ? err.message : t("ships.errorDeletingShip")
-      );
-    }
+    setShowDeleteModal(true);
   };
 
   const handleEditStart = () => {
@@ -652,8 +798,20 @@ export default function ShipDetail() {
         throw error;
       }
 
+      // 수정 성공 후 로컬 상태 즉시 업데이트
+      setShip((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          name: data.name.trim(),
+          description: data.description.trim(),
+          member_only: data.member_only,
+          time_zone: data.time_zone || "Asia/Seoul",
+          updated_at: new Date().toISOString(),
+        };
+      });
+
       setIsEditing(false);
-      await fetchShipDetails(); // 배 정보 새로고침
 
       // 성공 메시지 (선택사항)
     } catch (err: unknown) {
@@ -679,17 +837,23 @@ export default function ShipDetail() {
         label: t("ships.viewMembers"),
         content: (
           <div className="space-y-6">
-            <MemberList
-              members={ship.members}
-              currentUserId={profile?.id}
-              showMemberManagement={
-                ship.userRole === "captain" || ship.userRole === "mechanic"
-              }
-              showMemberView={true}
-              userRole={ship.userRole}
-              shipId={ship.id}
-              onRefresh={fetchShipDetails}
-            />
+            {isLoadingMembers ? (
+              <div className="flex justify-center items-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <MemberList
+                members={ship.members}
+                currentUserId={profile?.id}
+                showMemberManagement={
+                  ship.userRole === "captain" || ship.userRole === "mechanic"
+                }
+                showMemberView={true}
+                userRole={ship.userRole}
+                shipId={ship.id}
+                onRefresh={fetchShipDetails}
+              />
+            )}
           </div>
         ),
       },
@@ -705,16 +869,22 @@ export default function ShipDetail() {
         }`,
         content: (
           <div className="space-y-6">
-            <MemberRequestList
-              requests={memberRequests}
-              rejectedRequests={rejectedRequests}
-              onApproveRequest={handleApproveRequest}
-              onRejectRequest={handleRejectRequest}
-              onResetRejectedRequest={handleResetRejectedRequest}
-              onDeleteRejectedRequest={handleDeleteRejectedRequest}
-              isProcessing={isProcessingRequest}
-              showRejectedRequests={true}
-            />
+            {isLoadingMembers ? (
+              <div className="flex justify-center items-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <MemberRequestList
+                requests={memberRequests}
+                rejectedRequests={rejectedRequests}
+                onApproveRequest={handleApproveRequest}
+                onRejectRequest={handleRejectRequest}
+                onResetRejectedRequest={handleResetRejectedRequest}
+                onDeleteRejectedRequest={handleDeleteRejectedRequest}
+                isProcessing={isProcessingRequest}
+                showRejectedRequests={true}
+              />
+            )}
           </div>
         ),
       });
@@ -765,6 +935,9 @@ export default function ShipDetail() {
       </div>
     );
   }
+
+  // 멤버 정보 로딩 중일 때는 전체 레이아웃을 유지하고 멤버 부분만 로딩 표시
+  // (이 조건은 제거하고 아래에서 처리)
 
   if (error) {
     return (
@@ -828,6 +1001,16 @@ export default function ShipDetail() {
           tabs={createTabs()}
           activeTab={activeTab}
           onTabChange={handleTabChange}
+        />
+      )}
+
+      {/* 팀 삭제 모달 */}
+      {ship && (
+        <DeleteShipModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          shipId={ship.id}
+          shipName={ship.name}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import AdSlot from "@/components/AdSlot";
 import { faqData } from "@/data/faq";
 import { HomeAuthContent } from "./HomeAuthContent";
 import { HomeTutorialContent } from "./HomeTutorialContent";
+import { CabinList } from "@/components/CabinList";
 import { LogoWithAnimation } from "@/components/LogoWithAnimation";
 import { Metadata } from "next";
 import { generateMetadata as generatePageMetadata } from "@/lib/metadata-helpers";
@@ -176,6 +177,26 @@ export default async function Home({ params }: HomeProps) {
             locale={locale} 
             tutorialShipId={tutorialShipId}
           />
+        )}
+
+        {/* 회의실 미리보기 - 비로그인 사용자용 */}
+        {!user && tutorialShipId && (
+          <div className="max-w-4xl mx-auto mt-16">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-semibold text-foreground mb-2">
+                {t("home.cabinPreview.title", locale as Locale)}
+              </h3>
+              <p className="text-muted-foreground">
+                {t("home.cabinPreview.description", locale as Locale)}
+              </p>
+            </div>
+            <CabinList 
+              shipId={tutorialShipId}
+              shipPublicId={`SPtest${locale}`}
+              gridCols={{ default: 1, md: 2, lg: 2 }}
+              maxItems={6}
+            />
+          </div>
         )}
 
         {/* 자주 묻는 질문 섹션 - 비로그인 사용자용 */}

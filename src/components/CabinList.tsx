@@ -23,9 +23,15 @@ interface CabinListProps {
   shipId: string;
   shipPublicId: string;
   preloadedCabins?: CabinWithStatus[];
+  gridCols?: {
+    default?: number;
+    md?: number;
+    lg?: number;
+  };
+  maxItems?: number;
 }
 
-export function CabinList({ shipId, shipPublicId, preloadedCabins }: CabinListProps) {
+export function CabinList({ shipId, shipPublicId, preloadedCabins, gridCols, maxItems }: CabinListProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const [cabins, setCabins] = useState<CabinWithStatus[]>(preloadedCabins || []);
@@ -52,43 +58,41 @@ export function CabinList({ shipId, shipPublicId, preloadedCabins }: CabinListPr
         today.getDate() + 1
       );
 
-      // 병렬로 회의실 목록과 예약 목록 조회
-      const [cabinsResult, reservationsResult] = await Promise.all([
-        supabase
-          .from("ship_cabins")
-          .select("*")
-          .eq("ship_id", shipId)
-          .order("name", { ascending: true }),
-        supabase
-          .from("cabin_reservations")
-          .select("*")
-          .eq("status", "confirmed")
-          .gte("start_time", startOfDay.toISOString())
-          .lt("start_time", endOfDay.toISOString()),
-      ]);
+      // 1단계: 회의실 목록 조회
+      const { data: cabinsData, error: cabinsError } = await supabase
+        .from("ship_cabins")
+        .select("*")
+        .eq("ship_id", shipId)
+        .order("name", { ascending: true })
+        .limit(maxItems || 1000);
 
-      if (cabinsResult.error) {
-        throw cabinsResult.error;
+      if (cabinsError) {
+        throw cabinsError;
       }
 
-      if (reservationsResult.error) {
-        throw reservationsResult.error;
+      const cabins = cabinsData || [];
+      
+      // 2단계: 해당 회의실들의 예약만 조회 (DB에서 직접 필터링)
+      const cabinIds = cabins.map((cabin) => cabin.id);
+      const { data: reservationsData, error: reservationsError } = await supabase
+        .from("cabin_reservations")
+        .select("*")
+        .eq("status", "confirmed")
+        .in("cabin_id", cabinIds) // DB에서 직접 필터링
+        .gte("start_time", startOfDay.toISOString())
+        .lt("start_time", endOfDay.toISOString());
+
+      if (reservationsError) {
+        throw reservationsError;
       }
 
-      const cabinsData = cabinsResult.data || [];
-      const reservationsData = reservationsResult.data || [];
-
-      // cabin_id로 필터링 (DB에서 in 쿼리 대신 클라이언트에서 필터링)
-      const cabinIds = cabinsData.map((cabin) => cabin.id);
-      const filteredReservations = reservationsData.filter((reservation) =>
-        cabinIds.includes(reservation.cabin_id)
-      );
+      const filteredReservations = reservationsData || [];
 
       // 상태 정보 추가
       const reservationsByCabinId =
         groupReservationsByCabinId(filteredReservations);
       const cabinsWithStatus = addStatusToCabins(
-        cabinsData,
+        cabins,
         reservationsByCabinId
       );
 
@@ -172,6 +176,15 @@ export function CabinList({ shipId, shipPublicId, preloadedCabins }: CabinListPr
     return <ErrorMessage message={error} />;
   }
 
+  // Grid 클래스 생성
+  const getGridClass = () => {
+    const defaultCols = gridCols?.default || 1;
+    const mdCols = gridCols?.md || 2;
+    const lgCols = gridCols?.lg || 3;
+    
+    return `grid gap-4 grid-cols-${defaultCols} md:grid-cols-${mdCols} lg:grid-cols-${lgCols}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* <div className="flex items-center justify-between">
@@ -188,7 +201,7 @@ export function CabinList({ shipId, shipPublicId, preloadedCabins }: CabinListPr
           </h3>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className={getGridClass()}>
           {cabins.map((cabin) => (
             <div
               key={cabin.id}

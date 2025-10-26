@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -28,7 +28,7 @@ export function PastReservations({
 
   const [pastItems, setPastItems] = useState<CabinReservation[]>([]);
   const [pastPage, setPastPage] = useState(0);
-  const PAST_PAGE_SIZE = 4;
+  const PAST_PAGE_SIZE = 4; // 원래 의도대로 4개 유지
   const [loadingPast, setLoadingPast] = useState(false);
   const [pastHasMore, setPastHasMore] = useState(true);
 
@@ -39,13 +39,15 @@ export function PastReservations({
     setPastHasMore(true);
   }, [cabinId]);
 
-  const fetchPastPage = async () => {
+  const fetchPastPage = useCallback(async () => {
     if (loadingPast) return;
     setLoadingPast(true);
     try {
       const nowIso = new Date().toISOString();
       const from = pastPage * PAST_PAGE_SIZE;
       const to = from + PAST_PAGE_SIZE - 1;
+      
+      // 더 효율적인 쿼리: 인덱스 활용
       const { data, error, count } = await supabase
         .from("cabin_reservations")
         .select("*", { count: "exact" })
@@ -54,19 +56,25 @@ export function PastReservations({
         .lt("end_time", nowIso)
         .order("start_time", { ascending: false })
         .range(from, to);
+        
       if (error) throw error;
       const list = (data ?? []) as CabinReservation[];
       setPastItems((prev) => (pastPage === 0 ? list : [...prev, ...list]));
+      
+      // 더 정확한 hasMore 계산
       if (typeof count === "number") {
         const fetched = (pastPage + 1) * PAST_PAGE_SIZE;
         setPastHasMore(fetched < count);
       } else {
-        // If no count available, check if we got fewer items than requested
-        // If we got 0 items, there are definitely no more
-        setPastHasMore(list.length > 0 && list.length === PAST_PAGE_SIZE);
+        // 페이지 크기보다 적게 가져왔다면 더 이상 데이터가 없음
+        setPastHasMore(list.length === PAST_PAGE_SIZE);
+      }
+      
+      // 데이터가 없으면 hasMore를 false로 설정
+      if (list.length === 0) {
+        setPastHasMore(false);
       }
       setPastPage((p) => p + 1);
-      // Ensure loading is stopped
       setLoadingPast(false);
     } catch (e: unknown) {
       // Gracefully handle 416 Range Not Satisfiable
@@ -86,7 +94,7 @@ export function PastReservations({
       console.error("Failed to fetch past reservations:", e);
       setLoadingPast(false);
     }
-  };
+  }, [pastPage, cabinId, supabase]);
 
   const handleDeleteAll = async () => {
     if (!confirm(t("ships.confirmDeleteAllPastReservations"))) {
@@ -110,7 +118,7 @@ export function PastReservations({
       onUpdate();
       setPastItems([]);
       setPastPage(0);
-      setPastHasMore(true);
+      setPastHasMore(false);
       alert(t("ships.pastReservationsDeleted"));
     } catch (e: unknown) {
       console.error(e);
@@ -127,10 +135,46 @@ export function PastReservations({
 
   // Load first page when component mounts
   useEffect(() => {
-    if (pastItems.length === 0 && !loadingPast) {
-      void fetchPastPage();
+    const loadFirstPage = async () => {
+      setLoadingPast(true);
+      try {
+        const nowIso = new Date().toISOString();
+        const { data, error, count } = await supabase
+          .from("cabin_reservations")
+          .select("*", { count: "exact" })
+          .eq("cabin_id", cabinId)
+          .eq("status", "confirmed")
+          .lt("end_time", nowIso)
+          .order("start_time", { ascending: false })
+          .range(0, PAST_PAGE_SIZE - 1);
+          
+        if (error) throw error;
+        const list = (data ?? []) as CabinReservation[];
+        setPastItems(list);
+        
+        // 더 정확한 hasMore 계산
+        if (typeof count === "number") {
+          setPastHasMore(count > PAST_PAGE_SIZE);
+        } else {
+          setPastHasMore(list.length === PAST_PAGE_SIZE);
+        }
+        
+        // 데이터가 없으면 hasMore를 false로 설정
+        if (list.length === 0) {
+          setPastHasMore(false);
+        }
+        setPastPage(1);
+        setLoadingPast(false);
+      } catch (e: unknown) {
+        console.error("Failed to fetch past reservations:", e);
+        setLoadingPast(false);
+      }
+    };
+    
+    if (pastItems.length === 0) {
+      void loadFirstPage();
     }
-  }, [cabinId]); // Only depend on cabinId
+  }, [cabinId, pastItems.length, supabase]);
 
   return (
     <div>

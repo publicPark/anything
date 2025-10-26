@@ -7,6 +7,7 @@ import { ShipCabin, ShipMemberRole } from "@/types/database";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import EditCabinModal from "@/components/EditCabinModal";
 
 interface CabinFormData {
   name: string;
@@ -39,6 +40,7 @@ export function CabinManage({
     description: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const canManageCabins = userRole === "captain" || userRole === "mechanic";
 
@@ -138,40 +140,23 @@ export function CabinManage({
     }
   };
 
-  const handleUpdateCabin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditStart = (cabin: ShipCabin) => {
+    setEditingCabin(cabin);
+    setShowEditModal(true);
+  };
 
-    if (!editingCabin || !formData.name.trim()) {
-      setError(t("ships.cabinNameRequired"));
-      return;
-    }
+  const handleEditSuccess = (updatedCabin: ShipCabin) => {
+    setCabins((prev) =>
+      prev.map((cabin) => (cabin.id === updatedCabin.id ? updatedCabin : cabin))
+    );
+    setEditingCabin(null);
+    setShowEditModal(false);
+    onCabinUpdated?.(updatedCabin);
+  };
 
-    try {
-      setSubmitting(true);
-      setError(null);
-
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc("update_ship_cabin", {
-        cabin_uuid: editingCabin.id,
-        cabin_name: formData.name.trim(),
-        cabin_description: formData.description.trim() || null,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setCabins((prev) =>
-        prev.map((cabin) => (cabin.id === editingCabin.id ? data : cabin))
-      );
-      setEditingCabin(null);
-      setFormData({ name: "", description: "" });
-      onCabinUpdated?.(data);
-    } catch (err: unknown) {
-      handleError(err, t("ships.errorUpdatingCabin"));
-    } finally {
-      setSubmitting(false);
-    }
+  const handleEditCancel = () => {
+    setEditingCabin(null);
+    setShowEditModal(false);
   };
 
   const handleDeleteCabin = async (cabinId: string) => {
@@ -198,19 +183,6 @@ export function CabinManage({
     }
   };
 
-  const handleEditStart = (cabin: ShipCabin) => {
-    setEditingCabin(cabin);
-    setFormData({
-      name: cabin.name,
-      description: cabin.description || "",
-    });
-    setShowCreateForm(false);
-  };
-
-  const handleEditCancel = () => {
-    setEditingCabin(null);
-    setFormData({ name: "", description: "" });
-  };
 
   const handleCreateCancel = () => {
     setShowCreateForm(false);
@@ -252,16 +224,13 @@ export function CabinManage({
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Create/Edit Form */}
-      {(showCreateForm || editingCabin) && (
+      {/* Create Form */}
+      {showCreateForm && (
         <div className="bg-muted rounded-lg p-6">
           <h4 className="text-lg font-medium text-foreground mb-4">
-            {editingCabin ? t("ships.editCabin") : t("ships.createCabin")}
+            {t("ships.createCabin")}
           </h4>
-          <form
-            onSubmit={editingCabin ? handleUpdateCabin : handleCreateCabin}
-            className="space-y-4"
-          >
+          <form onSubmit={handleCreateCabin} className="space-y-4">
             <div>
               <label
                 htmlFor="cabinName"
@@ -308,7 +277,7 @@ export function CabinManage({
               </Button>
               <Button
                 type="button"
-                onClick={editingCabin ? handleEditCancel : handleCreateCancel}
+                onClick={handleCreateCancel}
                 variant="secondary"
               >
                 {t("ships.cancel")}
@@ -352,7 +321,7 @@ export function CabinManage({
                     onClick={() => handleEditStart(cabin)}
                     variant="secondary"
                     size="sm"
-                    disabled={showCreateForm || editingCabin !== null}
+                    disabled={showCreateForm}
                   >
                     {t("ships.editCabin")}
                   </Button>
@@ -360,7 +329,7 @@ export function CabinManage({
                     onClick={() => handleDeleteCabin(cabin.id)}
                     variant="destructive"
                     size="sm"
-                    disabled={showCreateForm || editingCabin !== null}
+                    disabled={showCreateForm}
                   >
                     {t("ships.deleteCabin")}
                   </Button>
@@ -370,6 +339,14 @@ export function CabinManage({
           ))
         )}
       </div>
+
+      {/* 선실 수정 모달 */}
+      <EditCabinModal
+        isOpen={showEditModal}
+        onClose={handleEditCancel}
+        onSuccess={handleEditSuccess}
+        cabin={editingCabin}
+      />
     </div>
   );
 }

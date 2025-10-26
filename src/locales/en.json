@@ -46,7 +46,12 @@
     },
     "myReservations": "My Reservations",
     "activeReservations": "Active Reservations",
-    "noMyReservations": "You have no reservations yet"
+    "noMyReservations": "You have no reservations yet",
+    "cabinPreview": {
+      "title": "Cabin Preview",
+      "description": "Check cabin status in real time",
+      "viewAll": "View All"
+    }
   },
   "login": {
     "title": "Login",
@@ -87,15 +92,13 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Manage app settings including language and theme",
     "language": "Language",
     "languageDescription": "Choose your preferred language",
     "appearance": "Appearance",
     "appearanceDescription": "Choose your preferred theme",
     "lightMode": "Light Mode",
     "darkMode": "Dark Mode",
-    "systemMode": "System",
-    "goBack": "Go Back"
+    "systemMode": "System"
   },
   "cookie": {
     "title": "We use cookies",
@@ -397,18 +400,6 @@
   },
   "admin": {
     "noUsersFound": "No users found"
-  },
-  "reservations": {
-    "management": "Reservation Management",
-    "managementDescription": "Reservation management features for system administrators only.",
-    "pastReservations": "Past Reservations",
-    "pastReservationsDescription": "Delete all completed reservations at once.",
-    "deleteAllPast": "Delete All Past Reservations",
-    "confirmDeleteAllPast": "Are you sure you want to delete all past reservations? This action cannot be undone.",
-    "allPastReservationsDeleted": "{count} past reservations have been deleted.",
-    "noPastReservations": "No past reservations to delete.",
-    "errorDeletingPast": "Error occurred while deleting past reservations.",
-    "accessDenied": "You do not have permission to access this page."
   },
   "cabin": {
     "notFoundTitle": "Room Not Found",

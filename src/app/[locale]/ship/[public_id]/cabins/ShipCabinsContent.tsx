@@ -77,7 +77,7 @@ export function ShipCabinsContent({ shipPublicId, preloadedData }: ShipCabinsCon
     try {
       const supabase = createClient();
       
-      // 오늘 날짜 범위 계산
+      // 오늘 날짜 범위 계산 (한 번만)
       const today = new Date();
       const startOfDay = new Date(
         today.getFullYear(),
@@ -94,11 +94,13 @@ export function ShipCabinsContent({ shipPublicId, preloadedData }: ShipCabinsCon
         999
       );
 
-      // 예약 정보 조회
+      // 해당 배의 캐빈들만 필터링하여 예약 조회 (성능 최적화)
+      const cabinIds = cabins.map(cabin => cabin.id);
       const { data: reservations, error: reservationsError } = await supabase
         .from("cabin_reservations")
         .select("*")
         .eq("status", "confirmed")
+        .in("cabin_id", cabinIds) // 해당 배의 캐빈들만 조회
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .order("start_time", { ascending: true });
@@ -113,7 +115,7 @@ export function ShipCabinsContent({ shipPublicId, preloadedData }: ShipCabinsCon
     } catch (err: unknown) {
       console.error("Failed to fetch cabins:", err);
     }
-  }, [ship, cabins]);
+  }, [ship, cabins, supabase]);
 
   // 탭 생성 함수 - 정비공 이상만 탭 표시
   const createTabs = useCallback(() => {

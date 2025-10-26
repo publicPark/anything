@@ -18,24 +18,16 @@ export async function generateMetadata({ params }: AboutProps): Promise<Metadata
 export default async function About({ params }: AboutProps) {
   const { locale } = await params;
   
-  // 서버에서 프로필 정보 가져오기
+  // 튜토리얼 팀 ID 조회 (모든 사용자용)
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const tutorialPublicId = `SPtest${locale}`;
+  const { data: shipData } = await supabase
+    .from("ships")
+    .select("id")
+    .eq("public_id", tutorialPublicId)
+    .maybeSingle();
   
-  // 튜토리얼 팀 ID 조회 (비로그인 사용자용)
-  let tutorialShipId: string | null = null;
-  if (!user) {
-    const tutorialPublicId = `SPtest${locale}`;
-    const { data: shipData } = await supabase
-      .from("ships")
-      .select("id")
-      .eq("public_id", tutorialPublicId)
-      .maybeSingle();
-    
-    if (shipData) {
-      tutorialShipId = shipData.id;
-    }
-  }
+  const tutorialShipId = shipData?.id || null;
 
   return (
     <div className="min-h-screen bg-background">

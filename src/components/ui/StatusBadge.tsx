@@ -19,7 +19,7 @@ export function StatusBadge({
   size = "sm",
   className = "",
 }: StatusBadgeProps) {
-  const base = "inline-flex items-center rounded-full font-medium";
+  const base = "inline-flex items-center rounded-full font-medium shrink-0";
   const sizeClass = size === "sm" ? "px-3 py-1 text-sm" : "px-4 py-1.5 text-base";
 
   const toneClass = (() => {

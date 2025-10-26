@@ -42,6 +42,7 @@ const ReservationItemComponent = ({
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [hasBeenClicked, setHasBeenClicked] = useState(false);
 
   // 실시간 시간 업데이트
   useEffect(() => {
@@ -343,18 +344,26 @@ const ReservationItemComponent = ({
   };
 
   const status = getReservationStatus();
+  const shouldShowNewlyCreatedBorder = isNewlyCreated && !hasBeenClicked;
+  
+  const handleCardClick = () => {
+    if (isNewlyCreated && !hasBeenClicked) {
+      setHasBeenClicked(true);
+    }
+  };
   
   return (
     <div
       className={`rounded-lg p-6 border ${
         isCurrent 
           ? "bg-muted border-destructive/60" 
-          : isNewlyCreated 
+          : shouldShowNewlyCreatedBorder
             ? "bg-muted border-primary shadow-lg shadow-primary/20" 
             : status === "ended"
               ? "bg-muted/50 border-border"
               : "bg-muted border-border"
       }`}
+      onClick={handleCardClick}
     >
       {/* Top: left (data) / right (status badge) */}
       <div className="flex items-start justify-between">
@@ -382,7 +391,7 @@ const ReservationItemComponent = ({
 
       {/* Bottom: left (slot/badge) / right (actions) */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 min-h-[24px]">
+        <div className="flex items-center gap-2 min-h-[24px] shrink-0">
           {leftExtra ? (
             leftExtra
           ) : !hideTypeBadge ? (

@@ -33,7 +33,7 @@ export async function HomeTutorialContent({
 
       {/* Featured Cabin */}
       <div className="mb-6">
-        <div className="bg-muted rounded-lg border border-border p-6">
+        <div className="bg-background rounded-lg border border-border p-6">
           {cabinData.ship && cabinData.cabin ? (
             <CabinDetailContent
               shipPublicId={cabinData.ship.public_id}

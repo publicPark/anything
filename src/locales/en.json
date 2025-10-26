@@ -93,6 +93,7 @@
     "title": "Settings",
     "language": "Language",
     "languageDescription": "Choose your preferred language",
+    "switching": "Switching...",
     "appearance": "Appearance",
     "appearanceDescription": "Choose your preferred theme",
     "lightMode": "Light Mode",

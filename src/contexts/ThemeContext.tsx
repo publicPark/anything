@@ -47,10 +47,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // HTML 요소에 테마 클래스 적용
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(resolvedTheme);
+  }, [resolvedTheme, mounted]);
 
-    // localStorage에 저장
+  // localStorage 저장을 별도 useEffect로 분리하여 성능 최적화
+  useEffect(() => {
+    if (!mounted) return;
     localStorage.setItem("theme", theme);
-  }, [theme, resolvedTheme, mounted]);
+  }, [theme, mounted]);
 
   // 시스템 테마 변화 감지
   useEffect(() => {

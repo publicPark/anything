@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { useRouter, usePathname } from "next/navigation";
 import { locales } from "@/lib/i18n";
@@ -20,6 +20,7 @@ export default function LanguageSettingsModal({
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const [isSwitching, setIsSwitching] = useState(false);
 
   const getLanguageDisplay = (lang: string) => {
     switch (lang) {
@@ -43,7 +44,13 @@ export default function LanguageSettingsModal({
     }
   };
 
-  const switchLanguage = (newLocale: string) => {
+  const switchLanguage = useCallback((newLocale: string) => {
+    // 현재 언어와 같으면 아무것도 하지 않음
+    if (newLocale === locale || isSwitching) return;
+
+    // 로딩 상태 설정
+    setIsSwitching(true);
+
     try {
       // Persist user preference for locale (1 year)
       // Note: Cookie will be read in middleware to keep locale consistent across navigation
@@ -52,12 +59,34 @@ export default function LanguageSettingsModal({
       }; samesite=lax`;
     } catch (err) {
       // Fail silently; navigation still updates the URL locale
+      console.warn('Failed to set locale cookie:', err);
     }
 
+    // 경로 계산 최적화
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
     const newPath = `/${newLocale}${pathWithoutLocale}`;
-    router.replace(newPath);
-  };
+    
+    // router.replace를 비동기로 실행하여 UI 블로킹 방지
+    requestAnimationFrame(() => {
+      router.replace(newPath);
+      // 언어 전환 후 모달 닫기
+      onClose();
+    });
+  }, [locale, isSwitching, pathname, router, onClose]);
+
+  // 모달이 열릴 때 로딩 상태 초기화
+  useEffect(() => {
+    if (isOpen) {
+      setIsSwitching(false);
+    }
+  }, [isOpen]);
+
+  // 언어 전환 실패 시 로딩 상태 해제
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSwitching(false);
+    }
+  }, [isOpen]);
 
   // ESC 키로 모달 닫기 및 배경 스크롤 방지
   useEffect(() => {
@@ -134,9 +163,14 @@ export default function LanguageSettingsModal({
               {locales.map((lang) => (
                 <button
                   key={lang}
+                  data-lang={lang}
                   onClick={() => switchLanguage(lang)}
+                  disabled={isSwitching}
                   className={cn(
-                    "w-full flex items-center justify-between p-4 rounded-lg border transition-all duration-200 cursor-pointer",
+                    "w-full flex items-center justify-between p-4 rounded-lg border transition-all duration-200",
+                    isSwitching
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer",
                     locale === lang
                       ? "bg-primary/20 border-primary/40 text-foreground shadow-sm"
                       : "bg-input border-border text-foreground hover:bg-muted hover:border-border/60"
@@ -147,9 +181,17 @@ export default function LanguageSettingsModal({
                     <span className="font-medium">
                       {getLanguageDisplay(lang)}
                     </span>
+                    {isSwitching && locale !== lang && (
+                      <span className="text-sm text-muted-foreground">
+                        {t("settings.switching")}
+                      </span>
+                    )}
                   </div>
-                  {locale === lang && (
+                  {locale === lang && !isSwitching && (
                     <span className="text-primary font-bold">✓</span>
+                  )}
+                  {isSwitching && locale === lang && (
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   )}
                 </button>
               ))}

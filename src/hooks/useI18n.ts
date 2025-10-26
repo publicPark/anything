@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { getLocaleFromPathname, t, Locale } from '@/lib/i18n'
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 
 export function useI18n() {
   const pathname = usePathname()
@@ -12,9 +12,10 @@ export function useI18n() {
     return getLocaleFromPathname(pathname)
   }, [pathname])
   
-  const translate = (key: string, params?: Record<string, string | number>) => {
+  // translate 함수를 useCallback으로 메모이제이션하여 불필요한 재생성 방지
+  const translate = useCallback((key: string, params?: Record<string, string | number>) => {
     return t(key, locale, params)
-  }
+  }, [locale])
   
   return {
     locale,

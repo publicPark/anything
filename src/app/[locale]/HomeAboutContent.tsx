@@ -93,13 +93,6 @@ export function HomeAboutContent({ locale, tutorialShipId }: HomeAboutContentPro
         </div>
       </div>
 
-      {/* 구분선 */}
-      {tutorialShipId && (
-        <div className="mt-8 max-w-4xl mx-auto">
-          <hr className="border-border mb-6" />
-        </div>
-      )}
-
       {/* 튜토리얼 팀 선실 목록 */}
       {tutorialShipId && (
         <HomeTutorialContent 

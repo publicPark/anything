@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTranslations, t, Locale } from "@/lib/i18n";
 import { CabinDetailContent } from "@/components/CabinDetailContent";
 import { Ship, ShipCabin, CabinReservation } from "@/types/database";
+import Link from "next/link";
 
 interface HomeTutorialContentProps {
   locale: string;
@@ -25,15 +26,24 @@ export async function HomeTutorialContent({
 
   return (
     <div className="max-w-4xl mx-auto mt-16">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-semibold text-foreground mb-2">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-semibold text-foreground">
           {translate("home.tryReservation")}
         </h2>
+        <Link 
+          href={`/${locale}/ship/SPtest${locale}/cabin/${cabinData.cabin?.public_id || 'CABIN000006'}`}
+          className="px-3 py-1.5 text-sm font-medium text-foreground bg-muted border border-border rounded-md hover:bg-muted/80 hover:border-border/60 transition-all inline-block"
+        >
+          {translate("home.cabinsPreview.viewAll")}
+        </Link>
       </div>
+
+      {/* Divider */}
+      <hr className="border-border mb-8" />
 
       {/* Featured Cabin */}
       <div className="mb-6">
-        <div className="bg-background rounded-lg border border-border p-6">
+        <div className="bg-background">
           {cabinData.ship && cabinData.cabin ? (
             <CabinDetailContent
               shipPublicId={cabinData.ship.public_id}

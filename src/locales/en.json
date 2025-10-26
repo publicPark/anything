@@ -33,11 +33,6 @@
     "goToLogin": "Login",
     "tutorial": "Just Explore",
     "tryReservation": "Try Reservation",
-    "tutorialCabins": {
-      "title": "Tutorial Team Cabins",
-      "description": "Check out real usage examples",
-      "tryTutorial": "Try Tutorial"
-    },
     "background": {
       "title": "Reservation System Background",
       "problems": {

@@ -25,6 +25,12 @@ export function Footer() {
               {t("settings.title")}
             </button>
             <Link
+              href={`/${locale}/about`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("footer.about")}
+            </Link>
+            <Link
               href={`/${locale}/faq`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >

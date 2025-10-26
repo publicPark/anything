@@ -25,7 +25,7 @@ export async function createReservationOnlyAction(
   const cookieStore = await cookies();
   const supabase = await createServerSupabase();
 
-  const { error } = await supabase.rpc("create_cabin_reservation", {
+  const { data, error } = await supabase.rpc("create_cabin_reservation", {
     cabin_uuid: input.cabinId,
     reservation_start_time: input.startISO,
     reservation_end_time: input.endISO,
@@ -38,7 +38,7 @@ export async function createReservationOnlyAction(
     return { ok: false as const, message: error.message };
   }
 
-  return { ok: true as const };
+  return { ok: true as const, reservationId: data?.id };
 }
 
 // 슬랙 알림만 하는 함수 (백그라운드 처리용)

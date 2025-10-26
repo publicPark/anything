@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode, memo } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
@@ -21,9 +21,10 @@ interface ReservationItemProps {
   leftExtra?: ReactNode;
   cabinId?: string;
   existingReservations?: CabinReservation[];
+  isNewlyCreated?: boolean;
 }
 
-export function ReservationItem({
+const ReservationItemComponent = ({
   reservation,
   currentUserId,
   userRole,
@@ -33,7 +34,8 @@ export function ReservationItem({
   leftExtra,
   cabinId,
   existingReservations = [],
-}: ReservationItemProps) {
+  isNewlyCreated = false,
+}: ReservationItemProps) => {
   const { t, locale } = useI18n();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -340,10 +342,18 @@ export function ReservationItem({
     );
   };
 
+  const status = getReservationStatus();
+  
   return (
     <div
       className={`rounded-lg p-6 border ${
-        isCurrent ? "bg-muted border-destructive/60" : "bg-muted border-border"
+        isCurrent 
+          ? "bg-muted border-destructive/60" 
+          : isNewlyCreated 
+            ? "bg-muted border-primary shadow-lg shadow-primary/20" 
+            : status === "ended"
+              ? "bg-muted/50 border-border"
+              : "bg-muted border-border"
       }`}
     >
       {/* Top: left (data) / right (status badge) */}
@@ -470,4 +480,6 @@ export function ReservationItem({
       )}
     </div>
   );
-}
+};
+
+export const ReservationItem = memo(ReservationItemComponent);

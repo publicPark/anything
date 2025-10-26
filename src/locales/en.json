@@ -25,14 +25,19 @@
     "description": "Main page of the Reservation System website",
     "welcome": "Hello, {name}!",
     "welcomeMessage": "Welcome to Reservation System!",
-    "subtitle": "What is the Reservation System?",
-    "subdescription": "You can reserve space and check the status in real time.\nAs shown below!",
+    "subtitle": "What is this Reservation System?",
+    "subdescription": "You can reserve space and check the status in real time.\nAs shown below",
     "loading": "Loading...",
     "errorTitle": "An Error Occurred",
     "retry": "Try Again",
     "goToLogin": "Login",
     "tutorial": "Just Explore",
     "tryReservation": "Try Reservation",
+    "tutorialCabins": {
+      "title": "Tutorial Team Cabins",
+      "description": "Check out real usage examples",
+      "tryTutorial": "Try Tutorial"
+    },
     "background": {
       "title": "Reservation System Background",
       "problems": {
@@ -47,7 +52,7 @@
     "activeReservations": "Active Reservations",
     "noMyReservations": "You have no reservations yet",
     "cabinsPreview": {
-      "title": "Preview",
+      "title": "Cabin List Preview",
       "description": "Check cabin status in real time",
       "viewAll": "Go"
     }
@@ -120,6 +125,9 @@
     "no": "No",
     "cancel": "Cancel",
     "createShip": "Create Team",
+    "share": "Share",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard",
     "shipName": "Team Name",
     "shipNamePlaceholder": "Enter team name",
     "shipDescription": "Team Description",
@@ -319,7 +327,8 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "nextDay": "Next Day",
-    "close": "Close"
+    "close": "Close",
+    "refresh": "Refresh"
   },
   "errors": {
     "auth": {
@@ -338,6 +347,7 @@
     "deleteAccount": "Delete Account"
   },
   "footer": {
+    "about": "About",
     "faq": "FAQ",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"

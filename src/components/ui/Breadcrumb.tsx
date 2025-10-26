@@ -16,7 +16,7 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
   return (
-    <nav className={`mb-6 ${className}`} aria-label="Breadcrumb">
+    <nav className={`${className || "mb-6"}`} aria-label="Breadcrumb">
       <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">

@@ -34,6 +34,7 @@ interface CabinDetailState {
   userRole: "captain" | "mechanic" | "crew" | null;
   isLoading: boolean;
   error: string | null;
+  newlyCreatedReservationId: string | null;
 }
 
 // 상수 분리
@@ -44,6 +45,7 @@ const INITIAL_STATE: CabinDetailState = {
   userRole: null,
   isLoading: true,
   error: null,
+  newlyCreatedReservationId: null,
 };
 
 const ERROR_MESSAGES = {
@@ -75,6 +77,7 @@ export function CabinDetailContent({
         userRole: null, // 튜토리얼에서는 사용자 역할 없음
         isLoading: false,
         error: null,
+        newlyCreatedReservationId: null,
       };
     }
     
@@ -87,6 +90,7 @@ export function CabinDetailContent({
         userRole: preloadedData.userRole || null,
         isLoading: false,
         error: null,
+        newlyCreatedReservationId: null,
       };
     }
     return INITIAL_STATE;
@@ -184,7 +188,7 @@ export function CabinDetailContent({
     fetchCabinDetails();
   }, [shipPublicId, cabinPublicId, profile?.id, tutorialMode, preloadedData]);
 
-  const handleReservationSuccess = useCallback(() => {
+  const handleReservationSuccess = useCallback((newReservationId?: string) => {
     // setShowReservationForm(false);
     setLastUpdateTime(new Date());
     // 예약 성공 시 예약 목록만 새로고침
@@ -200,7 +204,11 @@ export function CabinDetailContent({
 
           if (error) throw error;
 
-          setState((prev) => ({ ...prev, reservations: data || [] }));
+          setState((prev) => ({ 
+            ...prev, 
+            reservations: data || [],
+            newlyCreatedReservationId: newReservationId || null
+          }));
         } catch (err) {
           console.error("Error fetching reservations:", err);
         }
@@ -359,6 +367,7 @@ export function CabinDetailContent({
             existingReservations={state.reservations}
             onUpdate={fetchReservationsOnly}
             selectedDate={selectedDate}
+            newlyCreatedReservationId={state.newlyCreatedReservationId}
           />
         </div>
       </div>

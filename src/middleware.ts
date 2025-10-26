@@ -1,4 +1,5 @@
 import { updateSession } from "@/lib/supabase/middleware";
+import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { locales, defaultLocale, Locale } from "@/lib/i18n";
 

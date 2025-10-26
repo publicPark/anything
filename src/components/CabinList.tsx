@@ -29,9 +29,10 @@ interface CabinListProps {
     lg?: number;
   };
   maxItems?: number;
+  refreshTrigger?: number;
 }
 
-export function CabinList({ shipId, shipPublicId, preloadedCabins, gridCols, maxItems }: CabinListProps) {
+export function CabinList({ shipId, shipPublicId, preloadedCabins, gridCols, maxItems, refreshTrigger }: CabinListProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const [cabins, setCabins] = useState<CabinWithStatus[]>(preloadedCabins || []);
@@ -110,29 +111,17 @@ export function CabinList({ shipId, shipPublicId, preloadedCabins, gridCols, max
     if (!preloadedCabins) {
       fetchCabins();
     }
-
-    // Supabase Realtime 구독
-    const supabase = createClient();
-    const channel = supabase
-      .channel("cabin-reservations")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "cabin_reservations",
-        },
-        (payload) => {
-          // 예약 변경 시 데이터 새로고침
-          fetchCabins();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [shipId, fetchCabins, preloadedCabins]);
+
+  // refreshTrigger가 변경될 때마다 새로고침
+  useEffect(() => {
+    console.log("CabinList refreshTrigger changed:", refreshTrigger);
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      console.log("🔄 CabinList fetching cabins due to refreshTrigger");
+      fetchCabins();
+    }
+  }, [refreshTrigger, fetchCabins]);
+
 
   // 현재 시각 경과에 따라 배지 상태를 재계산 (DB 변경 없어도 경계 시각에 반영)
   // 30초마다 업데이트로 변경하여 성능 개선
@@ -235,7 +224,7 @@ export function CabinList({ shipId, shipPublicId, preloadedCabins, gridCols, max
               </div>
 
               {cabin.description && (
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-3 whitespace-pre-wrap">
+                <p className="text-muted-foreground text-sm mb-4 whitespace-pre-wrap">
                   {renderTextWithLinks(cabin.description)}
                 </p>
               )}

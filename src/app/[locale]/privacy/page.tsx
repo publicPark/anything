@@ -1,10 +1,14 @@
-"use client";
-
-import { useI18n } from "@/hooks/useI18n";
 import { privacyData } from "@/data/legal/privacy";
+import { getLocaleFromPathname } from "@/lib/i18n";
 
-export default function PrivacyPage() {
-  const { locale } = useI18n();
+interface PrivacyPageProps {
+  params: {
+    locale: string;
+  };
+}
+
+export default function PrivacyPage({ params }: PrivacyPageProps) {
+  const locale = getLocaleFromPathname(`/${params.locale}`);
   const data =
     privacyData[locale as keyof typeof privacyData] || privacyData.ko;
 

@@ -14,7 +14,7 @@ import { MessageSettings } from "@/components/MessageSettings";
 import { ShipTabs } from "@/components/ShipTabs";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { RoleBadge } from "@/components/ui/RoleBadge";
-import AdSlot from "@/components/AdSlot";
+import { ShareButton } from "@/components/ShareButton";
 import DeleteShipModal from "@/components/DeleteShipModal";
 import {
   Ship,
@@ -957,24 +957,35 @@ export function ShipDetailContent({ shipPublicId, preloadedData }: ShipDetailCon
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: (
-              <>
-                <span className="inline-flex items-center gap-2">
-                  <b>{ship.name}</b>
-                </span>{" "}
-                <span>{t("ship.title")}</span>
-                {ship.userRole ? (
-                  <RoleBadge role={ship.userRole} size="sm" className="ml-2" />
-                ) : null}
-              </>
-            ),
-            isCurrentPage: true,
-          },
-        ]}
-      />
+      {/* Breadcrumb and Share Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Breadcrumb
+          items={[
+            {
+              label: (
+                <>
+                  <span className="inline-flex items-center gap-2">
+                    <b>{ship.name}</b>
+                  </span>{" "}
+                  <span>{t("ship.title")}</span>
+                  {ship.userRole ? (
+                    <RoleBadge role={ship.userRole} size="sm" className="ml-2" />
+                  ) : null}
+                </>
+              ),
+              isCurrentPage: true,
+            },
+          ]}
+          className="mb-0"
+        />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <ShareButton
+            title={`${ship.name} - ${t("ship.title")}`}
+            description={ship.description || t("ships.shipDescription").replace("{shipName}", ship.name)}
+            className="flex-shrink-0"
+          />
+        </div>
+      </div>
       <ShipHeader
         ship={ship}
         profile={profile}

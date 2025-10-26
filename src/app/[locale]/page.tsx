@@ -1,12 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import AdSlot from "@/components/AdSlot";
 import { faqData } from "@/data/faq";
 import { HomeAuthContent } from "./HomeAuthContent";
-import { HomeTutorialContent } from "./HomeTutorialContent";
-import { CabinList } from "@/components/CabinList";
+import { HomeAboutContent } from "./HomeAboutContent";
 import { LogoWithAnimation } from "@/components/LogoWithAnimation";
 import { Metadata } from "next";
 import { generateMetadata as generatePageMetadata } from "@/lib/metadata-helpers";
@@ -52,7 +49,10 @@ export default async function Home({ params }: HomeProps) {
         <div className="text-center">
           <h1 className="sr-only">Bookabin - Home</h1>
           <h3 className="text-xl font-medium mb-8">
-            {t("home.welcomeMessage", locale as Locale)}
+            {user 
+              ? t("home.welcome", locale as Locale, { name: user.user_metadata?.full_name || user.email || "사용자" })
+              : t("home.welcomeMessage", locale as Locale)
+            }
           </h3>
 
           {/* 로그인 사용자용 콘텐츠 */}
@@ -79,132 +79,28 @@ export default async function Home({ params }: HomeProps) {
                 </Link>
               </div>
 
-              {/* 고양이 이미지 */}
-              <div className="flex justify-center mb-8">
-                <picture>
-                  <source srcSet="/catcatcat.webp" type="image/webp" />
-                  <Image
-                    src="/catcatcat.png"
-                    alt="Cat"
-                    width={400}
-                    height={300}
-                    priority
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                    className="w-full max-w-md object-contain"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    quality={85}
-                  />
-                </picture>
-              </div>
-
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold text-foreground mb-4">
-                  {t("home.subtitle", locale as Locale)}
-                </h2>
-                <p className="text-muted-foreground mb-4 whitespace-pre-line">
-                  {t("home.subdescription", locale as Locale)}
-                </p>
-
-                {/* 상태 뱃지들 */}
-                <div className="flex gap-2 mb-6 justify-center">
-                  <StatusBadge
-                    label={t("ships.available", locale as Locale)}
-                    tone="success"
-                    className="px-3 py-1 text-sm"
-                  />
-                  <StatusBadge
-                    label={t("ships.inUse", locale as Locale)}
-                    tone="destructive"
-                    blinking={true}
-                    className="px-3 py-1 text-sm"
-                  />
-                </div>
-              </div>
             </>
           )}
         </div>
 
-        {/* 예약시스템 탄생 배경 카드 - 비로그인 사용자용 */}
+        {/* About 섹션 - 비로그인 사용자용 */}
         {!user && (
-          <div className="max-w-4xl mx-auto mt-8">
-            <div className="bg-muted rounded-lg border border-border p-6">
-              <h3 className="text-2xl font-semibold text-foreground mb-4">
-                {t("home.background.title", locale as Locale)}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-xl font-semibold text-foreground mb-2">
-                    {t("home.background.problems.title", locale as Locale)}
-                  </h4>
-                  <ul className="space-y-2 text-md text-muted-foreground">
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">1.</span>
-                      <span>{t("home.background.problems.manual", locale as Locale)}</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">2.</span>
-                      <span>
-                        {t("home.background.problems.availability", locale as Locale)}
-                      </span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-primary mr-2">3.</span>
-                      <span>{t("home.background.problems.overlap", locale as Locale)}</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="pt-2">
-                  <p className="text-lg text-foreground whitespace-pre-line">
-                    {t("home.background.solution", locale as Locale)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 구분선 */}
-        {!user && tutorialShipId && (
-          <div className="mt-8 max-w-4xl mx-auto">
-            <hr className="border-border mb-6" />
-          </div>
-        )}
-
-        {/* 튜토리얼 팀 선실 목록 - 비로그인 사용자용 */}
-        {!user && tutorialShipId && (
-          <HomeTutorialContent 
-            locale={locale} 
+          <HomeAboutContent 
+            locale={locale as Locale} 
             tutorialShipId={tutorialShipId}
           />
         )}
 
-        {/* 선실 목록 - 비로그인 사용자용 */}
-        {!user && tutorialShipId && (
+        {/* 구분선 */}
+        {!user && (
           <div className="max-w-4xl mx-auto mt-16">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-semibold text-foreground">
-                {t("home.cabinsPreview.title", locale as Locale)}
-              </h3>
-              <a 
-                href={`/${locale}/ship/SPtest${locale}/cabins`}
-                className="px-3 py-1.5 text-sm font-medium text-primary border border-primary/20 rounded-md hover:bg-primary/5 hover:border-primary/30 transition-all inline-block"
-              >
-                {t("home.cabinsPreview.viewAll", locale as Locale)}
-              </a>
-            </div>
-            <CabinList 
-              shipId={tutorialShipId}
-              shipPublicId={`SPtest${locale}`}
-              gridCols={{ default: 1, md: 2, lg: 2 }}
-              maxItems={6}
-            />
+            <hr className="border-border" />
           </div>
         )}
 
         {/* 자주 묻는 질문 섹션 - 비로그인 사용자용 */}
         {!user && (
-          <div className="max-w-4xl mx-auto mt-16">
+          <div className="max-w-4xl mx-auto mt-8">
             <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
               {faqData[locale as keyof typeof faqData]?.title ||
                 faqData.ko.title}

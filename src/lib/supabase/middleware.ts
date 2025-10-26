@@ -41,6 +41,13 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
 
+  // 로그인 페이지에 이미 인증된 사용자가 접근하는 경우
+  if (user && pathWithoutLocale.startsWith("/login")) {
+    const locale = pathname.split("/")[1];
+    const redirectUrl = new URL(`/${locale}/`, request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // 로그인이 필요한 페이지에 비인증 사용자가 접근하는 경우
   if (
     !user &&

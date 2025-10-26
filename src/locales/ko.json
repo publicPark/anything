@@ -33,6 +33,11 @@
     "goToLogin": "로그인",
     "tutorial": "그냥 둘러보기",
     "tryReservation": "예약 신청 해보기",
+    "tutorialCabins": {
+      "title": "튜토리얼 팀 선실",
+      "description": "실제 사용 예시를 확인해보세요",
+      "tryTutorial": "튜토리얼 체험하기"
+    },
     "background": {
       "title": "예약시스템 탄생 배경",
       "problems": {
@@ -47,7 +52,7 @@
     "activeReservations": "안지난 예약",
     "noMyReservations": "내 예약이 아직 없습니다",
     "cabinsPreview": {
-      "title": "미리보기",
+      "title": "선실 목록 미리보기",
       "description": "실시간으로 회의실 상태를 확인해보세요",
       "viewAll": "이동"
     }
@@ -120,6 +125,9 @@
     "no": "아니오",
     "cancel": "취소",
     "createShip": "팀 생성",
+    "share": "공유하기",
+    "copyLink": "링크 복사",
+    "linkCopied": "링크가 복사되었습니다",
     "shipName": "팀 이름",
     "shipNamePlaceholder": "팀 이름을 입력하세요",
     "shipDescription": "팀 설명",
@@ -319,7 +327,8 @@
     "today": "오늘",
     "tomorrow": "내일",
     "nextDay": "다음날",
-    "close": "닫기"
+    "close": "닫기",
+    "refresh": "새로고침"
   },
   "errors": {
     "auth": {
@@ -338,6 +347,7 @@
     "deleteAccount": "계정 삭제"
   },
   "footer": {
+    "about": "소개",
     "faq": "자주 묻는 질문",
     "privacy": "개인정보처리방침",
     "terms": "이용약관"

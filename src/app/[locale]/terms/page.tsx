@@ -1,10 +1,14 @@
-"use client";
-
-import { useI18n } from "@/hooks/useI18n";
 import { termsData } from "@/data/legal/terms";
+import { getLocaleFromPathname } from "@/lib/i18n";
 
-export default function TermsPage() {
-  const { locale } = useI18n();
+interface TermsPageProps {
+  params: {
+    locale: string;
+  };
+}
+
+export default function TermsPage({ params }: TermsPageProps) {
+  const locale = getLocaleFromPathname(`/${params.locale}`);
   const data = termsData[locale as keyof typeof termsData] || termsData.ko;
 
   const sections = [

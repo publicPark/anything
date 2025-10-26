@@ -308,7 +308,7 @@ export function CabinManage({
                     {cabin.name}
                   </h4>
                   {cabin.description && (
-                    <p className="text-muted-foreground text-sm mb-2">
+                    <p className="text-muted-foreground text-sm mb-2 whitespace-pre-line">
                       {cabin.description}
                     </p>
                   )}

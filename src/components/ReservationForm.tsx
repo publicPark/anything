@@ -30,7 +30,7 @@ import { useReservationStore } from "@/stores/reservationStore";
 
 interface ReservationFormProps {
   cabinId: string;
-  onSuccess: () => void;
+  onSuccess: (newReservationId?: string) => void;
   existingReservations?: CabinReservation[];
   isModal?: boolean;
   editingReservation?: CabinReservation;
@@ -344,7 +344,7 @@ export function ReservationForm({
             // 성공 메시지 표시
             triggerParticles();
             toast.success(t("ships.reservationCreated"));
-            onSuccess();
+            onSuccess(result.reservationId);
 
             // 2. 슬랙 알림은 백그라운드에서 처리
             sendReservationNotificationAction({

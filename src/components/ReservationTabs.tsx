@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ShipTabs } from "@/components/ShipTabs";
 import { ReservationItem } from "@/components/ReservationItem";
 import { PastReservations } from "@/components/PastReservations";
@@ -16,6 +16,7 @@ interface ReservationTabsProps {
   existingReservations: CabinReservation[];
   onUpdate: () => void;
   selectedDate?: string;
+  newlyCreatedReservationId?: string | null;
 }
 
 export function ReservationTabs({
@@ -27,6 +28,7 @@ export function ReservationTabs({
   existingReservations,
   onUpdate,
   selectedDate,
+  newlyCreatedReservationId,
 }: ReservationTabsProps) {
   const { t, locale } = useI18n();
   const [activeTab, setActiveTab] = useState<"selected" | "past">("selected");
@@ -82,6 +84,29 @@ export function ReservationTabs({
   const todayStr = getLocalYYYYMMDD(today);
   const isToday = selectedDate === todayStr;
 
+  // 예약 목록을 메모이제이션하여 불필요한 리렌더링 방지
+  const reservationItems = useMemo(() => {
+    return selectedDateReservations.map((reservation) => {
+      const start = new Date(reservation.start_time);
+      const end = new Date(reservation.end_time);
+      const isCurrent = currentTime >= start && currentTime < end;
+
+      return (
+        <ReservationItem
+          key={reservation.id}
+          reservation={reservation}
+          currentUserId={currentUserId}
+          userRole={userRole}
+          onUpdate={handleReservationUpdate}
+          isCurrent={isCurrent}
+          cabinId={cabinId}
+          existingReservations={existingReservations}
+          isNewlyCreated={newlyCreatedReservationId === reservation.id}
+        />
+      );
+    });
+  }, [selectedDateReservations, currentTime, currentUserId, userRole, handleReservationUpdate, cabinId, existingReservations, newlyCreatedReservationId]);
+
   const tabs = [
     {
       id: "selected",
@@ -99,24 +124,7 @@ export function ReservationTabs({
         <div>
           {selectedDateReservations.length > 0 ? (
             <div className="space-y-4 mb-4">
-              {selectedDateReservations.map((reservation) => {
-                const start = new Date(reservation.start_time);
-                const end = new Date(reservation.end_time);
-                const isCurrent = currentTime >= start && currentTime < end;
-
-                return (
-                  <ReservationItem
-                    key={reservation.id}
-                    reservation={reservation}
-                    currentUserId={currentUserId}
-                    userRole={userRole}
-                    onUpdate={handleReservationUpdate}
-                    isCurrent={isCurrent}
-                    cabinId={cabinId}
-                    existingReservations={existingReservations}
-                  />
-                );
-              })}
+              {reservationItems}
             </div>
           ) : (
             <div className="text-center py-6">

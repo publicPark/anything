@@ -1,10 +1,14 @@
-"use client";
-
-import { useI18n } from "@/hooks/useI18n";
 import { faqData } from "@/data/faq";
+import { getLocaleFromPathname } from "@/lib/i18n";
 
-export default function FaqPage() {
-  const { locale } = useI18n();
+interface FaqPageProps {
+  params: {
+    locale: string;
+  };
+}
+
+export default function FaqPage({ params }: FaqPageProps) {
+  const locale = getLocaleFromPathname(`/${params.locale}`);
   const data = faqData[locale as keyof typeof faqData] || faqData.ko;
 
   return (

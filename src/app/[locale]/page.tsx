@@ -127,15 +127,17 @@ export default async function Home({ params }: HomeProps) {
           </div>
         )}
 
-        {/* 광고 배치 */}
-        <div className="mt-8">
-          <AdSlot
-            slotId="1234567890"
-            className="max-w-md mx-auto"
-            format="auto"
-            responsive={true}
-          />
-        </div>
+        {/* 광고 배치 - 비로그인 사용자에게만 표시 */}
+        {!user && process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID && (
+          <div className="mt-8">
+            <AdSlot
+              slotId="1234567890"
+              className="max-w-md mx-auto"
+              format="auto"
+              responsive={true}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -457,7 +457,7 @@ export function CabinDetailContent({
                     .lt("start_time", extendedEndISO)
                     .order("start_time", { ascending: true });
                   if (error) throw error;
-                  let merged = data || [];
+                  let merged: CabinReservation[] = data ?? [];
                   // If currently selectedDate lies outside the visible grid month, also fetch that day's reservations
                   const selected = new Date(selectedDate);
                   const selectedISO = selected.toISOString();
@@ -474,8 +474,8 @@ export function CabinDetailContent({
                       .order("start_time", { ascending: true });
                     if (dayError) throw dayError;
                     const byId = new Map<string, (typeof merged)[number]>();
-                    merged.forEach((r: any) => byId.set(r.id, r));
-                    (dayData || []).forEach((r: any) => byId.set(r.id, r));
+                    merged.forEach((r: CabinReservation) => byId.set(r.id, r));
+                    (dayData ?? []).forEach((r: CabinReservation) => byId.set(r.id, r));
                     merged = Array.from(byId.values());
                   }
                   setState((prev) => ({ ...prev, reservations: merged }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { useProfile } from "@/hooks/useProfile";
@@ -11,6 +11,11 @@ import { RoleBadge } from "@/components/ui/RoleBadge";
 import { CabinInfo } from "@/components/CabinInfo";
 import { ReservationTabs } from "@/components/ReservationTabs";
 import { ShipCabin, Ship, CabinReservation } from "@/types/database";
+import {
+  getStartEndOfMonthISOInTimeZone,
+  getVisibleMonthGridRangeISOInTimeZone,
+  getStartEndOfDayISOInTimeZone,
+} from "@/lib/datetime";
 import { useRouter } from "next/navigation";
 
 interface CabinDetailContentProps {
@@ -80,7 +85,7 @@ export function CabinDetailContent({
         newlyCreatedReservationId: null,
       };
     }
-    
+
     // SSR 모드일 때 미리 로드된 데이터로 초기화
     if (preloadedData) {
       return {
@@ -99,6 +104,7 @@ export function CabinDetailContent({
   // UI 상태
   const [showReservationForm, setShowReservationForm] = useState(true);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  const [isRefetching, setIsRefetching] = useState<boolean>(false);
   // 로컬 타임존 기준 YYYY-MM-DD 생성
   const getLocalYYYYMMDD = (d: Date) => {
     const year = d.getFullYear();
@@ -111,11 +117,12 @@ export function CabinDetailContent({
     const today = new Date();
     return getLocalYYYYMMDD(today);
   });
+  const didSkipInitialSelectedDateEffect = useRef<boolean>(false);
 
   useEffect(() => {
     const fetchCabinDetails = async () => {
       if (!shipPublicId || !cabinPublicId) return;
-      
+
       // 튜토리얼 모드이거나 미리 로드된 데이터가 있을 때는 fetch하지 않음
       if (tutorialMode || preloadedData) return;
 
@@ -147,13 +154,30 @@ export function CabinDetailContent({
         if (cabinData.ship_id !== shipData.id)
           throw new Error(ERROR_MESSAGES.CABIN_NOT_IN_SHIP);
 
-        // 2단계: 예약 목록과 사용자 역할 조회
+        // 2단계: 예약 목록(보이는 달만)과 사용자 역할 조회
+        const tz = shipData.time_zone || "Asia/Seoul";
+        const refDate = new Date(selectedDate);
+        const { startISO, endISO } = getVisibleMonthGridRangeISOInTimeZone(
+          tz,
+          refDate,
+          1
+        );
+        // Extend range by ±1 day to include cross-boundary reservations
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        const extendedStartISO = new Date(
+          new Date(startISO).getTime() - oneDayMs
+        ).toISOString();
+        const extendedEndISO = new Date(
+          new Date(endISO).getTime() + oneDayMs
+        ).toISOString();
         const [reservationsResult, memberResult] = await Promise.all([
           supabase
             .from("cabin_reservations")
             .select("*")
             .eq("cabin_id", cabinData.id)
             .eq("status", "confirmed")
+            .gte("end_time", extendedStartISO)
+            .lt("start_time", extendedEndISO)
             .order("start_time", { ascending: true }),
           profile?.id
             ? supabase
@@ -188,44 +212,80 @@ export function CabinDetailContent({
     fetchCabinDetails();
   }, [shipPublicId, cabinPublicId, profile?.id, tutorialMode, preloadedData]);
 
-  const handleReservationSuccess = useCallback((newReservationId?: string) => {
-    // setShowReservationForm(false);
-    setLastUpdateTime(new Date());
-    // 예약 성공 시 예약 목록만 새로고침
-    if (state.cabin) {
-      const fetchReservations = async () => {
+  const handleReservationSuccess = useCallback(
+    (newReservationId?: string) => {
+      setLastUpdateTime(new Date());
+      const cabinId = state.cabin?.id;
+      if (!cabinId) return;
+      // 성공 시 현재 달 범위로 재조회
+      (async () => {
         try {
+          setIsRefetching(true);
+          const tz = state.ship?.time_zone || "Asia/Seoul";
+          const refDate = new Date(selectedDate);
+          const { startISO, endISO } = getVisibleMonthGridRangeISOInTimeZone(
+            tz,
+            refDate,
+            1
+          );
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const extendedStartISO = new Date(
+            new Date(startISO).getTime() - oneDayMs
+          ).toISOString();
+          const extendedEndISO = new Date(
+            new Date(endISO).getTime() + oneDayMs
+          ).toISOString();
           const { data, error } = await supabase
             .from("cabin_reservations")
             .select("*")
-            .eq("cabin_id", state.cabin!.id)
+            .eq("cabin_id", cabinId)
             .eq("status", "confirmed")
+            .gte("end_time", extendedStartISO)
+            .lt("start_time", extendedEndISO)
             .order("start_time", { ascending: true });
-
           if (error) throw error;
-
-          setState((prev) => ({ 
-            ...prev, 
+          setState((prev) => ({
+            ...prev,
             reservations: data || [],
-            newlyCreatedReservationId: newReservationId || null
+            newlyCreatedReservationId: newReservationId || null,
           }));
         } catch (err) {
           console.error("Error fetching reservations:", err);
+        } finally {
+          setIsRefetching(false);
         }
-      };
-      fetchReservations();
-    }
-  }, [state.cabin, supabase]);
+      })();
+    },
+    [state.cabin, state.ship?.time_zone, selectedDate, supabase]
+  );
 
   const fetchReservationsOnly = useCallback(async () => {
-    if (!state.cabin) return;
+    const cabinId = state.cabin?.id;
+    if (!cabinId) return;
 
     try {
+      setIsRefetching(true);
+      const tz = state.ship?.time_zone || "Asia/Seoul";
+      const refDate = new Date(selectedDate);
+      const { startISO, endISO } = getVisibleMonthGridRangeISOInTimeZone(
+        tz,
+        refDate,
+        1
+      );
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const extendedStartISO = new Date(
+        new Date(startISO).getTime() - oneDayMs
+      ).toISOString();
+      const extendedEndISO = new Date(
+        new Date(endISO).getTime() + oneDayMs
+      ).toISOString();
       const { data, error } = await supabase
         .from("cabin_reservations")
         .select("*")
-        .eq("cabin_id", state.cabin.id)
+        .eq("cabin_id", cabinId)
         .eq("status", "confirmed")
+        .gte("end_time", extendedStartISO)
+        .lt("start_time", extendedEndISO)
         .order("start_time", { ascending: true });
 
       if (error) throw error;
@@ -234,8 +294,26 @@ export function CabinDetailContent({
       setLastUpdateTime(new Date());
     } catch (err) {
       console.error("Error fetching reservations:", err);
+    } finally {
+      setIsRefetching(false);
     }
-  }, [state.cabin]);
+  }, [state.cabin, state.ship?.time_zone, selectedDate, supabase]);
+
+  // 달력이 전환되면(선택된 날짜의 달이 바뀌면) 해당 달 범위로 재조회
+  useEffect(() => {
+    if (!state.cabin || !state.ship || tutorialMode) return;
+    if (!didSkipInitialSelectedDateEffect.current) {
+      didSkipInitialSelectedDateEffect.current = true;
+      return;
+    }
+    fetchReservationsOnly();
+  }, [
+    selectedDate,
+    state.cabin,
+    state.ship,
+    tutorialMode,
+    fetchReservationsOnly,
+  ]);
 
   // Realtime 구독 - cabin이 로드된 후에 설정
   useEffect(() => {
@@ -318,7 +396,9 @@ export function CabinDetailContent({
               label: (
                 <span className="flex items-center gap-2">
                   {state.ship.name}
-                  {state.userRole && <RoleBadge role={state.userRole} size="sm" />}
+                  {state.userRole && (
+                    <RoleBadge role={state.userRole} size="sm" />
+                  )}
                 </span>
               ),
               onClick: () => router.push(`/${locale}/ship/${shipPublicId}`),
@@ -353,22 +433,83 @@ export function CabinDetailContent({
             lastUpdateTime={lastUpdateTime}
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            onMonthChange={(activeStartDate: Date) => {
+              // Refetch using visible grid range for the month of activeStartDate without changing selectedDate
+              const tz = state.ship?.time_zone || "Asia/Seoul";
+              const { startISO, endISO } =
+                getVisibleMonthGridRangeISOInTimeZone(tz, activeStartDate, 1);
+              const oneDayMs = 24 * 60 * 60 * 1000;
+              const extendedStartISO = new Date(
+                new Date(startISO).getTime() - oneDayMs
+              ).toISOString();
+              const extendedEndISO = new Date(
+                new Date(endISO).getTime() + oneDayMs
+              ).toISOString();
+              (async () => {
+                try {
+                  setIsRefetching(true);
+                  const { data, error } = await supabase
+                    .from("cabin_reservations")
+                    .select("*")
+                    .eq("cabin_id", state.cabin!.id)
+                    .eq("status", "confirmed")
+                    .gte("end_time", extendedStartISO)
+                    .lt("start_time", extendedEndISO)
+                    .order("start_time", { ascending: true });
+                  if (error) throw error;
+                  let merged = data || [];
+                  // If currently selectedDate lies outside the visible grid month, also fetch that day's reservations
+                  const selected = new Date(selectedDate);
+                  const selectedISO = selected.toISOString();
+                  if (!(selectedISO >= startISO && selectedISO < endISO)) {
+                    const { startISO: dayStart, endISO: dayEnd } =
+                      getStartEndOfDayISOInTimeZone(tz, selected);
+                    const { data: dayData, error: dayError } = await supabase
+                      .from("cabin_reservations")
+                      .select("*")
+                      .eq("cabin_id", state.cabin!.id)
+                      .eq("status", "confirmed")
+                      .gte("end_time", dayStart)
+                      .lt("start_time", dayEnd)
+                      .order("start_time", { ascending: true });
+                    if (dayError) throw dayError;
+                    const byId = new Map<string, (typeof merged)[number]>();
+                    merged.forEach((r: any) => byId.set(r.id, r));
+                    (dayData || []).forEach((r: any) => byId.set(r.id, r));
+                    merged = Array.from(byId.values());
+                  }
+                  setState((prev) => ({ ...prev, reservations: merged }));
+                  setLastUpdateTime(new Date());
+                } catch (err) {
+                  console.error("Error fetching reservations:", err);
+                } finally {
+                  setIsRefetching(false);
+                }
+              })();
+            }}
+            isCalendarLoading={isRefetching}
           />
         </div>
 
         {/* 오른쪽 - 예약 탭 */}
-        <div>
+        <div className="relative">
           <ReservationTabs
             todayReservations={todayReservations}
             upcomingReservations={upcomingReservations}
             cabinId={state.cabin.id}
             currentUserId={tutorialMode ? undefined : profile?.id}
-            userRole={tutorialMode ? undefined : (state.userRole || undefined)}
+            userRole={tutorialMode ? undefined : state.userRole || undefined}
             existingReservations={state.reservations}
             onUpdate={fetchReservationsOnly}
             selectedDate={selectedDate}
             newlyCreatedReservationId={state.newlyCreatedReservationId}
           />
+          {isRefetching && (
+            <div className="absolute top-2 right-2 text-sm text-muted-foreground flex items-center gap-2 pointer-events-none">
+              <LoadingSpinner size="sm" />
+              <span className="sr-only">{t("common.loading")}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

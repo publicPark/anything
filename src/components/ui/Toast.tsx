@@ -138,7 +138,9 @@ export function Toast({ message, type, duration = 3000, onClose }: ToastProps) {
             {icon}
           </span>
         )}
-        <span className="flex-1 text-sm leading-5">{message}</span>
+        <span className="flex-1 text-sm leading-5 whitespace-pre-line">
+          {message}
+        </span>
         <button
           type="button"
           aria-label="Close"

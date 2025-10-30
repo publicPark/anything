@@ -6,12 +6,15 @@ import { format, isSameDay } from "date-fns";
 import { CabinReservation } from "@/types/database";
 import { useI18n } from "@/hooks/useI18n";
 import "react-calendar/dist/Calendar.css";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface CalendarProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
   reservations: CabinReservation[];
   className?: string;
+  onMonthChange?: (activeStartDate: Date) => void;
+  isLoading?: boolean;
 }
 
 export function Calendar({
@@ -19,6 +22,8 @@ export function Calendar({
   onDateChange,
   reservations,
   className = "",
+  onMonthChange,
+  isLoading = false,
 }: CalendarProps) {
   const { t } = useI18n();
 
@@ -63,13 +68,28 @@ export function Calendar({
   const selectedDateObj = new Date(selectedDate);
 
   return (
-    <div className={`${className}`}>
+    <div className={`relative ${className}`}>
+      {isLoading && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+          <div className="calendar-loading-badge pointer-events-none flex items-center gap-2 text-muted-foreground outline-none bg-muted px-2 py-1">
+            <LoadingSpinner />
+            <span className="text-[12px]">{t("common.loading")}</span>
+          </div>
+        </div>
+      )}
       <ReactCalendar
         value={selectedDateObj}
+        prev2Label={null}
+        next2Label={null}
         onChange={(value) => {
           if (value instanceof Date) {
             const dateStr = format(value, "yyyy-MM-dd");
             onDateChange(dateStr);
+          }
+        }}
+        onActiveStartDateChange={({ activeStartDate }) => {
+          if (activeStartDate && onMonthChange) {
+            onMonthChange(activeStartDate);
           }
         }}
         tileContent={tileContent}
@@ -84,6 +104,11 @@ export function Calendar({
           border: 1px solid var(--border) !important;
           font-family: inherit;
           width: 100% !important;
+        }
+
+        /* Ensure calendar loading badge has no extra border; allow Tailwind background/shadow */
+        .calendar-loading-badge {
+          border: none !important;
         }
 
         .react-calendar__navigation {

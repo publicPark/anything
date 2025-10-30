@@ -324,7 +324,10 @@
     "tomorrow": "내일",
     "nextDay": "다음날",
     "close": "닫기",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "timezones": "타임존",
+    "team": "팀",
+    "local": "내 로컬"
   },
   "errors": {
     "auth": {

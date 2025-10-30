@@ -18,14 +18,22 @@ import { Calendar } from "@/components/ui/Calendar";
 import { CabinReservation } from "@/types/database";
 import dynamic from "next/dynamic";
 
-const TimeTable = dynamic(() => import("@/components/TimeTable").then(mod => ({ default: mod.TimeTable })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="text-sm text-muted-foreground">Loading timetable...</div>
-    </div>
-  ),
-});
+const TimeTable = dynamic(
+  () =>
+    import("@/components/TimeTable").then((mod) => ({
+      default: mod.TimeTable,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-sm text-muted-foreground">
+          Loading timetable...
+        </div>
+      </div>
+    ),
+  }
+);
 import { useReservationStore } from "@/stores/reservationStore";
 
 interface ReservationFormProps {
@@ -36,6 +44,8 @@ interface ReservationFormProps {
   editingReservation?: CabinReservation;
   selectedDate?: string;
   onDateChange?: (date: string) => void;
+  onMonthChange?: (activeStartDate: Date) => void;
+  isCalendarLoading?: boolean;
 }
 
 export function ReservationForm({
@@ -46,6 +56,8 @@ export function ReservationForm({
   editingReservation,
   selectedDate: externalSelectedDate,
   onDateChange: externalOnDateChange,
+  onMonthChange,
+  isCalendarLoading = false,
 }: ReservationFormProps) {
   const { t, locale } = useI18n();
   const { profile } = useProfile();
@@ -104,8 +116,17 @@ export function ReservationForm({
       const endDate = new Date(editingReservation.end_time);
 
       // 24시간 형식으로 직접 변환 (toLocaleTimeString 대신)
-      const startTimeStr = `${startDate.getHours().toString().padStart(2, "0")}:${startDate.getMinutes().toString().padStart(2, "0")}`;
-      const endTimeStr = `${endDate.getHours().toString().padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
+      const startTimeStr = `${startDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${startDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+      const endTimeStr = `${endDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
 
       setSelectedTimes(startTimeStr, endTimeStr);
     }
@@ -162,7 +183,11 @@ export function ReservationForm({
     }
 
     // 시간 검증 및 날짜 계산
-    const createDateTime = (dateStr: string, timeStr: string, isEndTime = false): Date => {
+    const createDateTime = (
+      dateStr: string,
+      timeStr: string,
+      isEndTime = false
+    ): Date => {
       const [hours, minutes] = timeStr.split(":").map(Number);
       const date = new Date(dateStr);
 
@@ -184,7 +209,7 @@ export function ReservationForm({
 
     const startDateTime = createDateTime(formData.date, selectedStartTime);
     const endDateTime = createDateTime(formData.date, selectedEndTime);
-    
+
     // 자정을 넘나드는 경우 처리 (시간 문자열 비교로 자정 넘나드는지 확인)
     const isMidnightCrossing = selectedStartTime > selectedEndTime;
     if (isMidnightCrossing) {
@@ -404,6 +429,8 @@ export function ReservationForm({
               selectedDate={formData.date}
               onDateChange={handleDateChange}
               reservations={existingReservations}
+              onMonthChange={onMonthChange}
+              isLoading={isCalendarLoading}
             />
           </div>
 

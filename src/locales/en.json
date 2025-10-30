@@ -324,7 +324,10 @@
     "tomorrow": "Tomorrow",
     "nextDay": "Next Day",
     "close": "Close",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "timezones": "Timezones",
+    "team": "Team",
+    "local": "Local"
   },
   "errors": {
     "auth": {

@@ -4,6 +4,7 @@ import { getTranslations, Locale } from "@/lib/i18n";
 import { checkShipMemberAccess } from "@/lib/auth/ship-auth";
 import { ShipCabinsContent } from "./ShipCabinsContent";
 import { Ship } from "@/types/database";
+import { getStartEndOfDayISOInTimeZone } from "@/lib/datetime";
 import {
   CabinWithStatus,
   addStatusToCabins,
@@ -76,7 +77,7 @@ async function fetchShipCabinsData(
   userId?: string
 ): Promise<ShipCabinsData> {
   const supabase = await createClient();
-  
+
   try {
     // 1단계: 배 정보 조회
     const { data: shipData, error: shipError } = await supabase
@@ -97,12 +98,18 @@ async function fetchShipCabinsData(
         .select("*")
         .eq("ship_id", shipData.id)
         .order("name", { ascending: true }),
-      supabase
-        .from("cabin_reservations")
-        .select("*")
-        .eq("status", "confirmed")
-        .gte("start_time", new Date().toISOString().split('T')[0])
-        .order("start_time", { ascending: true }),
+      // Include any reservation that overlaps "today" in the ship's timezone
+      (() => {
+        const tz = shipData.time_zone || "Asia/Seoul";
+        const { startISO, endISO } = getStartEndOfDayISOInTimeZone(tz);
+        return supabase
+          .from("cabin_reservations")
+          .select("*")
+          .eq("status", "confirmed")
+          .gte("end_time", startISO)
+          .lt("start_time", endISO)
+          .order("start_time", { ascending: true });
+      })(),
       userId
         ? supabase
             .from("ship_members")
@@ -142,14 +149,13 @@ export default async function ShipCabinsPage({ params }: ShipCabinsPageProps) {
 
   // 서버에서 캐빈 데이터 미리 가져오기
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const cabinsData = await fetchShipCabinsData(public_id, user?.id);
 
   return (
-    <ShipCabinsContent
-      shipPublicId={public_id}
-      preloadedData={cabinsData}
-    />
+    <ShipCabinsContent shipPublicId={public_id} preloadedData={cabinsData} />
   );
 }

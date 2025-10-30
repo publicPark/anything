@@ -5,14 +5,22 @@ import { CabinReservationSummary } from "@/components/CabinReservationSummary";
 import { ShipCabin, CabinReservation } from "@/types/database";
 import dynamic from "next/dynamic";
 
-const ReservationForm = dynamic(() => import("@/components/ReservationForm").then(mod => ({ default: mod.ReservationForm })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="text-sm text-muted-foreground">Loading reservation form...</div>
-    </div>
-  ),
-});
+const ReservationForm = dynamic(
+  () =>
+    import("@/components/ReservationForm").then((mod) => ({
+      default: mod.ReservationForm,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-sm text-muted-foreground">
+          Loading reservation form...
+        </div>
+      </div>
+    ),
+  }
+);
 import { calculateCabinStatus } from "@/lib/cabin-status";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { renderTextWithLinks } from "@/lib/text-helpers";
@@ -29,6 +37,8 @@ interface CabinInfoProps {
   lastUpdateTime?: Date;
   selectedDate?: string;
   onDateChange?: (date: string) => void;
+  onMonthChange?: (activeStartDate: Date) => void;
+  isCalendarLoading?: boolean;
 }
 
 export function CabinInfo({
@@ -42,6 +52,8 @@ export function CabinInfo({
   lastUpdateTime,
   selectedDate,
   onDateChange,
+  onMonthChange,
+  isCalendarLoading,
 }: CabinInfoProps) {
   const { t } = useI18n();
 
@@ -112,6 +124,8 @@ export function CabinInfo({
             isModal={false}
             selectedDate={selectedDate}
             onDateChange={onDateChange}
+            onMonthChange={onMonthChange}
+            isCalendarLoading={isCalendarLoading}
           />
         )}
       </div>

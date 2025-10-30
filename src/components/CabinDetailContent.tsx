@@ -475,7 +475,9 @@ export function CabinDetailContent({
                     if (dayError) throw dayError;
                     const byId = new Map<string, (typeof merged)[number]>();
                     merged.forEach((r: CabinReservation) => byId.set(r.id, r));
-                    (dayData ?? []).forEach((r: CabinReservation) => byId.set(r.id, r));
+                    (dayData ?? []).forEach((r: CabinReservation) =>
+                      byId.set(r.id, r)
+                    );
                     merged = Array.from(byId.values());
                   }
                   setState((prev) => ({ ...prev, reservations: merged }));

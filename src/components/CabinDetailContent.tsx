@@ -27,7 +27,7 @@ interface CabinDetailContentProps {
   preloadedData?: {
     ship: Ship | null;
     cabin: ShipCabin | null;
-    reservations: CabinReservation[];
+    reservations?: CabinReservation[];
     userRole?: "captain" | "mechanic" | "crew" | null;
   };
 }
@@ -78,9 +78,9 @@ export function CabinDetailContent({
       return {
         ship: preloadedData.ship,
         cabin: preloadedData.cabin,
-        reservations: preloadedData.reservations,
+        reservations: preloadedData.reservations || [],
         userRole: null, // 튜토리얼에서는 사용자 역할 없음
-        isLoading: false,
+        isLoading: false, // 모든 데이터가 preloadedData에 있음
         error: null,
         newlyCreatedReservationId: null,
       };
@@ -91,9 +91,9 @@ export function CabinDetailContent({
       return {
         ship: preloadedData.ship,
         cabin: preloadedData.cabin,
-        reservations: preloadedData.reservations,
+        reservations: [], // 예약은 클라이언트에서 로드
         userRole: preloadedData.userRole || null,
-        isLoading: false,
+        isLoading: false, // 배와 cabin 정보는 이미 있으므로 로딩 완료, 예약은 백그라운드에서 로드
         error: null,
         newlyCreatedReservationId: null,
       };
@@ -123,39 +123,79 @@ export function CabinDetailContent({
     const fetchCabinDetails = async () => {
       if (!shipPublicId || !cabinPublicId) return;
 
-      // 튜토리얼 모드이거나 미리 로드된 데이터가 있을 때는 fetch하지 않음
-      if (tutorialMode || preloadedData) return;
+      // 튜토리얼 모드일 때는 fetch하지 않음
+      if (tutorialMode) return;
 
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      // 미리 로드된 데이터가 있어도 예약은 클라이언트에서 로드해야 함
+      if (!preloadedData) {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      }
+
+      // 배와 cabin 정보는 preloadedData가 있으면 사용, 없으면 조회
+      let shipData = preloadedData?.ship;
+      let cabinData = preloadedData?.cabin;
+
+      if (!shipData || !cabinData) {
+        try {
+          // 1단계: 배와 선실 정보 조회
+          const [shipResult, cabinResult] = await Promise.all([
+            supabase
+              .from("ships")
+              .select("*")
+              .eq("public_id", shipPublicId)
+              .maybeSingle(),
+            supabase
+              .from("ship_cabins")
+              .select("*")
+              .eq("public_id", cabinPublicId)
+              .maybeSingle(),
+          ]);
+
+          if (shipResult.error) throw shipResult.error;
+          if (cabinResult.error) throw cabinResult.error;
+
+          shipData = shipResult.data;
+          cabinData = cabinResult.data;
+
+          if (!shipData) throw new Error(ERROR_MESSAGES.SHIP_NOT_FOUND);
+          if (!cabinData) throw new Error(ERROR_MESSAGES.CABIN_NOT_FOUND);
+          if (cabinData.ship_id !== shipData.id)
+            throw new Error(ERROR_MESSAGES.CABIN_NOT_IN_SHIP);
+        } catch (err: unknown) {
+          console.error("Error fetching cabin details:", err);
+          setState((prev) => ({
+            ...prev,
+            error:
+              err instanceof Error ? err.message : t("common.errorOccurred"),
+            isLoading: false,
+          }));
+          return;
+        }
+      }
+
+      // 배와 cabin 정보만 업데이트 (예약은 별도 useEffect에서 로드)
+      setState((prev) => ({
+        ...prev,
+        ship: shipData,
+        cabin: cabinData,
+        isLoading: false,
+        error: null,
+      }));
+    };
+
+    fetchCabinDetails();
+  }, [shipPublicId, cabinPublicId, tutorialMode, preloadedData, t, supabase]);
+
+  // 예약 정보 로드 (배와 cabin 정보가 준비된 후)
+  useEffect(() => {
+    const loadReservations = async () => {
+      if (!state.cabin || !state.ship || tutorialMode) return;
 
       try {
-        // 1단계: 배와 선실 정보 조회
-        const [shipResult, cabinResult] = await Promise.all([
-          supabase
-            .from("ships")
-            .select("*")
-            .eq("public_id", shipPublicId)
-            .maybeSingle(),
-          supabase
-            .from("ship_cabins")
-            .select("*")
-            .eq("public_id", cabinPublicId)
-            .maybeSingle(),
-        ]);
+        // 예약 로드 시에만 로딩 상태 표시 (이미 배와 cabin 정보는 표시됨)
+        // setState((prev) => ({ ...prev, isLoading: true }));
 
-        if (shipResult.error) throw shipResult.error;
-        if (cabinResult.error) throw cabinResult.error;
-
-        const shipData = shipResult.data;
-        const cabinData = cabinResult.data;
-
-        if (!shipData) throw new Error(ERROR_MESSAGES.SHIP_NOT_FOUND);
-        if (!cabinData) throw new Error(ERROR_MESSAGES.CABIN_NOT_FOUND);
-        if (cabinData.ship_id !== shipData.id)
-          throw new Error(ERROR_MESSAGES.CABIN_NOT_IN_SHIP);
-
-        // 2단계: 예약 목록(보이는 달만)과 사용자 역할 조회
-        const tz = shipData.time_zone || "Asia/Seoul";
+        const tz = state.ship.time_zone || "Asia/Seoul";
         const refDate = new Date(selectedDate);
         const { startISO, endISO } = getVisibleMonthGridRangeISOInTimeZone(
           tz,
@@ -170,47 +210,69 @@ export function CabinDetailContent({
         const extendedEndISO = new Date(
           new Date(endISO).getTime() + oneDayMs
         ).toISOString();
-        const [reservationsResult, memberResult] = await Promise.all([
-          supabase
+        const { data: reservationsData, error: reservationsError } =
+          await supabase
             .from("cabin_reservations")
             .select("*")
-            .eq("cabin_id", cabinData.id)
+            .eq("cabin_id", state.cabin.id)
             .eq("status", "confirmed")
             .gte("end_time", extendedStartISO)
             .lt("start_time", extendedEndISO)
-            .order("start_time", { ascending: true }),
-          profile?.id
-            ? supabase
-                .from("ship_members")
-                .select("role")
-                .eq("ship_id", shipData.id)
-                .eq("user_id", profile.id)
-                .maybeSingle()
-            : Promise.resolve({ data: null, error: null }),
-        ]);
+            .order("start_time", { ascending: true });
 
-        if (reservationsResult.error) throw reservationsResult.error;
+        if (reservationsError) throw reservationsError;
 
         setState((prev) => ({
           ...prev,
-          ship: shipData,
-          cabin: cabinData,
-          reservations: reservationsResult.data || [],
-          userRole: memberResult.data?.role || null,
-          isLoading: false,
+          reservations: reservationsData || [],
+          // isLoading은 그대로 유지 (배와 cabin 정보는 이미 표시됨)
         }));
       } catch (err: unknown) {
-        console.error("Error fetching cabin details:", err);
+        console.error("Error fetching reservations:", err);
         setState((prev) => ({
           ...prev,
-          error: err instanceof Error ? err.message : t("common.errorOccurred"),
-          isLoading: false,
+          error:
+            err instanceof Error ? err.message : t("common.errorOccurred"),
+          // isLoading은 그대로 유지 (배와 cabin 정보는 이미 표시됨)
         }));
       }
     };
 
-    fetchCabinDetails();
-  }, [shipPublicId, cabinPublicId, profile?.id, tutorialMode, preloadedData]);
+    loadReservations();
+  }, [state.cabin?.id, state.ship?.time_zone, selectedDate, tutorialMode, supabase, t]);
+
+  // 멤버십 정보 지연 로드 (초기 로딩 후순위)
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!state.ship || !profile?.id || tutorialMode) {
+        return;
+      }
+
+      try {
+        const { data: memberData, error: memberError } = await supabase
+          .from("ship_members")
+          .select("role")
+          .eq("ship_id", state.ship.id)
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        if (memberError) {
+          console.error("Failed to fetch user role:", memberError);
+          return;
+        }
+
+        setState((prev) => ({
+          ...prev,
+          userRole: memberData?.role || null,
+        }));
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+      }
+    };
+
+    // 프로필과 배 정보가 준비되면 멤버십 정보 로드
+    fetchUserRole();
+  }, [state.ship?.id, profile?.id, tutorialMode, supabase]);
 
   const handleReservationSuccess = useCallback(
     (newReservationId?: string) => {

@@ -73,8 +73,7 @@ export async function generateMetadata({
 
 // 서버에서 캐빈 데이터를 가져오는 함수
 async function fetchShipCabinsData(
-  shipPublicId: string,
-  userId?: string
+  shipPublicId: string
 ): Promise<ShipCabinsData> {
   const supabase = await createClient();
 
@@ -91,8 +90,8 @@ async function fetchShipCabinsData(
       return { ship: null, cabins: [], userRole: null };
     }
 
-    // 2단계: 캐빈 목록과 예약 정보, 사용자 역할을 병렬로 조회
-    const [cabinsResult, reservationsResult, memberResult] = await Promise.all([
+    // 2단계: 캐빈 목록과 예약 정보만 조회 (멤버십 정보는 클라이언트에서 나중에 로드)
+    const [cabinsResult, reservationsResult] = await Promise.all([
       supabase
         .from("ship_cabins")
         .select("*")
@@ -110,14 +109,6 @@ async function fetchShipCabinsData(
           .lt("start_time", endISO)
           .order("start_time", { ascending: true });
       })(),
-      userId
-        ? supabase
-            .from("ship_members")
-            .select("role")
-            .eq("ship_id", shipData.id)
-            .eq("user_id", userId)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
     ]);
 
     if (cabinsResult.error) throw cabinsResult.error;
@@ -133,7 +124,7 @@ async function fetchShipCabinsData(
     return {
       ship: shipData,
       cabins: cabinsWithStatus,
-      userRole: memberResult.data?.role || null,
+      userRole: null, // 멤버십 정보는 클라이언트에서 나중에 로드
     };
   } catch (error) {
     console.error("Failed to fetch ship cabins data:", error);
@@ -147,13 +138,8 @@ export default async function ShipCabinsPage({ params }: ShipCabinsPageProps) {
   // 멤버 전용 배 권한 체크
   await checkShipMemberAccess(public_id, locale);
 
-  // 서버에서 캐빈 데이터 미리 가져오기
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const cabinsData = await fetchShipCabinsData(public_id, user?.id);
+  // 서버에서 캐빈 데이터 미리 가져오기 (멤버십 정보는 클라이언트에서 나중에 로드)
+  const cabinsData = await fetchShipCabinsData(public_id);
 
   return (
     <ShipCabinsContent shipPublicId={public_id} preloadedData={cabinsData} />

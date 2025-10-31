@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/hooks/useI18n";
+import { useProfile } from "@/hooks/useProfile";
+import { createClient } from "@/lib/supabase/client";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { CabinList, CabinListHandle } from "@/components/CabinList";
@@ -29,6 +31,7 @@ export function ShipCabinsContent({
 }: ShipCabinsContentProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const { profile } = useProfile();
   const cabinListRef = useRef<CabinListHandle | null>(null);
 
   // SSR 데이터로 초기화
@@ -44,6 +47,38 @@ export function ShipCabinsContent({
   const toast = useToast();
   const [showTimezoneButton, setShowTimezoneButton] = useState(false);
   const [browserTz, setBrowserTz] = useState<string>("");
+
+  // 멤버십 정보 지연 로드 (초기 로딩 후순위)
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!ship || !profile?.id) {
+        setUserRole(null);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const { data: memberData, error: memberError } = await supabase
+          .from("ship_members")
+          .select("role")
+          .eq("ship_id", ship.id)
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        if (memberError) {
+          console.error("Failed to fetch user role:", memberError);
+          return;
+        }
+
+        setUserRole(memberData?.role || null);
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+      }
+    };
+
+    // 프로필과 배 정보가 준비되면 멤버십 정보 로드
+    fetchUserRole();
+  }, [ship?.id, profile?.id]);
 
   // 클라이언트에서 브라우저 타임존 결정
   useEffect(() => {

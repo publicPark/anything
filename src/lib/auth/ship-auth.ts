@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Ship } from "@/types/database";
 
 export async function checkShipMemberAccess(
   shipPublicId: string,
   locale: string
-): Promise<void> {
+): Promise<Ship | null> {
   const supabase = await createClient();
 
   // 배 정보 조회
@@ -53,4 +54,6 @@ export async function checkShipMemberAccess(
       redirect(`/${locale}/ship/${shipPublicId}`);
     }
   }
+
+  return shipData;
 }

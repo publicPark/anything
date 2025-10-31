@@ -16,7 +16,6 @@ interface CabinDetailPageProps {
 interface CabinDetailData {
   ship: Ship | null;
   cabin: ShipCabin | null;
-  reservations: CabinReservation[];
   userRole: "captain" | "mechanic" | "crew" | null;
 }
 
@@ -80,71 +79,43 @@ export async function generateMetadata({
 
 // 서버에서 캐빈 데이터를 가져오는 함수
 async function fetchCabinDetailData(
-  shipPublicId: string,
-  cabinPublicId: string,
-  userId?: string
+  shipData: Ship | null,
+  cabinPublicId: string
 ): Promise<CabinDetailData> {
   const supabase = await createClient();
   
   try {
-    // 1단계: 배와 선실 정보 조회
-    const [shipResult, cabinResult] = await Promise.all([
-      supabase
-        .from("ships")
-        .select("*")
-        .eq("public_id", shipPublicId)
-        .maybeSingle(),
-      supabase
-        .from("ship_cabins")
-        .select("*")
-        .eq("public_id", cabinPublicId)
-        .maybeSingle(),
-    ]);
+    if (!shipData) {
+      return { ship: null, cabin: null, userRole: null };
+    }
 
-    if (shipResult.error) throw shipResult.error;
-    if (cabinResult.error) throw cabinResult.error;
+    // 선실 정보만 조회 (배 정보는 이미 있음)
+    const { data: cabinData, error: cabinError } = await supabase
+      .from("ship_cabins")
+      .select("*")
+      .eq("public_id", cabinPublicId)
+      .maybeSingle();
 
-    const shipData = shipResult.data;
-    const cabinData = cabinResult.data;
+    if (cabinError) throw cabinError;
 
-    if (!shipData || !cabinData) {
-      return { ship: null, cabin: null, reservations: [], userRole: null };
+    if (!cabinData) {
+      return { ship: null, cabin: null, userRole: null };
     }
 
     // 선실이 해당 배에 속하는지 확인
     if (cabinData.ship_id !== shipData.id) {
-      return { ship: null, cabin: null, reservations: [], userRole: null };
+      return { ship: null, cabin: null, userRole: null };
     }
 
-    // 2단계: 예약 목록과 사용자 역할 조회
-    const [reservationsResult, memberResult] = await Promise.all([
-      supabase
-        .from("cabin_reservations")
-        .select("*")
-        .eq("cabin_id", cabinData.id)
-        .eq("status", "confirmed")
-        .order("start_time", { ascending: true }),
-      userId
-        ? supabase
-            .from("ship_members")
-            .select("role")
-            .eq("ship_id", shipData.id)
-            .eq("user_id", userId)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
-    ]);
-
-    if (reservationsResult.error) throw reservationsResult.error;
-
+    // 예약 조회는 클라이언트 사이드에서만 수행
     return {
       ship: shipData,
       cabin: cabinData,
-      reservations: reservationsResult.data || [],
-      userRole: memberResult.data?.role || null,
+      userRole: null,
     };
   } catch (error) {
     console.error("Failed to fetch cabin detail data:", error);
-    return { ship: null, cabin: null, reservations: [], userRole: null };
+    return { ship: null, cabin: null, userRole: null };
   }
 }
 
@@ -153,18 +124,11 @@ export default async function CabinDetailPage({
 }: CabinDetailPageProps) {
   const { locale, public_id, cabin_public_id } = await params;
 
-  // 멤버 전용 배 권한 체크 (공통 함수 사용)
-  await checkShipMemberAccess(public_id, locale);
+  // 멤버 전용 배 권한 체크 및 배 정보 가져오기
+  const shipData = await checkShipMemberAccess(public_id, locale);
 
-  // 서버에서 캐빈 데이터 미리 가져오기
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  const cabinData = await fetchCabinDetailData(
-    public_id,
-    cabin_public_id,
-    user?.id
-  );
+  // 서버에서 캐빈 데이터 미리 가져오기 (예약과 멤버십 정보는 클라이언트에서 나중에 로드)
+  const cabinData = await fetchCabinDetailData(shipData, cabin_public_id);
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6">

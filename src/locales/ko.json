@@ -389,7 +389,7 @@
     "endsAtPlannedSuffix": "종료 예정",
     "nextReservation": "다음 예약",
     "startsAt": "{time}에 시작",
-    "startsAtPlannedSuffix": "시작 예정",
+    "startsIn": "약 {time} 후 시작",
     "noNextReservation": "다음 예약 없음",
     "reservationTitle": "예약 제목",
     "reservationDescription": "예약 설명",

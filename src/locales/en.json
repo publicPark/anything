@@ -388,7 +388,7 @@
     "endsAtPlannedSuffix": "ending",
     "nextReservation": "Next Reservation",
     "startsAt": "Starts at {time}",
-    "startsAtPlannedSuffix": "starting",
+    "startsIn": "starts in {time}",
     "noNextReservation": "No upcoming reservations",
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",

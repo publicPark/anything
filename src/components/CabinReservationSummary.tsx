@@ -47,7 +47,29 @@ export function CabinReservationSummary({
     return parts.join(" ");
   };
 
-  const renderStatusBadge = (type: "ongoing" | "upcoming"): ReactNode => {
+  // 공통 시간 포맷터
+  const formatTime = (timeISO: string) =>
+    new Date(timeISO).toLocaleTimeString(locale === "ko" ? "ko-KR" : "en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+  // 예정 섹션 표시 값 미리 계산
+  const formattedNextStartTime = nextReservation
+    ? formatTime(nextReservation.start_time)
+    : null;
+  const remainingUntilNext = nextReservation
+    ? getRemainingTime(nextReservation.start_time)
+    : null;
+  const nextPlannedText = remainingUntilNext
+    ? t("cabins.startsIn", { time: remainingUntilNext })
+    : null;
+
+  const renderStatusBadge = (
+    type: "ongoing" | "upcoming",
+    customLabel?: ReactNode
+  ): ReactNode => {
     const base =
       "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border shrink-0";
     if (type === "ongoing") {
@@ -61,7 +83,7 @@ export function CabinReservationSummary({
     }
     return (
       <span className={`${base} bg-info/10 text-info-600 border-info/600`}>
-        {t("ships.statusUpcoming")}
+        {customLabel ?? t("ships.statusUpcoming")}
       </span>
     );
   };
@@ -78,12 +100,7 @@ export function CabinReservationSummary({
             {renderStatusBadge("ongoing")}
           </div>
           <div className="text-sm text-foreground">
-            <b>
-              {new Date(currentReservation.end_time).toLocaleTimeString(
-                locale === "ko" ? "ko-KR" : "en-US",
-                { hour: "numeric", minute: "2-digit", hour12: true }
-              )}
-            </b>{" "}
+            <b>{formatTime(currentReservation.end_time)}</b>{" "}
             {t("cabins.endsAtPlannedSuffix")}
             {(() => {
               const remainingTime = getRemainingTime(
@@ -122,13 +139,15 @@ export function CabinReservationSummary({
             {renderStatusBadge("upcoming")}
           </div>
           <div className="text-sm text-foreground">
-            <b>
-              {new Date(nextReservation.start_time).toLocaleTimeString(
-                locale === "ko" ? "ko-KR" : "en-US",
-                { hour: "numeric", minute: "2-digit", hour12: true }
-              )}
-            </b>{" "}
-            {t("cabins.startsAtPlannedSuffix")}
+            <b>{formattedNextStartTime}</b>
+            {nextPlannedText && (
+              <>
+                {", "}
+                <span className="text-foreground font-normal">
+                  {nextPlannedText}
+                </span>
+              </>
+            )}
           </div>
         </div>
       ) : (

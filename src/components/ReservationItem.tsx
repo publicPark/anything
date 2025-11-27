@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { ReservationForm } from "@/components/ReservationForm";
 import { CabinReservation } from "@/types/database";
 import { deleteReservationSlackMessageAction } from "@/app/actions/slack";
+import { formatReservationDuration } from "@/lib/datetime";
 
 interface ReservationItemProps {
   reservation: CabinReservation;
@@ -187,14 +188,6 @@ const ReservationItemComponent = ({
       }
     );
 
-    // 시간 길이 계산 (분 단위)
-    const durationMs = endDate.getTime() - startDate.getTime();
-    const durationMinutes = Math.round(durationMs / (1000 * 60));
-
-    // 시간 길이를 시간과 분으로 변환
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
-
     // 현재 진행 중인 예약의 남은 시간 계산
     const getRemainingTime = () => {
       if (!isCurrent) return null;
@@ -217,11 +210,8 @@ const ReservationItemComponent = ({
       return parts.join(" ");
     };
 
-    const durationParts: string[] = [];
-    if (hours > 0) durationParts.push(t("timetable.hour", { count: hours }));
-    if (minutes > 0)
-      durationParts.push(t("timetable.minute", { count: minutes }));
-    const durationStr = durationParts.join(" ");
+    // 소요 시간 문자열 생성 (공통 유틸리티 함수 사용)
+    const durationStr = formatReservationDuration(startTime, endTime, t) || "";
 
     return {
       dateLabel,
@@ -230,12 +220,14 @@ const ReservationItemComponent = ({
     };
   };
 
-  const [badges, setBadges] = useState<Array<{
-    text: string;
-    variant: "primary" | "secondary";
-    clickable?: boolean;
-    onClick?: () => void;
-  }>>([]);
+  const [badges, setBadges] = useState<
+    Array<{
+      text: string;
+      variant: "primary" | "secondary";
+      clickable?: boolean;
+      onClick?: () => void;
+    }>
+  >([]);
 
   useEffect(() => {
     const getReservationBadges = () => {
@@ -301,7 +293,13 @@ const ReservationItemComponent = ({
     };
 
     setBadges(getReservationBadges());
-  }, [isGuest, reservation.guest_identifier, reservation.user_id, reservation.user_display_name, isOwner]);
+  }, [
+    isGuest,
+    reservation.guest_identifier,
+    reservation.user_id,
+    reservation.user_display_name,
+    isOwner,
+  ]);
 
   const getReservationStatus = (): "ongoing" | "upcoming" | "ended" => {
     const now = new Date();
@@ -345,23 +343,23 @@ const ReservationItemComponent = ({
 
   const status = getReservationStatus();
   const shouldShowNewlyCreatedBorder = isNewlyCreated && !hasBeenClicked;
-  
+
   const handleCardClick = () => {
     if (isNewlyCreated && !hasBeenClicked) {
       setHasBeenClicked(true);
     }
   };
-  
+
   return (
     <div
       className={`rounded-lg p-6 border ${
-        isCurrent 
-          ? "bg-muted border-destructive/60" 
+        isCurrent
+          ? "bg-muted border-destructive/60"
           : shouldShowNewlyCreatedBorder
-            ? "bg-muted border-primary shadow-lg shadow-primary/20" 
-            : status === "ended"
-              ? "bg-muted/50 border-border"
-              : "bg-muted border-border"
+          ? "bg-muted border-primary shadow-lg shadow-primary/20"
+          : status === "ended"
+          ? "bg-muted/50 border-border"
+          : "bg-muted border-border"
       }`}
       onClick={handleCardClick}
     >

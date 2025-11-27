@@ -291,3 +291,30 @@ export function getVisibleMonthGridRangeISOInTimeZone(
   ).toISOString();
   return { startISO, endISO };
 }
+
+/**
+ * Calculate reservation duration in minutes and format as localized string
+ * @param startTime ISO string of start time
+ * @param endTime ISO string of end time
+ * @param t Translation function (from useI18n hook)
+ * @returns Formatted duration string (e.g., "1시간 30분" or "1h 30m") or null if invalid
+ */
+export function formatReservationDuration(
+  startTime: string,
+  endTime: string,
+  t: (key: string, params?: { count: number }) => string
+): string | null {
+  const startDate = new Date(startTime);
+  const endDate = new Date(endTime);
+  const durationMs = endDate.getTime() - startDate.getTime();
+  const durationMinutes = Math.round(durationMs / (1000 * 60));
+
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+
+  const durationParts: string[] = [];
+  if (hours > 0) durationParts.push(t("timetable.hour", { count: hours }));
+  if (minutes > 0) durationParts.push(t("timetable.minute", { count: minutes }));
+
+  return durationParts.length > 0 ? durationParts.join(" ") : null;
+}

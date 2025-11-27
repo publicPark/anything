@@ -5,6 +5,7 @@ import { useI18n } from "@/hooks/useI18n";
 import type { ReactNode } from "react";
 import { CabinReservation } from "@/types/database";
 import { calculateCabinStatus } from "@/lib/cabin-status";
+import { formatReservationDuration } from "@/lib/datetime";
 
 interface CabinReservationSummaryProps {
   reservations: CabinReservation[];
@@ -59,11 +60,21 @@ export function CabinReservationSummary({
   const formattedNextStartTime = nextReservation
     ? formatTime(nextReservation.start_time)
     : null;
+  const formattedNextEndTime = nextReservation
+    ? formatTime(nextReservation.end_time)
+    : null;
   const remainingUntilNext = nextReservation
     ? getRemainingTime(nextReservation.start_time)
     : null;
   const nextPlannedText = remainingUntilNext
     ? t("cabins.startsIn", { time: remainingUntilNext })
+    : null;
+  const nextDurationLabel = nextReservation
+    ? formatReservationDuration(
+        nextReservation.start_time,
+        nextReservation.end_time,
+        t
+      )
     : null;
 
   const renderStatusBadge = (
@@ -123,7 +134,7 @@ export function CabinReservationSummary({
         </div>
       ) : (
         <div className="mb-3 p-3 bg-muted/10 border border-success-600 rounded-md">
-          <p className="text-sm text-success-800 font-medium">
+          <p className="text-sm text-success-foreground font-medium">
             {t("ships.currentlyAvailable")}
           </p>
         </div>
@@ -139,7 +150,11 @@ export function CabinReservationSummary({
             {renderStatusBadge("upcoming")}
           </div>
           <div className="text-sm text-foreground">
-            <b>{formattedNextStartTime}</b>
+            <b>
+              {formattedNextStartTime}
+              {formattedNextEndTime && <> - {formattedNextEndTime}</>}
+            </b>
+            {/* {nextDurationLabel && <> ({nextDurationLabel})</>} */}
             {nextPlannedText && (
               <>
                 {", "}

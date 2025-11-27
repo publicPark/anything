@@ -389,6 +389,7 @@
     "nextReservation": "Next Reservation",
     "startsAt": "Starts at {time}",
     "startsIn": "starts in {time}",
+    "duration": "{minutes} minutes",
     "noNextReservation": "No upcoming reservations",
     "reservationTitle": "Reservation Title",
     "reservationDescription": "Reservation Description",

@@ -17,7 +17,7 @@ export const renderTextWithLinks = (text: string): ReactNode[] => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary hover:text-primary/80 underline"
+          className="text-primary-active hover:text-primary-hover underline"
         >
           {part}
         </a>
